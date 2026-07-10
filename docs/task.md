@@ -24,18 +24,18 @@ Hệ thống được chia thành 6 giai đoạn phát triển chính từ hạ 
 Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding) cho cả Backend và Frontend, cấu hình cơ sở dữ liệu MySQL và viết Prisma schema hoàn chỉnh.
 
 ### 2.1 Backend Scaffolding
-- [ ] **TSK-SYS-101**: Khởi tạo dự án Node.js với TypeScript trong thư mục `source-code/backend/`. Cấu hình `tsconfig.json` và cài đặt các dependencies cốt lõi (`express`, `typescript`, `@types/node`, `@types/express`, `pino`, `dotenv`).
-- [ ] **TSK-SYS-102**: Cấu hình ESLint và Prettier cho Backend đảm bảo đồng bộ chuẩn viết code.
-- [ ] **TSK-SYS-103**: Khởi tạo cấu hình biến môi trường (`.env.example` và `.env`) chứa các cấu hình về cổng chạy, cơ sở dữ liệu, khóa bảo mật JWT, SMTP, thư mục upload.
+- [x] **TSK-SYS-101**: Khởi tạo dự án Node.js với TypeScript trong thư mục `source-code/backend/`. Cấu hình `tsconfig.json` và cài đặt các dependencies cốt lõi (`express`, `typescript`, `@types/node`, `@types/express`, `pino`, `dotenv`).
+- [x] **TSK-SYS-102**: Cấu hình ESLint và Prettier cho Backend đảm bảo đồng bộ chuẩn viết code.
+- [x] **TSK-SYS-103**: Khởi tạo cấu hình biến môi trường (`.env.example` và `.env`) chứa các cấu hình về cổng chạy, cơ sở dữ liệu, khóa bảo mật JWT, SMTP, thư mục upload.
 
 ### 2.2 Database & Prisma Configuration
-- [ ] **TSK-DB-101**
+- [x] **TSK-DB-101**
   - Cài đặt Prisma ORM v6.10.1.
   - Cấu hình `schema.prisma`.
   - Cấu hình `prisma.config.ts`.
   - Kết nối MySQL thông qua `DATABASE_URL`.
   - Generate Prisma Client.
-- [ ] **TSK-DB-102**: Định nghĩa các bảng thực thể trong `schema.prisma` khớp hoàn toàn với Domain Model của hệ thống:
+- [x] **TSK-DB-102**: Định nghĩa các bảng thực thể trong `schema.prisma` khớp hoàn toàn với Domain Model của hệ thống:
   - Bảng `User` (id, email, passwordHash, role, isActive, emailVerified, failedLoginAttempts, lockedUntil, timestamps).
   - Bảng `StudentProfile` (userId, fullName, phone, address, university, major, graduationYear, defaultCvId, timestamps).
   - Bảng `EmployerProfile` (userId, companyName, companyDescription, website, address, logoUrl, verified, verifiedAt, verifiedBy, timestamps).
@@ -45,14 +45,14 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
   - Bảng `RefreshToken` (id, userId, tokenHash, expiresAt, revoked, createdAt).
   - Bảng `AuditLog` (id, actorId, action, entity, entityId, metadata, timestamp).
   - Bảng `Notification` (id, userId, type, title, message, data, isRead, createdAt).
-- [ ] **TSK-DB-103**: Khởi tạo migration đầu tiên bằng `prisma migrate dev --name init`, đồng bộ cấu trúc cơ sở dữ liệu MySQL và xác nhận toàn bộ bảng cùng quan hệ được tạo thành công.
-- [ ] **TSK-DB-104**: Thiết lập Prisma Client cho tầng Infrastructure. Tạo module `src/infrastructure/database/prisma.ts` quản lý một singleton `PrismaClient`, kiểm tra kết nối cơ sở dữ liệu và đảm bảo toàn bộ Repository sử dụng chung một Prisma Client. Không sử dụng Prisma Seed trong dự án.
+- [x] **TSK-DB-103**: Khởi tạo migration đầu tiên bằng `prisma migrate dev --name init`, đồng bộ cấu trúc cơ sở dữ liệu MySQL và xác nhận toàn bộ bảng cùng quan hệ được tạo thành công.
+- [x] **TSK-DB-104**: Thiết lập Prisma Client cho tầng Infrastructure. Tạo module `src/infrastructure/database/prisma.ts` quản lý một singleton `PrismaClient`, kiểm tra kết nối cơ sở dữ liệu và đảm bảo toàn bộ Repository sử dụng chung một Prisma Client. Không sử dụng Prisma Seed trong dự án.
 
 ### 2.3 Frontend Scaffolding
-- [ ] **TSK-FE-101**: Khởi tạo dự án React + Vite với TypeScript trong thư mục `source-code/frontend/`.
-- [ ] **TSK-FE-102**: Cài đặt và cấu hình Tailwind CSS cho việc thiết kế giao diện responsive.
-- [ ] **TSK-FE-103**: Cài đặt các thư viện thiết yếu: `react-router-dom` (routing), `@tanstack/react-query` (state management & caching), `axios` (HTTP client), `zod` + `react-hook-form` (validation), `socket.io-client` (real-time notification).
-- [ ] **TSK-FE-104**: Cấu hình cấu trúc thư mục Frontend theo mô hình Feature-based (`app/`, `features/`, `core/`, `styles/`).
+- [x] **TSK-FE-101**: Khởi tạo dự án React + Vite với TypeScript trong thư mục `source-code/frontend/`.
+- [x] **TSK-FE-102**: Cài đặt và cấu hình Tailwind CSS cho việc thiết kế giao diện responsive.
+- [x] **TSK-FE-103**: Cài đặt các thư viện thiết yếu: `react-router-dom` (routing), `@tanstack/react-query` (state management & caching), `axios` (HTTP client), `zod` + `react-hook-form` (validation), `socket.io-client` (real-time notification).
+- [x] **TSK-FE-104**: Cấu hình cấu trúc thư mục Frontend theo mô hình Feature-based (`app/`, `features/`, `core/`, `styles/`).
 
 ---
 
@@ -61,19 +61,19 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 Xây dựng các thành phần nền tảng dùng chung cho toàn bộ các module Backend để đảm bảo tính nhất quán (Consistent).
 
 ### 3.1 Security & Authentication Core
-- [ ] **TSK-INF-201**: Hiện thực lớp `BcryptPasswordHasher` mã hóa mật khẩu bằng BCrypt với cost factor = 12.
-- [ ] **TSK-INF-202**: Hiện thực lớp `JwtTokenProvider` chịu trách nhiệm tạo và kiểm tra tính hợp lệ của Access Token (15 phút) và Refresh Token (7 ngày).
-- [ ] **TSK-INF-203**: Thiết lập hệ thống kiểm soát quyền truy cập: `AuthGuard` (xác thực JWT) và `RolesGuard` (phân quyền dựa trên Role - RBAC).
+- [x] **TSK-INF-201**: Hiện thực lớp `BcryptPasswordHasher` mã hóa mật khẩu bằng BCrypt với cost factor = 12.
+- [x] **TSK-INF-202**: Hiện thực lớp `JwtTokenProvider` chịu trách nhiệm tạo và kiểm tra tính hợp lệ của Access Token (15 phút) và Refresh Token (7 ngày).
+- [x] **TSK-INF-203**: Thiết lập hệ thống kiểm soát quyền truy cập: `AuthGuard` (xác thực JWT) và `RolesGuard` (phân quyền dựa trên Role - RBAC).
 
 ### 3.2 Error Handling & Logging
-- [ ] **TSK-INF-204**: Hiện thực các lớp ngoại lệ nghiệp vụ (`BusinessException` và các lớp con: `ValidationException`, `AuthException`, `ForbiddenException`, `NotFoundException`, `ConflictException`).
-- [ ] **TSK-INF-205**: Viết Express error-handling middleware (`AllExceptionsFilter`) bắt mọi lỗi và chuẩn hóa cấu trúc JSON trả về client (chứa `success: false`, `error: { code, message, details }`, `meta: { timestamp, requestId }`).
-- [ ] **TSK-INF-206**: Thiết lập `Pino Logger` ghi log dạng cấu trúc JSON, tự động đính kèm `requestId` và ẩn các thông tin nhạy cảm (password, tokens).
+- [x] **TSK-INF-204**: Hiện thực các lớp ngoại lệ nghiệp vụ (`BusinessException` và các lớp con: `ValidationException`, `AuthException`, `ForbiddenException`, `NotFoundException`, `ConflictException`).
+- [x] **TSK-INF-205**: Viết Express error-handling middleware (`AllExceptionsFilter`) bắt mọi lỗi và chuẩn hóa cấu trúc JSON trả về client (chứa `success: false`, `error: { code, message, details }`, `meta: { timestamp, requestId }`).
+- [x] **TSK-INF-206**: Thiết lập `Pino Logger` ghi log dạng cấu trúc JSON, tự động đính kèm `requestId` và ẩn các thông tin nhạy cảm (password, tokens).
 
  ### 3.3 Utilities & Services adapters
-- [ ] **TSK-INF-207**: Thiết lập `LocalFileStorage` xử lý lưu trữ tệp tin tải lên (CV, Avatar) tại thư mục cục bộ `uploads/`, tích hợp sẵn giao diện `IFileStorage` để sẵn sàng chuyển đổi sang AWS S3 sau này.
-- [ ] **TSK-INF-208**: Hiện thực `EmailServiceAdapter` sử dụng Nodemailer hỗ trợ gửi các email giao dịch (Xác thực tài khoản, thay đổi trạng thái tuyển dụng, khôi phục mật khẩu).
- - [ ] **TSK-INF-209**: Thiết lập Socket.io server phục vụ đẩy thông báo thời gian thực (Real-time notifications) tới trình duyệt.
+- [x] **TSK-INF-207**: Thiết lập `LocalFileStorage` xử lý lưu trữ tệp tin tải lên (CV, Avatar) tại thư mục cục bộ `uploads/`, tích hợp sẵn giao diện `IFileStorage` để sẵn sàng chuyển đổi sang AWS S3 sau này.
+- [x] **TSK-INF-208**: Hiện thực `EmailServiceAdapter` sử dụng Nodemailer hỗ trợ gửi các email giao dịch (Xác thực tài khoản, thay đổi trạng thái tuyển dụng, khôi phục mật khẩu).
+ - [x] **TSK-INF-209**: Thiết lập Socket.io server phục vụ đẩy thông báo thời gian thực (Real-time notifications) tới trình duyệt.
 
 ### 3.4 Design Patterns Implementation
 

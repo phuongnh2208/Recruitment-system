@@ -1,0 +1,275 @@
+import jwt, { JwtPayload, SignOptions, VerifyErrors } from "jsonwebtoken";
+import { TokenProvider, TokenPayload } from "../../modules/auth/domain/token-provider";
+
+/**
+ * Default expiry durations used when environment variables are not set.
+ */
+const DEFAULT_ACCESS_EXPIRY = "15m";
+const DEFAULT_REFRESH_EXPIRY = "7d";
+
+/**
+ * Implementation of TokenProvider using the jsonwebtoken library.
+ *
+ * This class resides in the Infrastructure Layer and implements the
+ * TokenProvider interface defined in the Domain Layer, following the
+ * Dependency Inversion Principle.
+ *
+ * Token Policy:
+ * - Access Token: short-lived (default 15 minutes), used for API access.
+ * - Refresh Token: long-lived (default 7 days), used to obtain new Access Tokens.
+ * - Each token type uses a separate secret for security isolation.
+ *
+ * Configurations are read from environment variables:
+ * - JWT_ACCESS_SECRET  / JWT_REFRESH_SECRET  (secrets for signing)
+ * - JWT_ACCESS_EXPIRES_IN / JWT_REFRESH_EXPIRES_IN (expiry durations)
+ *
+ * TODO (TSK-INF-204): Replace generic Error throws with typed exceptions
+ * (e.g., AuthenticationException) once the exception hierarchy is implemented.
+ */
+export class JwtTokenProvider implements TokenProvider {
+  private readonly accessSecret: string;
+  private readonly refreshSecret: string;
+  private readonly accessExpiresIn: string;
+  private readonly refreshExpiresIn: string;
+
+  constructor() {
+    this.accessSecret = process.env.JWT_ACCESS_SECRET || "";
+    this.refreshSecret = process.env.JWT_REFRESH_SECRET || "";
+    this.accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || DEFAULT_ACCESS_EXPIRY;
+    this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || DEFAULT_REFRESH_EXPIRY;
+
+    if (!this.accessSecret) {
+      throw new Error("JWT_ACCESS_SECRET is not configured. Set it in environment variables.");
+    }
+    if (!this.refreshSecret) {
+      throw new Error("JWT_REFRESH_SECRET is not configured. Set it in environment variables.");
+    }
+  }
+
+  /**
+   * Generate a signed Access Token with the given payload.
+   * @param payload - The claims to embed in the token.
+   * @returns A signed JWT string.
+   * @throws {Error} If signing fails.
+   */
+  async generateAccessToken(payload: TokenPayload): Promise<string> {
+    return this.signToken(payload, this.accessSecret, {
+      expiresIn: this.accessExpiresIn as SignOptions["expiresIn"],
+    });
+  }
+
+  /**
+   * Generate a signed Refresh Token with the given payload.
+   * @param payload - The claims to embed in the token.
+   * @returns A signed JWT string.
+   * @throws {Error} If signing fails.
+   */
+  async generateRefreshToken(payload: TokenPayload): Promise<string> {
+    return this.signToken(payload, this.refreshSecret, {
+      expiresIn: this.refreshExpiresIn as SignOptions["expiresIn"],
+    });
+  }
+
+  /**
+   * Verify an Access Token and return its decoded payload.
+   * @param token - The JWT string to verify.
+   * @returns The decoded and verified payload.
+   * @throws {Error} If the token is expired, malformed, or has an invalid signature.
+   */
+  async verifyAccessToken(token: string): Promise<TokenPayload> {
+    return this.verifyToken(token, this.accessSecret, "Access");
+  }
+
+  /**
+   * Verify a Refresh Token and return its decoded payload.
+   * @param token - The JWT string to verify.
+   * @returns The decoded and verified payload.
+   * @throws {Error} If the token is expired, malformed, or has an invalid signature.
+   */
+  async verifyRefreshToken(token: string): Promise<TokenPayload> {
+    return this.verifyToken(token, this.refreshSecret, "Refresh");
+  }
+
+  /**
+   * Decode a JWT without verifying signature or expiry.
+   * @param token - The JWT string to decode.
+   * @returns The decoded payload (unverified).
+   * @throws {Error} If the token is malformed and cannot be decoded.
+   */
+  async decode(token: string): Promise<TokenPayload> {
+    return new Promise<TokenPayload>((resolve, reject) => {
+      try {
+        const decoded = jwt.decode(token);
+
+        if (!decoded || typeof decoded !== "object") {
+          reject(
+            new Error(
+              `Token decode failed: decoded value is not an object. Ensure the token is a valid JWT.`,
+            ),
+          );
+          return;
+        }
+
+        const payload = decoded as JwtPayload;
+        this.assertTokenPayload(payload);
+        resolve({
+          sub: payload.sub as string,
+          email: payload.email as string,
+          role: payload.role as string,
+        });
+      } catch (error) {
+        reject(
+          new Error(
+            `Token decode failed: ${error instanceof Error ? error.message : "Unknown error"}. Ensure the token is a valid JWT format.`,
+          ),
+        );
+      }
+    });
+  }
+
+  /**
+   * Internal helper to sign a JWT with the given secret and options.
+   * @param payload - The claims to embed.
+   * @param secret - The secret key used for signing.
+   * @param options - Additional signing options (e.g., expiresIn).
+   * @returns A signed JWT string.
+   * @throws {Error} If signing fails.
+   */
+  private signToken(payload: TokenPayload, secret: string, options: SignOptions): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      try {
+        jwt.sign(
+          {
+            sub: payload.sub,
+            email: payload.email,
+            role: payload.role,
+          },
+          secret,
+          { ...options, algorithm: "HS256" },
+          (error: Error | null, token: string | undefined) => {
+            if (error || !token) {
+              reject(
+                new Error(
+                  `Token generation failed: ${error?.message || "Unknown error"}. Verify that the secret and payload are valid.`,
+                ),
+              );
+              return;
+            }
+            resolve(token);
+          },
+        );
+      } catch (error) {
+        reject(
+          new Error(
+            `Token generation failed: ${error instanceof Error ? error.message : "Unknown error"}. Verify that the secret and payload are valid.`,
+          ),
+        );
+      }
+    });
+  }
+
+  /**
+   * Internal helper to verify a JWT and extract its payload.
+   * @param token - The JWT string to verify.
+   * @param secret - The secret key used for verification.
+   * @param tokenType - Human-readable token type for error messages ("Access" or "Refresh").
+   * @returns The decoded and verified payload.
+   * @throws {Error} If verification fails.
+   */
+  private verifyToken(token: string, secret: string, tokenType: string): Promise<TokenPayload> {
+    return new Promise<TokenPayload>((resolve, reject) => {
+      try {
+        jwt.verify(
+          token,
+          secret,
+          { algorithms: ["HS256"] },
+          (error: VerifyErrors | null, decoded: unknown) => {
+            if (error) {
+              reject(this.mapVerifyError(error, tokenType));
+              return;
+            }
+
+            if (!decoded || typeof decoded !== "object") {
+              reject(
+                new Error(
+                  `${tokenType} token verification failed: decoded value is not an object.`,
+                ),
+              );
+              return;
+            }
+
+            const payload = decoded as JwtPayload;
+            try {
+              this.assertTokenPayload(payload);
+              resolve({
+                sub: payload.sub as string,
+                email: payload.email as string,
+                role: payload.role as string,
+              });
+            } catch (assertError) {
+              reject(assertError);
+            }
+          },
+        );
+      } catch (error) {
+        reject(
+          new Error(
+            `${tokenType} token verification failed: ${error instanceof Error ? error.message : "Unknown error"}.`,
+          ),
+        );
+      }
+    });
+  }
+
+  /**
+   * Map jsonwebtoken errors to descriptive error messages.
+   *
+   * TODO (TSK-INF-204): Replace with proper typed exceptions (e.g.,
+   * AuthenticationException) once the common exception hierarchy is in place.
+   *
+   * @param error - The VerifyErrors object from jsonwebtoken.
+   * @param tokenType - "Access" or "Refresh" for the error message.
+   * @returns An Error with a descriptive message.
+   */
+  private mapVerifyError(error: VerifyErrors, tokenType: string): Error {
+    switch (error.name) {
+      case "TokenExpiredError": {
+        const expiredAt = (error as jwt.TokenExpiredError).expiredAt;
+        return new Error(
+          `${tokenType} token has expired${expiredAt ? ` at ${expiredAt.toISOString()}` : ""}. Please obtain a new token.`,
+        );
+      }
+      case "JsonWebTokenError":
+        return new Error(
+          `${tokenType} token is invalid: ${error.message}. Ensure the token was issued by this server and has not been tampered with.`,
+        );
+      case "NotBeforeError":
+        return new Error(
+          `${tokenType} token is not yet active: ${error.message}. The token cannot be used before its 'nbf' claim.`,
+        );
+      default:
+        return new Error(`${tokenType} token verification failed: ${error.message}.`);
+    }
+  }
+
+  /**
+   * Validate that a decoded JwtPayload contains the required claims
+   * and convert it to a TokenPayload.
+   *
+   * @param payload - The decoded JwtPayload to validate.
+   * @throws {Error} If required claims are missing or have invalid types.
+   */
+  private assertTokenPayload(
+    payload: JwtPayload,
+  ): asserts payload is Required<Pick<JwtPayload, "sub" | "email" | "role">> {
+    if (!payload.sub || typeof payload.sub !== "string") {
+      throw new Error("Token payload is invalid: missing or invalid 'sub' (userId) claim.");
+    }
+    if (!payload.email || typeof payload.email !== "string") {
+      throw new Error("Token payload is invalid: missing or invalid 'email' claim.");
+    }
+    if (!payload.role || typeof payload.role !== "string") {
+      throw new Error("Token payload is invalid: missing or invalid 'role' claim.");
+    }
+  }
+}
