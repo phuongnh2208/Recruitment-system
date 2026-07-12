@@ -77,14 +77,14 @@ Xây dựng các thành phần nền tảng dùng chung cho toàn bộ các modu
 
 ### 3.4 Design Patterns Implementation
 
-- [ ] TSK-INF-210 (Factory Pattern): Hiện thực các Factory class trong Domain Layer của từng module tương ứng:
-  - `UserFactory` (modules/auth/domain/): Tạo User với role hợp lệ, hash password, set isActive = false.
+- [x] TSK-INF-210A (UserFactory): Hiện thực UserFactory trong modules/auth/domain/ với validate role, hash password qua DI, set mặc định isActive = false.
+- [x] TSK-INF-210 (Factory Pattern): Hiện thực các Factory class còn lại trong Domain Layer của từng module tương ứng:
   - `StudentProfileFactory` (modules/student/domain/): Tạo StudentProfile gắn với userId, kiểm tra role = Student.
   - `EmployerProfileFactory` (modules/employer/domain/): Tạo EmployerProfile gắn với userId, set verified = false.
   - `JobPostingFactory` (modules/job/domain/): Tạo JobPosting với state khởi tạo = Draft, validate title <= 120 chars.
-  - `ApplicationFactory` (modules/application/domain/): Tạo Application với state = Applied, kiểm tra BR-01 và BR-02 trước khi khởi tạo.
+  - `ApplicationFactory` (modules/application/domain/): Tạo Application Entity với state = Applied, appliedAt, createdAt, updatedAt. Validate dữ liệu đầu vào (studentId, jobId, cvId). KHÔNG truy cập Repository/Database. BR-01 và BR-02 được kiểm tra trong ApplyJobUseCase (Application Layer) vì cần Repository để truy vấn dữ liệu tồn tại.
 
-- [ ] TSK-INF-211 (Strategy Pattern): Hiện thực các Strategy Interface tại Domain Layer và Implementation tại Infrastructure:
+- [x] TSK-INF-211 (Strategy Pattern): Hiện thực các Strategy Interface tại Domain Layer và Implementation tại Infrastructure:
   - `IFileStorageStrategy` + `LocalFileStorageStrategy` (MVP) + `S3FileStorageStrategy` (stub/placeholder cho future). UploadCVUseCase phụ thuộc vào IFileStorageStrategy, không phụ thuộc trực tiếp LocalFileStorageStrategy.
   - `INotificationStrategy` + `EmailNotificationStrategy` + `WebSocketNotificationStrategy` + `CompositeNotificationStrategy` (gửi cả hai).
   - `IPasswordHashStrategy` + `BcryptHashStrategy` (cost factor = 12, configurable qua .env).

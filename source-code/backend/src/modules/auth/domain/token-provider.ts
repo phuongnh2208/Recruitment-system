@@ -23,25 +23,82 @@ export interface TokenPayload {
 }
 
 /**
- * Interface for JWT token management.
+ * Strategy interface for token management.
  *
  * Defines the contract for generating, verifying, and decoding
- * Access and Refresh tokens. This interface belongs to the Domain Layer
- * so that Application / Use Case layers depend on an abstraction rather
- * than a concrete jsonwebtoken implementation.
+ * Access and Refresh tokens. This is the **Strategy** role in the
+ * **Strategy Pattern** — it defines the abstraction that all concrete
+ * token providers must implement.
  *
  * ═══════════════════════════════════════════════════════════════════
- * DEPENDENCY INVERSION
+ * STRATEGY PATTERN
  * ═══════════════════════════════════════════════════════════════════
  *
- * Use Cases MUST NOT instantiate JwtTokenProvider directly.
- * Instead, receive TokenProvider via constructor injection:
+ *   ┌─────────────────────────────────────────────────────┐
+ *   │  TokenProvider  (Strategy Interface)                │
+ *   │  ─ Domain Layer ─                                   │
+ *   │  Defines the contract (generate / verify / decode). │
+ *   └──────────────┬──────────────────────────────────────┘
+ *                   │ implements
+ *          ┌────────┴────────┐
+ *          ▼                 ▼
+ *   ┌──────────────┐  ┌──────────────┐
+ *   │JwtToken      │  │PasetoToken   │  ← future
+ *   │Provider      │  │Provider      │
+ *   │(Concrete     │  │(Concrete     │
+ *   │ Strategy)    │  │ Strategy)    │
+ *   └──────────────┘  └──────────────┘
  *
- *   constructor(private readonly tokenProvider: TokenProvider)
+ * The Application Layer (Use Cases, AuthGuard) depends ONLY on this
+ * interface — not on any concrete implementation.
  *
- * The concrete implementation (JwtTokenProvider) is instantiated
- * once at the Composition Root (e.g., app.module.ts or main.ts)
- * and injected into all Use Cases that need token services.
+ * ═══════════════════════════════════════════════════════════════════
+ * DEPENDENCY INVERSION (DIP)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * High-level modules (Use Cases, AuthGuard) MUST NOT depend on
+ * low-level modules (JwtTokenProvider). Both MUST depend on
+ * abstractions (TokenProvider).
+ *
+ * ✅ CORRECT — Dependency injection via constructor:
+ *
+ *   class LoginUseCase {
+ *     constructor(private readonly tokenProvider: TokenProvider) {}
+ *   }
+ *
+ * ❌ WRONG — Instantiating concrete implementation in Use Case:
+ *
+ *   class LoginUseCase {
+ *     private tokenProvider = new JwtTokenProvider();  // BAD
+ *   }
+ *
+ * The concrete implementation is instantiated ONLY at the
+ * Composition Root (e.g., main.ts or app.module.ts).
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * OPEN / CLOSED PRINCIPLE (OCP)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * The system is OPEN for extension but CLOSED for modification.
+ * New token strategy implementations can be added WITHOUT modifying
+ * existing consumers:
+ *
+ *   - PasetoTokenProvider   → PASETO-based tokens
+ *   - OAuthTokenProvider    → OAuth2 / OIDC integration
+ *   - OpaqueTokenProvider   → Server-side session tokens
+ *
+ * None of these require changes to LoginUseCase, RefreshTokenUseCase,
+ * or AuthGuard — they all depend solely on TokenProvider.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * LAYER BOUNDARY
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * This interface belongs to the Domain Layer so that:
+ * - Application / Use Case layers depend on an abstraction
+ * - The Infrastructure layer (JwtTokenProvider) implements it
+ * - Swapping JWT for another format requires zero changes above
+ *   the composition boundary
  *
  * ═══════════════════════════════════════════════════════════════════
  * FUTURE EXTENSIBILITY
@@ -76,6 +133,9 @@ export interface TokenPayload {
  *   }
  * }
  * ```
+ *
+ * @see JwtTokenProvider — The primary concrete strategy using jsonwebtoken.
+ * @see {@link https://refactoring.guru/design-patterns/strategy | Strategy Pattern}
  */
 export interface TokenProvider {
   /**

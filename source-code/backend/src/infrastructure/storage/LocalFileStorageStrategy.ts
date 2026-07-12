@@ -1,11 +1,14 @@
 /**
- * LocalFileStorage — Infrastructure Layer
+ * LocalFileStorageStrategy — Infrastructure Layer
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * PURPOSE
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Implements {@link IFileStorage} on the local filesystem.
+ * Implements {@link IFileStorageStrategy} on the local filesystem.
+ *
+ * This is a Strategy Pattern implementation that allows the storage backend
+ * to be swapped WITHOUT modifying any Use Case code.
  *
  * Files are stored under:
  *   {UPLOAD_ROOT}/cv/{studentId}/{uuid}.pdf   – CVs
@@ -13,6 +16,18 @@
  *
  * The root directory is read from the `UPLOAD_ROOT` environment variable
  * and defaults to `"uploads"` when not set.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * STRATEGY PATTERN
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * This class is ONE of many possible strategies:
+ *
+ *   - LocalFileStorageStrategy  (this file — local filesystem)
+ *   - S3FileStorageStrategy     (future — AWS S3 / MinIO)
+ *
+ * Use Cases depend only on {@link IFileStorageStrategy}, so switching
+ * between strategies requires ZERO changes to Use Case code.
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * VALIDATION
@@ -36,7 +51,7 @@
 import { mkdir, unlink, access, constants, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { IFileStorage, UploadResult } from "../../common/interfaces/IFileStorage";
+import { IFileStorageStrategy, UploadResult } from "../../common/interfaces/file-storage-strategy";
 import { InfrastructureException } from "../../common/exceptions";
 import { logger } from "../../common/logger";
 
@@ -71,20 +86,20 @@ function extractCategory(relativePath: string): string {
 // ── Class ─────────────────────────────────────────────────────────────────────
 
 /**
- * Local filesystem implementation of {@link IFileStorage}.
+ * Local filesystem implementation of {@link IFileStorageStrategy}.
  *
  * @example
- *   const storage = new LocalFileStorage();
+ *   const storage = new LocalFileStorageStrategy();
  *   const result = await storage.upload(buffer, "cv/abc-123/uuid.pdf");
  */
-export class LocalFileStorage implements IFileStorage {
+export class LocalFileStorageStrategy implements IFileStorageStrategy {
   /** Resolved absolute path to the upload root directory. */
   private readonly uploadRoot: string;
 
   constructor() {
     const envRoot = process.env.UPLOAD_ROOT?.trim();
     this.uploadRoot = path.resolve(envRoot || DEFAULT_UPLOAD_ROOT);
-    logger.info({ uploadRoot: this.uploadRoot }, "LocalFileStorage initialized");
+    logger.info({ uploadRoot: this.uploadRoot }, "LocalFileStorageStrategy initialized");
   }
 
   // ── upload ──────────────────────────────────────────────────────────────────

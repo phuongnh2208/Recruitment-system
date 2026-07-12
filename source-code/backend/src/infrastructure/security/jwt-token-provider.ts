@@ -8,20 +8,63 @@ const DEFAULT_ACCESS_EXPIRY = "15m";
 const DEFAULT_REFRESH_EXPIRY = "7d";
 
 /**
- * Implementation of TokenProvider using the jsonwebtoken library.
+ * Concrete Strategy — JWT implementation of TokenProvider.
  *
  * This class resides in the Infrastructure Layer and implements the
- * TokenProvider interface defined in the Domain Layer, following the
- * Dependency Inversion Principle.
+ * TokenProvider interface (Strategy Interface) defined in the Domain Layer.
+ * This follows the Dependency Inversion Principle: high-level modules
+ * depend on the abstraction (TokenProvider), not on this concrete class.
  *
- * Token Policy:
- * - Access Token: short-lived (default 15 minutes), used for API access.
- * - Refresh Token: long-lived (default 7 days), used to obtain new Access Tokens.
- * - Each token type uses a separate secret for security isolation.
+ * ═══════════════════════════════════════════════════════════════════
+ * STRATEGY PATTERN ROLE
+ * ═══════════════════════════════════════════════════════════════════
  *
- * Configurations are read from environment variables:
- * - JWT_ACCESS_SECRET  / JWT_REFRESH_SECRET  (secrets for signing)
- * - JWT_ACCESS_EXPIRES_IN / JWT_REFRESH_EXPIRES_IN (expiry durations)
+ *   ┌──────────────────────────────────────┐
+ *   │ TokenProvider  (Strategy Interface)  │ ← modules/auth/domain/
+ *   ├──────────────────────────────────────┤
+ *   │ JwtTokenProvider (Concrete Strategy) │ ← infrastructure/security/
+ *   └──────────────────────────────────────┘
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * TOKEN POLICY
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * - Access Token:  short-lived (default 15 minutes), used for API access.
+ * - Refresh Token: long-lived  (default 7 days),     used to obtain new
+ *   Access Tokens without re-authentication.
+ * - Each token type uses a separate secret for security isolation
+ *   (JWT_ACCESS_SECRET vs JWT_REFRESH_SECRET).
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * CONFIGURATION (All from Environment — NO hardcoded values)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * Required:
+ *   JWT_ACCESS_SECRET   — Secret key used to sign Access Tokens.
+ *   JWT_REFRESH_SECRET  — Secret key used to sign Refresh Tokens.
+ *
+ * Optional (with sensible defaults):
+ *   JWT_ACCESS_EXPIRES_IN   — Access Token expiry duration
+ *                             (default: "15m" — 15 minutes).
+ *   JWT_REFRESH_EXPIRES_IN  — Refresh Token expiry duration
+ *                             (default: "7d" — 7 days).
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * LAYER BOUNDARY
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * This class MUST NOT be referenced outside the Infrastructure Layer
+ * except at the Composition Root (main.ts). Use Cases and AuthGuard
+ * receive TokenProvider via constructor injection only.
+ *
+ *   ✅ Composition Root (main.ts):
+ *      const tokenProvider = new JwtTokenProvider();
+ *      const authGuard = createAuthGuard(tokenProvider);
+ *
+ *   ❌ Use Case:
+ *      private tokenProvider = new JwtTokenProvider();  // FORBIDDEN
+ *
+ * ═══════════════════════════════════════════════════════════════════
  *
  * TODO (TSK-INF-204): Replace generic Error throws with typed exceptions
  * (e.g., AuthenticationException) once the exception hierarchy is implemented.

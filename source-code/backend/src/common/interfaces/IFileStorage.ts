@@ -1,52 +1,27 @@
 /**
- * File Storage Interface
+ * File Storage Interface — DEPRECATED
  *
  * ═══════════════════════════════════════════════════════════════════════════════
- * PURPOSE
- * ═══════════════════════════════════════════════════════════════════════════════
+ * @deprecated Since TSK-INF-211A — Use {@link IFileStorageStrategy} instead.
  *
- * Defines the contract for file storage operations (upload, delete, check
- * existence, get public URL).
+ * This interface is kept for backward compatibility only.
+ * It will be removed in a future version.
  *
- * This interface sits in the Shared Kernel (`common/interfaces`) so that
- * Application Layer Use Cases can depend on it WITHOUT knowing whether the
- * underlying implementation is local disk, AWS S3, MinIO, or any other
- * storage backend.
+ * All new code MUST depend on {@link IFileStorageStrategy} from
+ * `./file-storage-strategy` to support the Strategy Pattern.
  *
- * ═══════════════════════════════════════════════════════════════════════════════
- * DEPENDENCY INVERSION
- * ═══════════════════════════════════════════════════════════════════════════════
- *
- *   UploadCVUseCase
- *        │  depends on
- *        ▼
- *   IFileStorage  ←──────┐
- *        │               │ implemented by
- *        ▼               │
- *   LocalFileStorage ─────┘
- *        │
- *        ▼
- *   (future) S3FileStorage
- *
- * ═══════════════════════════════════════════════════════════════════════════════
- * USAGE
- * ═══════════════════════════════════════════════════════════════════════════════
- *
- *   import { IFileStorage } from "../../common/interfaces/IFileStorage";
- *
- *   class UploadCVUseCase {
- *     constructor(private readonly storage: IFileStorage) {}
- *     async execute(input: UploadCVInput): Promise<CVMetadata> {
- *       const url = await this.storage.upload(input.buffer, `cv/${studentId}/${uuid}.pdf`);
- *       // ...
- *     }
- *   }
- *
+ * Migration:
+ *   import { IFileStorage } from "./IFileStorage";
+ *   → import { IFileStorageStrategy } from "./file-storage-strategy";
+ *   const storage: IFileStorage = new LocalFileStorage();
+ *   → const storage: IFileStorageStrategy = new LocalFileStorageStrategy();
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 /**
  * Result of a successful upload operation.
+ *
+ * @deprecated Use {@link import('./file-storage-strategy').UploadResult} instead.
  */
 export interface UploadResult {
   /** The absolute or relative path where the file was stored. */
@@ -58,50 +33,39 @@ export interface UploadResult {
 /**
  * File Storage interface — completely storage-backend agnostic.
  *
+ * @deprecated Since TSK-INF-211A — Use {@link IFileStorageStrategy} instead.
+ *             This interface will be removed in a future version.
+ *
  * Implementations:
- *   - {@link LocalFileStorage} (MVP — local filesystem)
- *   - S3FileStorage       (future — AWS S3 / MinIO)
+ *   - {@link LocalFileStorage} (removed) — use {@link LocalFileStorageStrategy}
+ *   - S3FileStorage (removed) — use {@link S3FileStorageStrategy}
  */
 export interface IFileStorage {
   /**
    * Upload a file (raw buffer) to the given path.
    *
-   * @param file   - The file content as a Buffer.
-   * @param path   - Destination path **relative** to the storage root
-   *                 (e.g. `cv/abc-123/uuid.pdf`).
-   *                 Must use forward slashes (`/`) regardless of host OS.
-   * @returns Metadata about the stored file.
-   * @throws {InfrastructureException} If the write fails.
+   * @deprecated Use {@link IFileStorageStrategy#upload} instead.
    */
   upload(file: Buffer, path: string): Promise<UploadResult>;
 
   /**
-   * Delete a file at the given absolute path (as returned by `upload`).
+   * Delete a file at the given absolute path.
    *
-   * @param path - Full path to the file to delete.
-   * @throws {InfrastructureException} If the delete fails or the file
-   *         does not exist (for consistency: callers should use `exists`
-   *         first if they need to distinguish "not found" from "error").
+   * @deprecated Use {@link IFileStorageStrategy#delete} instead.
    */
   delete(path: string): Promise<void>;
 
   /**
    * Check whether a file exists at the given path.
    *
-   * @param path - Full path to check.
-   * @returns `true` if a regular file exists at that path, `false` otherwise.
+   * @deprecated Use {@link IFileStorageStrategy#exists} instead.
    */
   exists(path: string): Promise<boolean>;
 
   /**
    * Get the publicly-accessible URL for a stored file.
    *
-   * For local storage this will be a relative serving path
-   * (e.g. `/uploads/cv/abc/uuid.pdf`).
-   * For S3 this would be a full HTTPS URL.
-   *
-   * @param path - The absolute path (as returned by `upload`).
-   * @returns The public URL string.
+   * @deprecated Use {@link IFileStorageStrategy#getPublicUrl} instead.
    */
   getPublicUrl(path: string): string;
 }
