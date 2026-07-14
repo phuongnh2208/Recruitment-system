@@ -20,6 +20,14 @@ export interface TokenPayload {
 
   /** Role assigned to the user (Student | Employer | Administrator). */
   role: string;
+
+  /**
+   * Optional purpose of the token. Existing code only uses this interface for
+   * access and refresh tokens, which implicitly have the purpose "ACCESS" or
+   * "REFRESH". Adding the field as optional preserves backward compatibility
+   * while allowing the RegisterUseCase to specify a verification token.
+   */
+  purpose?: "ACCESS" | "REFRESH" | "VERIFY_EMAIL";
 }
 
 /**

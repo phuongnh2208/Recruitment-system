@@ -98,15 +98,15 @@ Phát triển hệ thống theo cấu trúc Modular Monolith. Mỗi module sẽ 
 
 ### 4.1 Authentication Module (Xác thực tài khoản)
 * **Backend Development (Clean Architecture)**:
-  - [ ] **TSK-AUTH-101 (Domain)**: Định nghĩa thực thể `User`, `RefreshToken`, các Value Objects `Email`, `Password`, và interface `IUserRepository`, `IRefreshTokenRepository`.
-  - [ ] **TSK-AUTH-102 (Infrastructure)**: Hiện thực `PrismaUserRepository` và `PrismaRefreshTokenRepository` truy cập DB thông qua Prisma.
-  - [ ] **TSK-AUTH-103 (Application)**: Xây dựng các Use Case cốt lõi:
+  - [x] **TSK-AUTH-101 (Domain)**: Định nghĩa thực thể `User`, `RefreshToken`, các Value Objects `Email`, `Password`, và interface `IUserRepository`, `IRefreshTokenRepository`.
+  - [x] **TSK-AUTH-102 (Infrastructure)**: Hiện thực `PrismaUserRepository` và `PrismaRefreshTokenRepository` truy cập DB thông qua Prisma.
+  - [x] **TSK-AUTH-103 (Application)**: Xây dựng các Use Case cốt lõi:
     - `RegisterUseCase` (Đăng ký tài khoản mới, mã hóa mật khẩu, tạo token kích hoạt, phát sự kiện `UserRegistered`).
     - `LoginUseCase` (Đăng nhập bằng Email/Password, xử lý đếm số lần sai mật khẩu quá 5 lần sẽ khóa tạm thời 15 phút, trả về cặp token, phát sự kiện `UserLoggedIn`).
     - `LogoutUseCase` (Đăng xuất, thu hồi/vô hiệu hóa Refresh Token).
     - `ChangePasswordUseCase` (Đổi mật khẩu cho người dùng đã xác thực).
     - `VerifyEmailUseCase` (Kích hoạt tài khoản bằng liên kết/OTP gửi qua email).
-  - [ ] **TSK-AUTH-104 (Presentation)**: Thiết lập `AuthController` định nghĩa các routing, áp dụng validation DTOs bằng Zod schemas.
+  - [x] **TSK-AUTH-104 (Presentation)**: Thiết lập `AuthController` định nghĩa các routing, áp dụng validation DTOs bằng Zod schemas.
 * **Frontend Integration**:
   - [ ] **TSK-AUTH-201**: Phát triển trang Đăng ký (Register Form) với kiểm tra chính sách mật khẩu nghiêm ngặt (8-32 ký tự, ít nhất 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt).
   - [ ] **TSK-AUTH-202**: Phát triển trang Đăng nhập (Login Form) và lưu trữ Access Token trong bộ nhớ, Refresh Token tự động lưu HttpOnly Cookie. Xử lý hiển thị thông báo lỗi chi tiết khi sai tài khoản hoặc bị khóa.

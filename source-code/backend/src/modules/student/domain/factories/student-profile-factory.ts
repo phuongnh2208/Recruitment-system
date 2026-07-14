@@ -1,5 +1,5 @@
-import { StudentProfile } from "./student-profile";
-import { ValidationException } from "../../../common/exceptions/validation-exception";
+import { StudentProfile } from "../entities/student-profile";
+import { ValidationException } from "../../../../common/exceptions/validation-exception";
 
 /**
  * Input data required to create a new StudentProfile via StudentProfileFactory.

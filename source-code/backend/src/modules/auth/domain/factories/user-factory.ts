@@ -1,6 +1,6 @@
-import { User } from "./user";
-import { PasswordHasher } from "./password-hasher";
-import { ValidationException } from "../../../common/exceptions/validation-exception";
+import { User } from "../entities/user";
+import { PasswordHasher } from "../password-hasher";
+import { ValidationException } from "../../../../common/exceptions/validation-exception";
 
 /**
  * Input data required to create a new User via UserFactory.
