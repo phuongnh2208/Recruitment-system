@@ -114,19 +114,19 @@ Phát triển hệ thống theo cấu trúc Modular Monolith. Mỗi module sẽ 
 
 ### 4.2 Student Module (Phân hệ Sinh viên)
 * **Backend Development (Clean Architecture)**:
-  - [ ] **TSK-ST-101 (Domain)**: Định nghĩa thực thể `StudentProfile`, `CVMetadata`, và interface `IStudentRepository`, `ICVRepository`.
-  - [ ] **TSK-ST-102 (Infrastructure)**: Hiện thực `PrismaStudentRepository` hỗ trợ lưu thông tin cá nhân và quản lý danh sách tệp CV của sinh viên.
-  - [ ] **TSK-ST-103 (Application)**: Hiện thực các Use Case nghiệp vụ:
+  - [x] **TSK-ST-101 (Domain)**: Định nghĩa thực thể `StudentProfile`, `CVMetadata`, và interface `IStudentRepository`, `ICVRepository`.
+  - [x] **TSK-ST-102 (Infrastructure)**: Hiện thực `PrismaStudentRepository` hỗ trợ lưu thông tin cá nhân và quản lý danh sách tệp CV của sinh viên.
+  - [x] **TSK-ST-103 (Application)**: Hiện thực các Use Case nghiệp vụ:
     - `UpdateProfileUseCase` (Tạo hoặc cập nhật thông tin cá nhân, bắt buộc fullName, phone).
     - `UploadCVUseCase` (Tiếp nhận file PDF tối đa 5MB, lưu trữ tại thư mục `uploads/cv/{studentId}/`, lưu metadata vào DB).
     - `ManageCVListUseCase` (Liệt kê danh sách CV, xóa CV, thiết lập CV mặc định để ứng tuyển).
    - `GetApplicationHistoryUseCase` (Lấy lịch sử ứng tuyển kèm phân trang).
    - `GetJobDetailUseCase` (Lấy chi tiết 1 JobPosting theo id, chỉ trả về khi state = Approved. Phục vụ FR-ST-07).
-  - [ ] **TSK-ST-104 (Presentation)**: Tạo `StudentController` với các endpoint bảo vệ bằng `AuthGuard` và kiểm tra vai trò là `Student`.
+  - [x] **TSK-ST-104 (Presentation)**: Tạo `StudentController` với các endpoint bảo vệ bằng `AuthGuard` và kiểm tra vai trò là `Student`.
 * **Frontend Integration**:
-  - [ ] **TSK-FE-ST-201**: Thiết kế giao diện Quản lý hồ sơ cá nhân sinh viên (Họ tên, SĐT, Địa chỉ, Trường học, Chuyên ngành).
-  - [ ] **TSK-FE-ST-202**: Thiết kế giao diện Quản lý CV hỗ trợ kéo thả tệp PDF, hiển thị dung lượng, ngày tải lên, tích hợp nút "Đặt làm mặc định" và "Xóa".
-  - [ ] **TSK-FE-ST-203**: Thiết kế trang Lịch sử ứng tuyển, hiển thị trạng thái của từng hồ sơ (Applied -> Under Review -> Accepted/Rejected/Withdrawn) theo trục thời gian tuyến tính.
+  - [x] **TSK-FE-ST-201**: Thiết kế giao diện Quản lý hồ sơ cá nhân sinh viên (Họ tên, SĐT, Địa chỉ, Trường học, Chuyên ngành).
+  - [x] **TSK-FE-ST-202**: Thiết kế giao diện Quản lý CV hỗ trợ kéo thả tệp PDF, hiển thị dung lượng, ngày tải lên, tích hợp nút "Đặt làm mặc định" và "Xóa".
+  - [x] **TSK-FE-ST-203**: Thiết kế trang Lịch sử ứng tuyển, hiển thị trạng thái của từng hồ sơ (Applied -> Under Review -> Accepted/Rejected/Withdrawn) theo trục thời gian tuyến tính.
 
 ### 4.3 Employer Module (Phân hệ Nhà tuyển dụng)
 * **Backend Development (Clean Architecture)**:
