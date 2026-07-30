@@ -17,43 +17,99 @@
  *
  * Fields are private and only exposed via getters. State mutations
  * are performed exclusively through explicit business methods
- * (updateCompanyInfo, verify, changeLogo, etc.) which update
- * `updatedAt` automatically.
+ * (verify, unverify, updateCompanyName, updateDescription, updateWebsite,
+ * updateLogo, touch) which update `updatedAt` automatically.
  *
  * ═══════════════════════════════════════════════════════════════════
+ * CONSTRUCTION INVARIANTS
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * Validated in constructor:
+ * - companyName: must not be empty
+ * - userId: must not be empty
+ * - website: if provided, must be a valid URL
+ * - description: nullable
+ * - logoUrl: nullable
+ * - verified: defaults to false
+ * - createdAt: must not be null
+ * - updatedAt: must not be null
+ *
+ * Violation throws ValidationException.
+ *
+ * ═══════════════════════════════════════════════════════════════════
+ * BUSINESS METHODS
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * verify()       - Marks employer as verified. Throws ConflictException if already verified.
+ * unverify()     - Marks employer as not verified. Throws ConflictException if not verified.
+ * updateCompanyName(name) - Updates company name. Validates not empty.
+ * updateDescription(description) - Updates description (nullable).
+ * updateWebsite(url) - Updates website. Validates URL if provided.
+ * updateLogo(url) - Updates logo URL (nullable).
+ * touch()        - Updates updatedAt timestamp.
+ *
+ * No public setters. No new object returned.
  *
  * @category Domain Entity
  */
+import { ValidationException } from "../../../common/exceptions/validation-exception";
+import { ConflictException } from "../../../common/exceptions/conflict-exception";
+
 export class EmployerProfile {
   private _id: string | null;
   private _userId: string;
   private _companyName: string;
-  private _companyDescription: string | null;
+  private _description: string | null;
   private _website: string | null;
   private _logoUrl: string | null;
-  private _contactEmail: string | null;
-  private _contactPhone: string | null;
-  private _taxCode: string | null;
   private _verified: boolean;
   private _createdAt: Date;
   private _updatedAt: Date;
 
   constructor(props: EmployerProfileProps) {
+    // Construction Invariants
+    if (!props.userId || props.userId.trim() === "") {
+      throw new ValidationException("userId must not be empty");
+    }
+    if (!props.companyName || props.companyName.trim() === "") {
+      throw new ValidationException("companyName must not be empty");
+    }
+    if (props.website !== null && props.website !== undefined && props.website.trim() !== "") {
+      if (!this.isValidUrl(props.website)) {
+        throw new ValidationException("website must be a valid URL");
+      }
+    }
+    if (props.createdAt === null || props.createdAt === undefined) {
+      throw new ValidationException("createdAt must not be null");
+    }
+    if (props.updatedAt === null || props.updatedAt === undefined) {
+      throw new ValidationException("updatedAt must not be null");
+    }
+
     this._id = props.id;
     this._userId = props.userId;
     this._companyName = props.companyName;
-    this._companyDescription = props.companyDescription;
+    this._description = props.description;
     this._website = props.website;
     this._logoUrl = props.logoUrl;
-    this._contactEmail = props.contactEmail;
-    this._contactPhone = props.contactPhone;
-    this._taxCode = props.taxCode;
-    this._verified = props.verified;
+    this._verified = props.verified ?? false;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
   }
 
-  // ── Getters ──────────────────────────────────────────────────────
+  /**
+   * Validates if a string is a valid URL.
+   */
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // ── Getters ────────────────────────────────────────────────────────
 
   get id(): string | null {
     return this._id;
@@ -67,8 +123,8 @@ export class EmployerProfile {
     return this._companyName;
   }
 
-  get companyDescription(): string | null {
-    return this._companyDescription;
+  get description(): string | null {
+    return this._description;
   }
 
   get website(): string | null {
@@ -77,18 +133,6 @@ export class EmployerProfile {
 
   get logoUrl(): string | null {
     return this._logoUrl;
-  }
-
-  get contactEmail(): string | null {
-    return this._contactEmail;
-  }
-
-  get contactPhone(): string | null {
-    return this._contactPhone;
-  }
-
-  get taxCode(): string | null {
-    return this._taxCode;
   }
 
   get verified(): boolean {
@@ -103,73 +147,83 @@ export class EmployerProfile {
     return this._updatedAt;
   }
 
-  // ── Business methods ─────────────────────────────────────────────
+  // ── Business Methods ───────────────────────────────────────────────
 
   /**
-   * Update the company's core information.
-   *
-   * @param companyName        - The updated company name.
-   * @param companyDescription - The updated company description (nullable).
+   * Marks the employer profile as verified.
+   * @throws ConflictException if already verified.
    */
-  updateCompanyInfo(companyName: string, companyDescription?: string | null): void {
-    this._companyName = companyName;
-    if (companyDescription !== undefined) {
-      this._companyDescription = companyDescription;
-    }
-    this._updatedAt = new Date();
-  }
-
-  /**
-   * Update the contact information for the employer.
-   *
-   * @param contactEmail - The updated contact email (nullable).
-   * @param contactPhone - The updated contact phone (nullable).
-   */
-  updateContact(contactEmail: string | null, contactPhone: string | null): void {
-    this._contactEmail = contactEmail;
-    this._contactPhone = contactPhone;
-    this._updatedAt = new Date();
-  }
-
-  /** Mark this employer profile as verified. */
   verify(): void {
+    if (this._verified) {
+      throw new ConflictException("Employer profile is already verified");
+    }
     this._verified = true;
     this._updatedAt = new Date();
   }
 
-  /** Mark this employer profile as not verified. */
+  /**
+   * Marks the employer profile as not verified.
+   * @throws ConflictException if not verified.
+   */
   unverify(): void {
+    if (!this._verified) {
+      throw new ConflictException("Employer profile is not verified");
+    }
     this._verified = false;
     this._updatedAt = new Date();
   }
 
   /**
-   * Change the company logo.
-   *
-   * @param logoUrl - The URL of the new logo (nullable).
+   * Updates the company name.
+   * @param name - The new company name (must not be empty).
+   * @throws ValidationException if name is empty.
    */
-  changeLogo(logoUrl: string | null): void {
-    this._logoUrl = logoUrl;
+  updateCompanyName(name: string): void {
+    if (!name || name.trim() === "") {
+      throw new ValidationException("companyName must not be empty");
+    }
+    this._companyName = name;
     this._updatedAt = new Date();
   }
 
   /**
-   * Change the company website.
-   *
-   * @param website - The new website URL (nullable).
+   * Updates the company description.
+   * @param description - The new description (nullable).
    */
-  changeWebsite(website: string | null): void {
-    this._website = website;
+  updateDescription(description: string | null): void {
+    this._description = description;
     this._updatedAt = new Date();
   }
 
   /**
-   * Change the company description.
-   *
-   * @param description - The new company description (nullable).
+   * Updates the company website.
+   * @param url - The new website URL (nullable, but must be valid if provided).
+   * @throws ValidationException if URL is provided but invalid.
    */
-  changeDescription(description: string | null): void {
-    this._companyDescription = description;
+  updateWebsite(url: string | null): void {
+    if (url !== null && url !== undefined && url.trim() !== "") {
+      if (!this.isValidUrl(url)) {
+        throw new ValidationException("website must be a valid URL");
+      }
+    }
+    this._website = url;
+    this._updatedAt = new Date();
+  }
+
+  /**
+   * Updates the company logo URL.
+   * @param url - The new logo URL (nullable).
+   */
+  updateLogo(url: string | null): void {
+    this._logoUrl = url;
+    this._updatedAt = new Date();
+  }
+
+  /**
+   * Updates the updatedAt timestamp to now.
+   * Useful for tracking when the entity was last touched.
+   */
+  touch(): void {
     this._updatedAt = new Date();
   }
 }
@@ -186,12 +240,9 @@ export interface EmployerProfileProps {
   id: string | null;
   userId: string;
   companyName: string;
-  companyDescription: string | null;
+  description: string | null;
   website: string | null;
   logoUrl: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  taxCode: string | null;
   verified: boolean;
   createdAt: Date;
   updatedAt: Date;

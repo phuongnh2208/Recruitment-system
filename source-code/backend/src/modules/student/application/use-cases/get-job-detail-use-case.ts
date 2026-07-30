@@ -69,7 +69,7 @@
  * @category Application Use Case
  */
 
-import { JobPosting, JobPostingState } from "../../../../modules/job/domain/job-posting";
+import { JobPosting } from "../../../job/domain";
 import {
   ValidationException,
   NotFoundException,
@@ -165,7 +165,7 @@ export class GetJobDetailUseCase {
 
       // ── 5. Verify job is APPROVED (FR-ST-07) ───────────────────────
       // Throw NotFoundException to hide the existence of non-approved jobs
-      if (job.state !== JobPostingState.APPROVED) {
+      if (!job.state.isVisible()) {
         logger.warn(
           {
             jobId: command.jobId,

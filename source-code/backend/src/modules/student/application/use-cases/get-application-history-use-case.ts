@@ -59,7 +59,7 @@
  * @category Application Use Case
  */
 
-import { Application } from "../../../application/domain/application";
+import { Application } from "../../../application/domain/entities/application";
 import {
   ValidationException,
   BusinessException,

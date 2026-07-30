@@ -11,12 +11,15 @@
  *   - ❌ Business logic – parent component controls data
  */
 import type { ApplicationHistoryItem } from "../types/application-history.types";
+import WithdrawButton from "../../application/components/WithdrawButton";
 
 export interface ApplicationHistoryItemProps {
   /** Application data to display. */
   application: ApplicationHistoryItem;
   /** Whether this is the last item in the list (no connector line). */
   isLast?: boolean;
+  /** Callback when application is withdrawn successfully. */
+  onWithdrawSuccess?: () => void;
 }
 
 /** Status badge color mapping following design.md tokens. */
@@ -134,6 +137,7 @@ function formatDate(dateString: string): string {
 export default function ApplicationHistoryItem({
   application,
   isLast = false,
+  onWithdrawSuccess,
 }: ApplicationHistoryItemProps) {
   return (
     <div className="relative flex gap-4">
@@ -210,6 +214,20 @@ export default function ApplicationHistoryItem({
               Mã đơn: {application.id}
             </span>
           </div>
+
+          {/* Withdraw button - only show for APPLIED or UNDER_REVIEW */}
+          {(application.status === "Applied" ||
+            application.status === "Under Review") && (
+            <div className="mt-4 flex justify-end">
+              <WithdrawButton
+                applicationId={application.id}
+                applicationState={
+                  application.status === "Applied" ? "APPLIED" : "UNDER_REVIEW"
+                }
+                onWithdrawSuccess={onWithdrawSuccess}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

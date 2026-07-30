@@ -1,10 +1,10 @@
 # Architecture Document
 
 **Project:** TrustHire – Student Recruitment Support System  
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Draft  
 **Methodology:** Specification-Driven Development (SDD)  
-**Last Updated:** 2026-06-29
+**Last Updated:** 2026-07-20
 
 ---
 
@@ -30,27 +30,27 @@ Xây dựng một hệ thống tuyển dụng sinh viên **TrustHire** với ki�
 
 ## 1.3 Nguyên tắc thiết kế
 
-| Nguyên tắc | Mô tả |
-|------------|-------|
-| **Separation of Concerns** | Mỗi tầng chỉ lo một trách nhiệm duy nhất |
-| **Dependency Inversion** | Tầng cao (Domain/Application) không phụ thuộc tầng thấp (Infrastructure) |
-| **Low Coupling** | Module giao tiếp qua Interface/Event, không chia sẻ implementation |
-| **High Cohesion** | Các chức năng liên quan gom chung trong một module |
-| **Single Responsibility** | Mỗi class/module chỉ có một lý do để thay đổi |
-| **Open/Closed** | Mở rộng bằng cách thêm mới, không sửa code hiện có |
-| **Interface Segregation** | Interface nhỏ, chuyên biệt thay vì interface lớn |
-| **AI Ready** | AI modules giao tiếp qua Adapter/Interface, không can thiệp Domain core |
+| Nguyên tắc                 | Mô tả                                                                    |
+| -------------------------- | ------------------------------------------------------------------------ |
+| **Separation of Concerns** | Mỗi tầng chỉ lo một trách nhiệm duy nhất                                 |
+| **Dependency Inversion**   | Tầng cao (Domain/Application) không phụ thuộc tầng thấp (Infrastructure) |
+| **Low Coupling**           | Module giao tiếp qua Interface/Event, không chia sẻ implementation       |
+| **High Cohesion**          | Các chức năng liên quan gom chung trong một module                       |
+| **Single Responsibility**  | Mỗi class/module chỉ có một lý do để thay đổi                            |
+| **Open/Closed**            | Mở rộng bằng cách thêm mới, không sửa code hiện có                       |
+| **Interface Segregation**  | Interface nhỏ, chuyên biệt thay vì interface lớn                         |
+| **AI Ready**               | AI modules giao tiếp qua Adapter/Interface, không can thiệp Domain core  |
 
 ## 1.4 Các tiêu chí đánh giá
 
-| Tiêu chí | Mục tiêu |
-|----------|----------|
-| **Performance** | API response < 3s, Search < 2s, Pagination hỗ trợ large dataset |
-| **Security** | OWASP Top 10 mitigated, JWT + RBAC, BCrypt, Audit Log immutable |
+| Tiêu chí            | Mục tiêu                                                             |
+| ------------------- | -------------------------------------------------------------------- |
+| **Performance**     | API response < 3s, Search < 2s, Pagination hỗ trợ large dataset      |
+| **Security**        | OWASP Top 10 mitigated, JWT + RBAC, BCrypt, Audit Log immutable      |
 | **Maintainability** | Clean Architecture, Repository Pattern, DI, Unit test coverage > 80% |
-| **Extensibility** | Module mới thêm vào không sửa core, AI integration via Adapter |
-| **Reliability** | Data consistency, Backup/Recovery, Error handling, Logging |
-| **Usability** | Responsive UI, Vietnamese language, Clear error messages |
+| **Extensibility**   | Module mới thêm vào không sửa core, AI integration via Adapter       |
+| **Reliability**     | Data consistency, Backup/Recovery, Error handling, Logging           |
+| **Usability**       | Responsive UI, Vietnamese language, Clear error messages             |
 
 ---
 
@@ -137,24 +137,24 @@ flowchart TB
 
 ## 2.2 Giải thích vai trò từng thành phần
 
-| Thành phần | Vai trò |
-|------------|---------|
-| **Browser / React + Vite** | Single Page Application, giao tiếp với backend qua REST API |
-| **Nginx / Cloudflare** | Reverse proxy, SSL termination, rate limiting, static file serving, compression |
-| **Express.js Server** | HTTP server, middleware pipeline, routing, error handling |
-| **Presentation Layer (Controllers)** | Nhận HTTP request, validate input DTO, gọi Use Case, trả về HTTP response |
-| **Application Layer (Use Cases)** | Chứa business logic orchestration, điều phối Domain objects, gọi Repository, phát Domain Events |
-| **Domain Layer** | Chứa Entities, Value Objects, Domain Services, Repository Interfaces, Domain Events, Business Rules – **không phụ thuộc framework** |
-| **Infrastructure Layer** | Implementations: Prisma Repository, JWT, BCrypt, File Storage, Email, Logger, Scheduler, AI Adapters |
-| **Prisma ORM** | Type-safe database access, migrations, query builder |
-| **MySQL Database** | Persistent storage, ACID transactions |
-| **JWT Provider** | Access/Refresh token generation, validation, revocation |
-| **BCrypt Hasher** | Password hashing với cost factor configurable |
-| **Multer / File Storage** | Multipart file upload, local storage, chuẩn bị S3 adapter |
-| **Email Service** | Transactional email (SMTP/SendGrid), template, retry |
-| **Logger (Pino)** | Structured JSON logging, log levels, correlation ID |
-| **Cron Scheduler** | Scheduled jobs (job expiry, cleanup, reports) |
-| **AI Service Adapters** | Interface implementations cho AI services (future microservices) |
+| Thành phần                           | Vai trò                                                                                                                             |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Browser / React + Vite**           | Single Page Application, giao tiếp với backend qua REST API                                                                         |
+| **Nginx / Cloudflare**               | Reverse proxy, SSL termination, rate limiting, static file serving, compression                                                     |
+| **Express.js Server**                | HTTP server, middleware pipeline, routing, error handling                                                                           |
+| **Presentation Layer (Controllers)** | Nhận HTTP request, validate input DTO, gọi Use Case, trả về HTTP response                                                           |
+| **Application Layer (Use Cases)**    | Chứa business logic orchestration, điều phối Domain objects, gọi Repository, phát Domain Events                                     |
+| **Domain Layer**                     | Chứa Entities, Value Objects, Domain Services, Repository Interfaces, Domain Events, Business Rules – **không phụ thuộc framework** |
+| **Infrastructure Layer**             | Implementations: Prisma Repository, JWT, BCrypt, File Storage, Email, Logger, Scheduler, AI Adapters                                |
+| **Prisma ORM**                       | Type-safe database access, migrations, query builder                                                                                |
+| **MySQL Database**                   | Persistent storage, ACID transactions                                                                                               |
+| **JWT Provider**                     | Access/Refresh token generation, validation, revocation                                                                             |
+| **BCrypt Hasher**                    | Password hashing với cost factor configurable                                                                                       |
+| **Multer / File Storage**            | Multipart file upload, local storage, chuẩn bị S3 adapter                                                                           |
+| **Email Service**                    | Transactional email (SMTP/SendGrid), template, retry                                                                                |
+| **Logger (Pino)**                    | Structured JSON logging, log levels, correlation ID                                                                                 |
+| **Cron Scheduler**                   | Scheduled jobs (job expiry, cleanup, reports)                                                                                       |
+| **AI Service Adapters**              | Interface implementations cho AI services (future microservices)                                                                    |
 
 ---
 
@@ -162,51 +162,51 @@ flowchart TB
 
 ## 3.1 Frontend
 
-| Technology | Lý do lựa chọn |
-|------------|----------------|
-| **React 18+** | Component-based, large ecosystem, concurrent features, TypeScript support |
-| **Vite** | Fast dev server (ESM), instant HMR, optimized production build, plugin ecosystem |
-| **TypeScript** | Type safety, better DX, refactoring confidence, catches bugs at compile time |
-| **React Router v6** | Declarative routing, nested routes, data loading APIs |
-| **TanStack Query (React Query)** | Server state management, caching, deduplication, pagination, optimistic updates |
-| **Zod + React Hook Form** | Schema validation, type inference, performant form handling |
-| **Tailwind CSS** | Utility-first, responsive design, dark mode, small bundle, customizable |
-| **Axios** | HTTP client với interceptors, request/response transformation, error handling |
-| **Socket.io Client** | Real-time notifications (WebSocket) |
+| Technology                       | Lý do lựa chọn                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------- |
+| **React 18+**                    | Component-based, large ecosystem, concurrent features, TypeScript support        |
+| **Vite**                         | Fast dev server (ESM), instant HMR, optimized production build, plugin ecosystem |
+| **TypeScript**                   | Type safety, better DX, refactoring confidence, catches bugs at compile time     |
+| **React Router v6**              | Declarative routing, nested routes, data loading APIs                            |
+| **TanStack Query (React Query)** | Server state management, caching, deduplication, pagination, optimistic updates  |
+| **Zod + React Hook Form**        | Schema validation, type inference, performant form handling                      |
+| **Tailwind CSS**                 | Utility-first, responsive design, dark mode, small bundle, customizable          |
+| **Axios**                        | HTTP client với interceptors, request/response transformation, error handling    |
+| **Socket.io Client**             | Real-time notifications (WebSocket)                                              |
 
 ## 3.2 Backend
 
-| Technology | Lý do lựa chọn |
-|------------|----------------|
-| **Node.js 20+ (LTS)** | JavaScript runtime, non-blocking I/O, large ecosystem, TypeScript native support |
-| **Express.js** | Minimalist, flexible, middleware ecosystem, mature, easy to customize |
-| **TypeScript** | Type safety across stack, shared types with frontend, better maintainability |
-| **Prisma ORM** | Type-safe database access, auto-generated types, migrations, relation handling, DX |
-| **MySQL 8+** | ACID compliance, JSON support, CTE, window functions, mature, cost-effective |
-| **JWT (jsonwebtoken)** | Stateless auth, scalable, industry standard, access + refresh token pattern |
-| **BCrypt (bcryptjs)** | Adaptive hashing, configurable cost, battle-tested, timing attack resistant |
-| **Multer** | Multipart/form-data handling, file size/type limits, disk/memory storage |
-| **Zod** | Runtime validation, TypeScript inference, composable schemas |
-| **Pino** | Fast structured JSON logging, child loggers, redaction, pretty print dev mode |
-| **Helmet** | Security headers (CSP, HSTS, X-Frame-Options, etc.) |
-| **CORS (cors)** | Configurable Cross-Origin Resource Sharing |
-| **express-rate-limit** | Rate limiting middleware, Redis store support for scaling |
-| **class-validator / class-transformer** | Decorator-based DTO validation (optional, Zod preferred) |
-| **node-cron** | Scheduled jobs (job expiry, cleanup, reports) |
-| **Socket.io** | Real-time WebSocket communication for notifications |
+| Technology                              | Lý do lựa chọn                                                                     |
+| --------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Node.js 20+ (LTS)**                   | JavaScript runtime, non-blocking I/O, large ecosystem, TypeScript native support   |
+| **Express.js**                          | Minimalist, flexible, middleware ecosystem, mature, easy to customize              |
+| **TypeScript**                          | Type safety across stack, shared types with frontend, better maintainability       |
+| **Prisma ORM**                          | Type-safe database access, auto-generated types, migrations, relation handling, DX |
+| **MySQL 8+**                            | ACID compliance, JSON support, CTE, window functions, mature, cost-effective       |
+| **JWT (jsonwebtoken)**                  | Stateless auth, scalable, industry standard, access + refresh token pattern        |
+| **BCrypt (bcryptjs)**                   | Adaptive hashing, configurable cost, battle-tested, timing attack resistant        |
+| **Multer**                              | Multipart/form-data handling, file size/type limits, disk/memory storage           |
+| **Zod**                                 | Runtime validation, TypeScript inference, composable schemas                       |
+| **Pino**                                | Fast structured JSON logging, child loggers, redaction, pretty print dev mode      |
+| **Helmet**                              | Security headers (CSP, HSTS, X-Frame-Options, etc.)                                |
+| **CORS (cors)**                         | Configurable Cross-Origin Resource Sharing                                         |
+| **express-rate-limit**                  | Rate limiting middleware, Redis store support for scaling                          |
+| **class-validator / class-transformer** | Decorator-based DTO validation (optional, Zod preferred)                           |
+| **node-cron**                           | Scheduled jobs (job expiry, cleanup, reports)                                      |
+| **Socket.io**                           | Real-time WebSocket communication for notifications                                |
 
 ## 3.3 Infrastructure & DevOps
 
-| Technology | Lý do lựa chọn |
-|------------|----------------|
-| **Docker / Docker Compose** | Containerization, consistent environments, easy deployment |
-| **GitHub Actions** | CI/CD pipeline, lint, test, build, deploy |
-| **GitHub Spec Kit** | Specification-driven development, AI-assisted spec generation |
-| **Cline** | AI coding agent for implementation |
-| **OpenRouter** | LLM API gateway for AI features |
-| **ESLint + Prettier** | Code quality, consistent formatting |
-| **Jest + Supertest** | Unit & integration testing |
-| **Husky + lint-staged** | Pre-commit hooks |
+| Technology                  | Lý do lựa chọn                                                |
+| --------------------------- | ------------------------------------------------------------- |
+| **Docker / Docker Compose** | Containerization, consistent environments, easy deployment    |
+| **GitHub Actions**          | CI/CD pipeline, lint, test, build, deploy                     |
+| **GitHub Spec Kit**         | Specification-driven development, AI-assisted spec generation |
+| **Cline**                   | AI coding agent for implementation                            |
+| **OpenRouter**              | LLM API gateway for AI features                               |
+| **ESLint + Prettier**       | Code quality, consistent formatting                           |
+| **Jest + Supertest**        | Unit & integration testing                                    |
+| **Husky + lint-staged**     | Pre-commit hooks                                              |
 
 ---
 
@@ -245,22 +245,22 @@ flowchart TB
 
 ## 4.2 SOLID Principles
 
-| Principle | Application |
-|-----------|-------------|
+| Principle                 | Application                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | **S**ingle Responsibility | Mỗi class/module một trách nhiệm: Controller chỉ handle HTTP, Use Case chỉ orchestrate, Repository chỉ data access |
-| **O**pen/Closed | Mở rộng bằng Interface/Adapter: thêm AI provider mới không sửa Use Case, thêm storage backend không sửa Domain |
-| **L**iskov Substitution | Repository implementations thay thế lẫn nhau được, AI Adapters implement common interface |
-| **I**nterface Segregation | `IUserRepository`, `IJobRepository`, `IResumeAnalyzer` – nhỏ, chuyên biệt |
-| **D**ependency Inversion | Use Case depend trên `IUserRepository` (Domain), không depend `PrismaUserRepository` (Infrastructure) |
+| **O**pen/Closed           | Mở rộng bằng Interface/Adapter: thêm AI provider mới không sửa Use Case, thêm storage backend không sửa Domain     |
+| **L**iskov Substitution   | Repository implementations thay thế lẫn nhau được, AI Adapters implement common interface                          |
+| **I**nterface Segregation | `IUserRepository`, `IJobRepository`, `IResumeAnalyzer` – nhỏ, chuyên biệt                                          |
+| **D**ependency Inversion  | Use Case depend trên `IUserRepository` (Domain), không depend `PrismaUserRepository` (Infrastructure)              |
 
 ## 4.3 Separation of Concerns
 
-| Layer | Concern |
-|-------|---------|
-| **Presentation** | HTTP protocol, serialization, validation, auth middleware |
-| **Application** | Use case orchestration, transaction boundary, authorization check, event publishing |
-| **Domain** | Business logic, invariants, rules, state transitions, domain events |
-| **Infrastructure** | Database, external APIs, file system, email, scheduling, logging |
+| Layer              | Concern                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| **Presentation**   | HTTP protocol, serialization, validation, auth middleware                           |
+| **Application**    | Use case orchestration, transaction boundary, authorization check, event publishing |
+| **Domain**         | Business logic, invariants, rules, state transitions, domain events                 |
+| **Infrastructure** | Database, external APIs, file system, email, scheduling, logging                    |
 
 ## 4.4 Dependency Inversion
 
@@ -308,13 +308,13 @@ class UpdateProfileUseCase {
 
 Factory Pattern được áp dụng để tạo các đối tượng domain phức tạp, đảm bảo Business Rules được thực thi ngay tại điểm khởi tạo và tách logic tạo đối tượng khỏi Use Case.
 
-| Factory | Vị trí | Mục đích |
-|---------|--------|----------|
-| `UserFactory` | `modules/auth/domain/` | Tạo `User` với role hợp lệ, hash password, set `isActive = false` |
-| `StudentProfileFactory` | `modules/student/domain/` | Tạo `StudentProfile` gắn với `userId`, kiểm tra role = Student |
-| `EmployerProfileFactory` | `modules/employer/domain/` | Tạo `EmployerProfile` gắn với `userId`, set `verified = false` |
-| `JobPostingFactory` | `modules/job/domain/` | Tạo `JobPosting` với state khởi tạo = `Draft`, validate title/description |
-| `ApplicationFactory` | `modules/application/domain/` | Tạo `Application` với state = `Applied`, kiểm tra BR-01 (ứng tuyển 1 lần) và BR-02 (tài khoản active) |
+| Factory                  | Vị trí                        | Mục đích                                                                                              |
+| ------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `UserFactory`            | `modules/auth/domain/`        | Tạo `User` với role hợp lệ, hash password, set `isActive = false`                                     |
+| `StudentProfileFactory`  | `modules/student/domain/`     | Tạo `StudentProfile` gắn với `userId`, kiểm tra role = Student                                        |
+| `EmployerProfileFactory` | `modules/employer/domain/`    | Tạo `EmployerProfile` gắn với `userId`, set `verified = false`                                        |
+| `JobPostingFactory`      | `modules/job/domain/`         | Tạo `JobPosting` với state khởi tạo = `Draft`, validate title/description                             |
+| `ApplicationFactory`     | `modules/application/domain/` | Tạo `Application` với state = `Applied`, kiểm tra BR-01 (ứng tuyển 1 lần) và BR-02 (tài khoản active) |
 
 ```typescript
 // Ví dụ: ApplicationFactory trong Domain Layer
@@ -344,12 +344,12 @@ class ApplicationFactory {
 
 Strategy Pattern được áp dụng cho các hành vi có thể thay đổi implementation mà không ảnh hưởng Use Case. Interface định nghĩa tại Domain Layer, implementation tại Infrastructure Layer.
 
-| Interface | Implementations | Mục đích |
-|-----------|----------------|----------|
-| `IFileStorageStrategy` | `LocalFileStorageStrategy` (MVP), `S3FileStorageStrategy` (future) | Lưu trữ CV, Avatar — dễ chuyển đổi sang S3/MinIO |
-| `INotificationStrategy` | `EmailNotificationStrategy`, `WebSocketNotificationStrategy`, `CompositeNotificationStrategy` | Gửi thông báo qua email, WebSocket hoặc cả hai |
-| `IPasswordHashStrategy` | `BcryptHashStrategy` | Mã hóa mật khẩu, cost factor configurable |
-| `ITokenStrategy` | `JwtAccessTokenStrategy`, `JwtRefreshTokenStrategy` | Tạo và xác thực JWT với cấu hình khác nhau |
+| Interface               | Implementations                                                                               | Mục đích                                         |
+| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `IFileStorageStrategy`  | `LocalFileStorageStrategy` (MVP), `S3FileStorageStrategy` (future)                            | Lưu trữ CV, Avatar — dễ chuyển đổi sang S3/MinIO |
+| `INotificationStrategy` | `EmailNotificationStrategy`, `WebSocketNotificationStrategy`, `CompositeNotificationStrategy` | Gửi thông báo qua email, WebSocket hoặc cả hai   |
+| `IPasswordHashStrategy` | `BcryptHashStrategy`                                                                          | Mã hóa mật khẩu, cost factor configurable        |
+| `ITokenStrategy`        | `JwtAccessTokenStrategy`, `JwtRefreshTokenStrategy`                                           | Tạo và xác thực JWT với cấu hình khác nhau       |
 
 ```typescript
 // Ví dụ: IFileStorageStrategy trong Domain Layer
@@ -396,14 +396,14 @@ class UploadCVUseCase {
 - Rate limiting, CORS, Security headers
 
 ### Thành phần
-| Component | Trách nhiệm |
-|-----------|-------------|
-| **Controllers** | Route handlers, gọi Use Case, map response |
-| **DTOs (Request/Response)** | Data transfer objects với validation schemas |
-| **Guards** | JWT Auth Guard, RBAC Guard, Rate Limit Guard |
-| **Pipes** | Validation Pipe (Zod), Transform Pipe |
-| **Filters** | Global Exception Filter, HTTP Exception Filter |
-| **Interceptors** | Logging Interceptor, Transform Interceptor, Cache Interceptor |
+| Component                   | Trách nhiệm                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| **Controllers**             | Route handlers, gọi Use Case, map response                    |
+| **DTOs (Request/Response)** | Data transfer objects với validation schemas                  |
+| **Guards**                  | JWT Auth Guard, RBAC Guard, Rate Limit Guard                  |
+| **Pipes**                   | Validation Pipe (Zod), Transform Pipe                         |
+| **Filters**                 | Global Exception Filter, HTTP Exception Filter                |
+| **Interceptors**            | Logging Interceptor, Transform Interceptor, Cache Interceptor |
 
 ### Luồng xử lý
 ```
@@ -442,16 +442,16 @@ HTTP Response
 ### Use Cases
 Mỗi Use Case = một business operation đơn lẻ (Single Responsibility).
 
-| Module | Use Cases (Ví dụ) |
-|--------|-------------------|
-| **Auth** | `RegisterUseCase`, `LoginUseCase`, `LogoutUseCase`, `RefreshTokenUseCase`, `ChangePasswordUseCase`, `VerifyEmailUseCase`, `RequestPasswordResetUseCase`, `ResetPasswordUseCase` |
-| **Student** | `UpdateProfileUseCase`, `UploadCVUseCase`, `DeleteCVUseCase`, `SetDefaultCVUseCase`, `SearchJobsUseCase`, `GetJobDetailsUseCase`, `ApplyJobUseCase`, `WithdrawApplicationUseCase`, `GetApplicationHistoryUseCase`, `GetApplicationStatusUseCase` |
-| **Employer** | `UpdateCompanyProfileUseCase`, `CreateJobPostingUseCase`, `UpdateJobPostingUseCase`, `CloseJobPostingUseCase`, `ReopenJobPostingUseCase`, `GetMyJobPostingsUseCase`, `GetJobApplicantsUseCase`, `GetApplicantDetailsUseCase`, `UpdateApplicationStatusUseCase`, `GenerateRecruitmentReportUseCase` |
-| **Job (Public)** | `SearchJobsUseCase`, `GetJobDetailsUseCase`, `FilterJobsUseCase` |
-| **Application** | `SubmitApplicationUseCase`, `UpdateApplicationStatusUseCase`, `WithdrawApplicationUseCase`, `GetApplicationHistoryUseCase` |
-| **Admin** | `VerifyEmployerUseCase`, `ApproveJobPostingUseCase`, `RejectJobPostingUseCase`, `ManageUserAccountUseCase`, `GetDashboardStatsUseCase`, `ExportAuditLogsUseCase`, `ManageCategoriesUseCase` |
-| **Notification** | `SendNotificationUseCase`, `GetUserNotificationsUseCase`, `MarkAsReadUseCase` |
-| **Audit** | `GetAuditLogsUseCase`, `ExportAuditLogsUseCase` |
+| Module           | Use Cases (Ví dụ)                                                                                                                                                                                                                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**         | `RegisterUseCase`, `LoginUseCase`, `LogoutUseCase`, `RefreshTokenUseCase`, `ChangePasswordUseCase`, `VerifyEmailUseCase`, `RequestPasswordResetUseCase`, `ResetPasswordUseCase`                                                                                                                    |
+| **Student**      | `UpdateProfileUseCase`, `UploadCVUseCase`, `DeleteCVUseCase`, `SetDefaultCVUseCase`, `SearchJobsUseCase`, `GetJobDetailsUseCase`, `ApplyJobUseCase`, `WithdrawApplicationUseCase`, `GetApplicationHistoryUseCase`, `GetApplicationStatusUseCase`                                                   |
+| **Employer**     | `UpdateCompanyProfileUseCase`, `CreateJobPostingUseCase`, `UpdateJobPostingUseCase`, `CloseJobPostingUseCase`, `ReopenJobPostingUseCase`, `GetMyJobPostingsUseCase`, `GetJobApplicantsUseCase`, `GetApplicantDetailsUseCase`, `UpdateApplicationStatusUseCase`, `GenerateRecruitmentReportUseCase` |
+| **Job (Public)** | `SearchJobsUseCase`, `GetJobDetailsUseCase`, `FilterJobsUseCase`                                                                                                                                                                                                                                   |
+| **Application**  | `SubmitApplicationUseCase`, `UpdateApplicationStatusUseCase`, `WithdrawApplicationUseCase`, `GetApplicationHistoryUseCase`                                                                                                                                                                         |
+| **Admin**        | `VerifyEmployerUseCase`, `ApproveJobPostingUseCase`, `RejectJobPostingUseCase`, `ManageUserAccountUseCase`, `GetDashboardStatsUseCase`, `ExportAuditLogsUseCase`, `ManageCategoriesUseCase`                                                                                                        |
+| **Notification** | `SendNotificationUseCase`, `GetUserNotificationsUseCase`, `MarkAsReadUseCase`                                                                                                                                                                                                                      |
+| **Audit**        | `GetAuditLogsUseCase`, `ExportAuditLogsUseCase`                                                                                                                                                                                                                                                    |
 
 ### Services
 - **Application Services**: Orchestration logic phức tạp, cross-use-case (ví dụ: `EmailNotificationService` gửi email cho nhiều use case)
@@ -470,26 +470,26 @@ Mỗi Use Case = một business operation đơn lẻ (Single Responsibility).
 ## 5.3 Domain Layer
 
 ### Entities (Aggregate Roots)
-| Entity | Aggregate Root | Key Invariants |
-|--------|----------------|----------------|
-| **User** | Yes | Email unique, password hashed, role immutable after creation |
-| **StudentProfile** | Yes (owned by User) | One per User, required fields, CV list management |
-| **EmployerProfile** | Yes (owned by User) | One per User, verified flag controlled by Admin |
-| **JobPosting** | Yes | State machine (Draft→Pending→Approved/Rejected→Closed/Expired), owner only edit |
-| **Application** | Yes | State machine (Applied→UnderReview→Accepted/Rejected/Withdrawn), one per student per job |
-| **AuditLog** | Yes | Immutable, append-only, tamper-evident |
+| Entity              | Aggregate Root      | Key Invariants                                                                           |
+| ------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
+| **User**            | Yes                 | Email unique, password hashed, role immutable after creation                             |
+| **StudentProfile**  | Yes (owned by User) | One per User, required fields, CV list management                                        |
+| **EmployerProfile** | Yes (owned by User) | One per User, verified flag controlled by Admin                                          |
+| **JobPosting**      | Yes                 | State machine (Draft→Pending→Approved/Rejected→Closed/Expired), owner only edit          |
+| **Application**     | Yes                 | State machine (Applied→UnderReview→Accepted/Rejected/Withdrawn), one per student per job |
+| **AuditLog**        | Yes                 | Immutable, append-only, tamper-evident                                                   |
 
 ### Value Objects
-| Value Object | Mô tả |
-|--------------|-------|
-| **Email** | Value object với validation RFC-5322, equality by value |
-| **Password** | Value object, never exposed plain, hashed on creation |
-| **StudentId / EmployerId / JobId / ApplicationId** | Branded types (TypeScript nominal typing) |
-| **JobState** | Enum-like VO với transition validation |
-| **ApplicationState** | Enum-like VO với transition validation |
-| **CVMetadata** | fileName, filePath, fileSize, mimeType, uploadedAt, isDefault |
-| **Money / SalaryRange** | Value object cho salary min/max, currency |
-| **PaginationParams / PaginatedResult** | Reusable pagination VO |
+| Value Object                                       | Mô tả                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------- |
+| **Email**                                          | Value object với validation RFC-5322, equality by value       |
+| **Password**                                       | Value object, never exposed plain, hashed on creation         |
+| **StudentId / EmployerId / JobId / ApplicationId** | Branded types (TypeScript nominal typing)                     |
+| **JobState**                                       | Enum-like VO với transition validation                        |
+| **ApplicationState**                               | Enum-like VO với transition validation                        |
+| **CVMetadata**                                     | fileName, filePath, fileSize, mimeType, uploadedAt, isDefault |
+| **Money / SalaryRange**                            | Value object cho salary min/max, currency                     |
+| **PaginationParams / PaginatedResult**             | Reusable pagination VO                                        |
 
 ### Repository Interfaces (Domain Layer)
 ```typescript
@@ -524,30 +524,30 @@ interface IJobPostingRepository {
 - **BR-10**: Mọi action quan trọng ghi AuditLog
 
 ### Domain Events
-| Event | Triggered By | Consumers |
-|-------|--------------|-----------|
-| `UserRegistered` | RegisterUseCase | EmailVerificationSender, AuditLogger |
-| `UserLoggedIn` | LoginUseCase | AuditLogger, SecurityMonitor |
-| `EmployerVerified` | VerifyEmployerUseCase | NotificationService, AuditLogger |
-| `JobPostingCreated` | CreateJobPostingUseCase | AdminNotification, AuditLogger |
-| `JobPostingApproved` | ApproveJobPostingUseCase | EmployerNotification, SearchIndexer, AuditLogger |
-| `JobPostingRejected` | RejectJobPostingUseCase | EmployerNotification, AuditLogger |
-| `ApplicationSubmitted` | ApplyJobUseCase | EmployerNotification, AuditLogger, AIResumeAnalysis (future) |
-| `ApplicationStatusChanged` | UpdateApplicationStatusUseCase | StudentNotification, AuditLogger |
-| `CVUploaded` | UploadCVUseCase | AuditLogger, AIResumeAnalysis (future) |
-| `UserAccountLocked` | ManageUserAccountUseCase | NotificationService, AuditLogger |
+| Event                      | Triggered By                   | Consumers                                                    |
+| -------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| `UserRegistered`           | RegisterUseCase                | EmailVerificationSender, AuditLogger                         |
+| `UserLoggedIn`             | LoginUseCase                   | AuditLogger, SecurityMonitor                                 |
+| `EmployerVerified`         | VerifyEmployerUseCase          | NotificationService, AuditLogger                             |
+| `JobPostingCreated`        | CreateJobPostingUseCase        | AdminNotification, AuditLogger                               |
+| `JobPostingApproved`       | ApproveJobPostingUseCase       | EmployerNotification, SearchIndexer, AuditLogger             |
+| `JobPostingRejected`       | RejectJobPostingUseCase        | EmployerNotification, AuditLogger                            |
+| `ApplicationSubmitted`     | ApplyJobUseCase                | EmployerNotification, AuditLogger, AIResumeAnalysis (future) |
+| `ApplicationStatusChanged` | UpdateApplicationStatusUseCase | StudentNotification, AuditLogger                             |
+| `CVUploaded`               | UploadCVUseCase                | AuditLogger, AIResumeAnalysis (future)                       |
+| `UserAccountLocked`        | ManageUserAccountUseCase       | NotificationService, AuditLogger                             |
 
 ## 5.4 Infrastructure Layer
 
 ### Repository Implementations
-| Repository | Implementation | Technology |
-|------------|----------------|------------|
-| `IUserRepository` | `PrismaUserRepository` | Prisma Client |
-| `IStudentRepository` | `PrismaStudentRepository` | Prisma Client |
-| `IEmployerRepository` | `PrismaEmployerRepository` | Prisma Client |
-| `IJobPostingRepository` | `PrismaJobPostingRepository` | Prisma Client |
-| `IApplicationRepository` | `PrismaApplicationRepository` | Prisma Client |
-| `IAuditLogRepository` | `PrismaAuditLogRepository` | Prisma Client |
+| Repository                | Implementation                 | Technology    |
+| ------------------------- | ------------------------------ | ------------- |
+| `IUserRepository`         | `PrismaUserRepository`         | Prisma Client |
+| `IStudentRepository`      | `PrismaStudentRepository`      | Prisma Client |
+| `IEmployerRepository`     | `PrismaEmployerRepository`     | Prisma Client |
+| `IJobPostingRepository`   | `PrismaJobPostingRepository`   | Prisma Client |
+| `IApplicationRepository`  | `PrismaApplicationRepository`  | Prisma Client |
+| `IAuditLogRepository`     | `PrismaAuditLogRepository`     | Prisma Client |
 | `INotificationRepository` | `PrismaNotificationRepository` | Prisma Client |
 
 ### Database
@@ -556,25 +556,25 @@ interface IJobPostingRepository {
 - **Connection Pool**: Configured via Prisma datasource
 
 ### Authentication & Security
-| Component | Implementation |
-|-----------|----------------|
-| **JWT Provider** | `JwtTokenProvider` – sign/verify access & refresh tokens, JWKS support future |
-| **Password Hasher** | `BcryptPasswordHasher` – cost factor 12, timing-safe compare |
-| **Token Blacklist** | `RedisTokenBlacklist` (or DB table) – revoked refresh tokens |
-| **Rate Limiter** | `express-rate-limit` với Redis store cho production |
+| Component           | Implementation                                                                |
+| ------------------- | ----------------------------------------------------------------------------- |
+| **JWT Provider**    | `JwtTokenProvider` – sign/verify access & refresh tokens, JWKS support future |
+| **Password Hasher** | `BcryptPasswordHasher` – cost factor 12, timing-safe compare                  |
+| **Token Blacklist** | `RedisTokenBlacklist` (or DB table) – revoked refresh tokens                  |
+| **Rate Limiter**    | `express-rate-limit` với Redis store cho production                           |
 
 ### File Storage
-| Component | Implementation |
-|-----------|----------------|
-| **File Storage Adapter** | `FileStorageAdapter` interface |
-| **Local Storage** | `LocalFileStorage` – `uploads/cv/{studentId}/`, `uploads/avatar/{userId}/` |
-| **S3 Storage (Future)** | `S3FileStorage` – implements same interface |
+| Component                | Implementation                                                             |
+| ------------------------ | -------------------------------------------------------------------------- |
+| **File Storage Adapter** | `FileStorageAdapter` interface                                             |
+| **Local Storage**        | `LocalFileStorage` – `uploads/cv/{studentId}/`, `uploads/avatar/{userId}/` |
+| **S3 Storage (Future)**  | `S3FileStorage` – implements same interface                                |
 
 ### External Services
-| Service | Adapter |
-|---------|---------|
-| **Email** | `EmailServiceAdapter` – Nodemailer/SendGrid, template engine, retry queue |
-| **AI Services (Future)** | `AIServiceAdapter` – HTTP/gRPC client cho AI microservices |
+| Service                  | Adapter                                                                   |
+| ------------------------ | ------------------------------------------------------------------------- |
+| **Email**                | `EmailServiceAdapter` – Nodemailer/SendGrid, template engine, retry queue |
+| **AI Services (Future)** | `AIServiceAdapter` – HTTP/gRPC client cho AI microservices                |
 
 ### Logging
 - **Pino Logger**: Structured JSON, levels (trace, debug, info, warn, error, fatal)
@@ -612,14 +612,13 @@ Infrastructure Layer ────────────┘
 
 # 6. Project Structure
 
-## 6.1 Backend Structure (`source-code/backend/`)
+## 6.1 Backend Structure (`source-code/backend/`) — Implementation Status
 
 ```
 source-code/backend/
 ├── src/
-│   ├── main.ts                      # Application entry point
-│   ├── app.module.ts                # Root module
-│   ├── common/                      # Shared Kernel
+│   ├── main.ts                      # Application entry point [✅ Implemented]
+│   ├── common/                      # Shared Kernel [✅ Implemented]
 │   │   ├── decorators/              # Custom decorators (CurrentUser, Roles, Public)
 │   │   ├── guards/                  # AuthGuard, RolesGuard, RateLimitGuard
 │   │   ├── pipes/                   # ValidationPipe (Zod), TransformPipe
@@ -629,58 +628,46 @@ source-code/backend/
 │   │   ├── exceptions/              # BusinessException, ValidationException, AuthException, ForbiddenException, NotFoundException, ConflictException
 │   │   ├── events/                  # DomainEventPublisher, EventBus, DomainEvent base class
 │   │   └── utils/                   # Date, String, Crypto helpers
-│   ├── config/                      # Configuration
+│   ├── config/                      # Configuration [✅ Implemented]
 │   │   ├── database.config.ts       # Prisma config
 │   │   ├── jwt.config.ts            # JWT secret, expiry
 │   │   ├── storage.config.ts        # Local/S3 config
 │   │   ├── email.config.ts          # SMTP config
 │   │   └── app.config.ts            # App-wide config
 │   ├── modules/                     # Feature modules (Clean Architecture per module)
-│   │   ├── auth/
+│   │   ├── auth/                    # [✅ Fully Implemented]
 │   │   │   ├── presentation/        # Controllers, DTOs, Guards
-│   │   │   ├── application/         # Use Cases (Register, Login, Logout, ChangePassword, VerifyEmail, ResetPassword)
-│   │   │   ├── domain/              # Entities (User), ValueObjects (Email, Password), Repository Interfaces, Domain Services, Events
-│   │   │   └── infrastructure/      # PrismaUserRepository, JwtTokenProvider, BcryptPasswordHasher
-│   │   ├── student/
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # ManageProfile, UploadCV, SearchJobs, ApplyJob, TrackApplication
-│   │   │   ├── domain/              # StudentProfile, CV, Repository Interfaces, Domain Events
-│   │   │   └── infrastructure/      # PrismaStudentRepository, LocalFileStorage
-│   │   ├── employer/
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # ManageCompany, CreateJob, ManageJobs, ReviewApplications
-│   │   │   ├── domain/              # EmployerProfile, JobPosting, Repository Interfaces, State Machine
-│   │   │   └── infrastructure/      # PrismaEmployerRepository, PrismaJobRepository
-│   │   ├── job/
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # SearchJobs (public), GetJobDetails
+│   │   │   ├── application/         # Use Cases (Register, Login, Logout, ChangePassword, VerifyEmail)
+│   │   │   ├── domain/              # Entities (User), ValueObjects (Email, Password), Repository Interfaces, Domain Services, Events, Factories
+│   │   │   ├── infrastructure/      # PrismaUserRepository, JwtTokenProvider, BcryptPasswordHasher
+│   │   │   └── composition/         # AuthModule DI wiring
+│   │   ├── student/                 # [✅ Fully Implemented]
+│   │   │   ├── presentation/        # StudentController, routes
+│   │   │   ├── application/         # UpdateProfile, UploadCV, ManageCVList, GetApplicationHistory, GetJobDetail
+│   │   │   ├── domain/              # StudentProfile, CV, Repository Interfaces, Factories
+│   │   │   ├── infrastructure/      # PrismaStudentRepository
+│   │   │   └── composition/         # StudentModule DI wiring
+│   │   ├── employer/                # [✅ Fully Implemented]
+│   │   │   ├── presentation/        # EmployerController, routes
+│   │   │   ├── application/         # UpdateCompanyProfile, GetMyApplicants, ViewApplicantDetails
+│   │   │   ├── domain/              # EmployerProfile, EmployerProfileFactory, Repository Interfaces
+│   │   │   ├── infrastructure/      # PrismaEmployerRepository
+│   │   │   └── composition/         # EmployerModule DI wiring
+│   │   ├── job/                     # [⚠️ Partial — Domain only]
 │   │   │   ├── domain/              # JobPosting (Aggregate), JobState VO, Repository Interface
-│   │   │   └── infrastructure/      # PrismaJobRepository
-│   │   ├── application/             # Application module (cross-cutting)
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # SubmitApplication, UpdateStatus, Withdraw, GetHistory
+│   │   │   ├── presentation/        # [❌ Not Implemented]
+│   │   │   ├── application/         # [❌ Not Implemented]
+│   │   │   └── infrastructure/      # [❌ Not Implemented]
+│   │   ├── application/             # [⚠️ Partial — Domain only]
 │   │   │   ├── domain/              # Application (Aggregate), ApplicationState VO, Repository Interface
-│   │   │   └── infrastructure/      # PrismaApplicationRepository
-│   │   ├── admin/
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # VerifyEmployer, ApproveJob, ManageUsers, Dashboard, AuditLog
-│   │   │   ├── domain/              # Admin-specific Domain Services, Repository Interfaces
-│   │   │   └── infrastructure/      # PrismaAdminRepository
-│   │   ├── notification/
-│   │   │   ├── presentation/
-│   │   │   ├── application/         # SendNotification, GetNotifications, MarkAsRead
-│   │   │   ├── domain/              # Notification Entity, Repository Interface
-│   │   │   └── infrastructure/      # PrismaNotificationRepository, WebSocketGateway
-│   │   ├── audit/
-│   │   │   ├── presentation/
-│   │   │   ├── application/application/application/        # GetAuditLogs, ExportAuditLogs
-│   │   │   ├── domain/              # AuditLog Entity, Repository Interface
-│   │   │   └── infrastructure/      # PrismaAuditRepository
-│   │   └── ai/                      # AI Extension Points (Future)
-│   │       ├── domain/              # Interfaces: IResumeAnalyzer, ITrustScoreEngine, IRecommendationEngine, IFraudDetector, ISkillMatcher
-│   │       ├── infrastructure/      # Stub implementations (NoOp), Future: Python microservice adapters
-│   │       └── application/         # AI Use Cases (orchestration)
-│   └── infrastructure/              # Cross-cutting infrastructure
+│   │   │   ├── presentation/        # [❌ Not Implemented]
+│   │   │   ├── application/         # [❌ Not Implemented]
+│   │   │   └── infrastructure/      # [❌ Not Implemented]
+│   │   ├── admin/                   # [❌ Not Implemented]
+│   │   ├── notification/            # [❌ Not Implemented]
+│   │   ├── audit/                   # [❌ Not Implemented]
+│   │   └── ai/                      # [❌ Not Implemented]
+│   └── infrastructure/              # Cross-cutting infrastructure [✅ Implemented]
 │       ├── database/                # PrismaClient provider, migrations
 │       ├── security/                # JwtProvider, BcryptHasher, TokenBlacklist
 │       ├── storage/                 # FileStorageAdapter (Local/S3)
@@ -688,44 +675,54 @@ source-code/backend/
 │       ├── logging/                 # Logger provider (Pino)
 │       └── scheduler/               # Cron jobs setup
 ├── prisma/
-│   ├── schema.prisma                # Database schema
-│   └── migrations/                  # Migration files
-├── package.json
-├── tsconfig.json
-├── .env.example
-└── jest.config.ts
+│   ├── schema.prisma                # Database schema [✅ Implemented]
+│   └── migrations/                  # Migration files [✅ Implemented]
+├── package.json                     # [✅ Implemented]
+├── tsconfig.json                    # [✅ Implemented]
+├── .env.example                     # [✅ Implemented]
+└── jest.config.ts                   # [✅ Implemented]
 ```
 
-## 6.2 Frontend Structure (`source-code/frontend/`)
+## 6.2 Frontend Structure (`source-code/frontend/`) — Implementation Status
 
 ```
 source-code/frontend/
-├── public/                          # Static assets
+├── public/                          # Static assets [✅ Implemented]
 ├── src/
-│   ├── app/                         # App-level setup
+│   ├── app/                         # App-level setup [✅ Implemented]
 │   │   ├── providers/               # Context providers (Auth, Theme, Query)
 │   │   ├── routes/                  # Route definitions, lazy loading
 │   │   └── layout/                  # Layout components
 │   ├── features/                    # Feature-based modules (Domain-driven)
-│   │   ├── auth/                    # Login, Register, Password Reset
-│   │   ├── student/                 # Profile, CV, Job Search, Applications
-│   │   ├── employer/                # Company Profile, Job Management, Applicants
-│   │   ├── admin/                   # Dashboard, User Mgmt, Approvals, Audit
-│   │   └── shared/                  # Shared components, hooks, utils
-│   ├── core/                        # Core infrastructure
+│   │   ├── auth/                    # [❌ Not Implemented]
+│   │   ├── student/                 # [✅ Fully Implemented] Profile, CV, Applications
+│   │   │   ├── components/          # StudentProfilePage, StudentCvPage, CvUploadZone, CvListItem, CvEmptyState, NoDefaultCvBanner, ApplicationHistoryPage, ApplicationHistoryItem, ApplicationHistoryPagination, ApplicationHistoryEmptyState, ApplicationHistorySkeleton
+│   │   │   ├── hooks/               # useProfileForm, useCvUpload, useCvList, useApplicationHistory
+│   │   │   ├── services/            # student.service, application-history.service
+│   │   │   ├── schemas/             # profile.schema, cv.schema
+│   │   │   └── types/               # student.types, cv.types, application-history.types
+│   │   ├── employer/                # [⚠️ Partial] Company Profile, Applicants
+│   │   │   ├── components/          # CompanyProfilePage, ApplicantsPage, ApplicantRow, ApplicantsPagination, ApplicantsEmptyState, ApplicantsSkeleton
+│   │   │   ├── hooks/               # useCompanyProfileForm, useApplicants
+│   │   │   ├── services/            # employer.service, applicants.service
+│   │   │   ├── schemas/             # company-profile.schema
+│   │   │   └── types/               # company-profile.types, applicants.types
+│   │   ├── admin/                   # [❌ Not Implemented]
+│   │   └── shared/                  # [❌ Not Implemented]
+│   ├── core/                        # Core infrastructure [✅ Implemented]
 │   │   ├── api/                     # Axios instance, interceptors, endpoints
 │   │   ├── auth/                    # Token management, auth state
 │   │   ├── ui/                      # Design system components (Button, Input, Table, Modal)
 │   │   ├── hooks/                   # Shared hooks (useQuery, useMutation, useAuth)
 │   │   ├── utils/                   # Formatters, validators, constants
 │   │   └── types/                   # Shared TypeScript types
-│   ├── styles/                      # Global styles, theme, CSS variables
-│   └── main.tsx                     # Entry point
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── .env.example
+│   ├── styles/                      # Global styles, theme, CSS variables [✅ Implemented]
+│   └── main.tsx                     # Entry point [✅ Implemented]
+├── index.html                       # [✅ Implemented]
+├── package.json                     # [✅ Implemented]
+├── tsconfig.json                    # [✅ Implemented]
+├── vite.config.ts                   # [✅ Implemented]
+└── .env.example                     # [✅ Implemented]
 ```
 
 **Trách nhiệm từng thư mục:**
@@ -796,109 +793,109 @@ graph TB
 
 ### 7.2.1 Authentication Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Xác thực và phân quyền người dùng |
-| **Trách nhiệm** | Đăng ký, đăng nhập, đăng xuất, refresh token, đổi mật khẩu, xác thực email, quên mật khẩu |
-| **Use Cases** | Register, Login, Logout, RefreshToken, ChangePassword, VerifyEmail, RequestPasswordReset, ResetPassword |
-| **Main Entities** | User, RefreshToken |
-| **Repository** | IUserRepository, IRefreshTokenRepository |
-| **Services** | JwtTokenProvider, BcryptPasswordHasher, EmailVerificationService |
-| **Quan hệ** | Cung cấp User context cho tất cả module khác; phát Domain Events (UserRegistered, UserLoggedIn) |
+| Aspect            | Description                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| **Mục tiêu**      | Xác thực và phân quyền người dùng                                                                       |
+| **Trách nhiệm**   | Đăng ký, đăng nhập, đăng xuất, refresh token, đổi mật khẩu, xác thực email, quên mật khẩu               |
+| **Use Cases**     | Register, Login, Logout, RefreshToken, ChangePassword, VerifyEmail, RequestPasswordReset, ResetPassword |
+| **Main Entities** | User, RefreshToken                                                                                      |
+| **Repository**    | IUserRepository, IRefreshTokenRepository                                                                |
+| **Services**      | JwtTokenProvider, BcryptPasswordHasher, EmailVerificationService                                        |
+| **Quan hệ**       | Cung cấp User context cho tất cả module khác; phát Domain Events (UserRegistered, UserLoggedIn)         |
 
 ### 7.2.2 Student Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Quản lý hồ sơ sinh viên, CV, tìm kiếm và ứng tuyển việc làm |
-| **Trách nhiệm** | Profile management, CV upload/management, job search/filter, application submission/tracking |
-| **Use Cases** | UpdateProfile, UploadCV, DeleteCV, SetDefaultCV, SearchJobs, GetJobDetails, ApplyJob, WithdrawApplication, GetApplicationHistory, GetApplicationStatus |
-| **Main Entities** | StudentProfile, CV |
-| **Repository** | IStudentRepository, ICVRepository |
-| **Services** | FileStorageAdapter (CV), JobSearchService |
-| **Quan hệ** | Depends on Auth (User), Job (search), Application (submit), Notification (receive) |
+| Aspect            | Description                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mục tiêu**      | Quản lý hồ sơ sinh viên, CV, tìm kiếm và ứng tuyển việc làm                                                                                            |
+| **Trách nhiệm**   | Profile management, CV upload/management, job search/filter, application submission/tracking                                                           |
+| **Use Cases**     | UpdateProfile, UploadCV, DeleteCV, SetDefaultCV, SearchJobs, GetJobDetails, ApplyJob, WithdrawApplication, GetApplicationHistory, GetApplicationStatus |
+| **Main Entities** | StudentProfile, CV                                                                                                                                     |
+| **Repository**    | IStudentRepository, ICVRepository                                                                                                                      |
+| **Services**      | FileStorageAdapter (CV), JobSearchService                                                                                                              |
+| **Quan hệ**       | Depends on Auth (User), Job (search), Application (submit), Notification (receive)                                                                     |
 
 ### 7.2.3 Employer Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Quản lý doanh nghiệp, đăng tin tuyển dụng, quản lý ứng viên |
-| **Trách nhiệm** | Company profile, job posting CRUD, applicant review, status updates, reports |
-| **Use Cases** | UpdateCompanyProfile, CreateJobPosting, UpdateJobPosting, CloseJobPosting, ReopenJobPosting, GetMyJobPostings, GetJobApplicants, GetApplicantDetails, UpdateApplicationStatus, GenerateRecruitmentReport |
-| **Main Entities** | EmployerProfile, JobPosting |
-| **Repository** | IEmployerRepository, IJobPostingRepository |
-| **Services** | JobStateMachine, ApplicationStateMachine |
-| **Quan hệ** | Depends on Auth (User), Job (own), Application (review), Admin (verification), Notification (send/receive) |
+| Aspect            | Description                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mục tiêu**      | Quản lý doanh nghiệp, đăng tin tuyển dụng, quản lý ứng viên                                                                                                                                              |
+| **Trách nhiệm**   | Company profile, job posting CRUD, applicant review, status updates, reports                                                                                                                             |
+| **Use Cases**     | UpdateCompanyProfile, CreateJobPosting, UpdateJobPosting, CloseJobPosting, ReopenJobPosting, GetMyJobPostings, GetJobApplicants, GetApplicantDetails, UpdateApplicationStatus, GenerateRecruitmentReport |
+| **Main Entities** | EmployerProfile, JobPosting                                                                                                                                                                              |
+| **Repository**    | IEmployerRepository, IJobPostingRepository                                                                                                                                                               |
+| **Services**      | JobStateMachine, ApplicationStateMachine                                                                                                                                                                 |
+| **Quan hệ**       | Depends on Auth (User), Job (own), Application (review), Admin (verification), Notification (send/receive)                                                                                               |
 
 ### 7.2.4 Job Module (Public)
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Cung cấp chức năng tìm kiếm, xem chi tiết tin tuyển dụng công khai |
-| **Trách nhiệm** | Search, filter, pagination, view details cho approved jobs |
-| **Use Cases** | SearchJobs, GetJobDetails, FilterJobs |
-| **Main Entities** | JobPosting (read-only view) |
-| **Repository** | IJobPostingRepository (read methods) |
-| **Services** | SearchService, FilterService |
-| **Quan hệ** | Independent read access; data từ Employer module; consumed by Student module |
+| Aspect            | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **Mục tiêu**      | Cung cấp chức năng tìm kiếm, xem chi tiết tin tuyển dụng công khai           |
+| **Trách nhiệm**   | Search, filter, pagination, view details cho approved jobs                   |
+| **Use Cases**     | SearchJobs, GetJobDetails, FilterJobs                                        |
+| **Main Entities** | JobPosting (read-only view)                                                  |
+| **Repository**    | IJobPostingRepository (read methods)                                         |
+| **Services**      | SearchService, FilterService                                                 |
+| **Quan hệ**       | Independent read access; data từ Employer module; consumed by Student module |
 
 ### 7.2.5 Application Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Quản lý vòng đời hồ sơ ứng tuyển |
-| **Trách nhiệm** | Submit, status transitions, withdrawal, history |
-| **Use Cases** | SubmitApplication, UpdateApplicationStatus, WithdrawApplication, GetApplicationHistory |
-| **Main Entities** | Application (Aggregate Root) |
-| **Repository** | IApplicationRepository |
-| **Services** | ApplicationStateMachine (validates transitions) |
-| **Quan hệ** | Bridge giữa Student và Employer; phát Domain Events cho Notification, Audit, AI |
+| Aspect            | Description                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| **Mục tiêu**      | Quản lý vòng đời hồ sơ ứng tuyển                                                       |
+| **Trách nhiệm**   | Submit, status transitions, withdrawal, history                                        |
+| **Use Cases**     | SubmitApplication, UpdateApplicationStatus, WithdrawApplication, GetApplicationHistory |
+| **Main Entities** | Application (Aggregate Root)                                                           |
+| **Repository**    | IApplicationRepository                                                                 |
+| **Services**      | ApplicationStateMachine (validates transitions)                                        |
+| **Quan hệ**       | Bridge giữa Student và Employer; phát Domain Events cho Notification, Audit, AI        |
 
 ### 7.2.6 Administrator Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Quản trị hệ thống: duyệt doanh nghiệp, duyệt tin, quản lý user, dashboard, audit |
-| **Trách nhiệm** | Employer verification, Job approval, User management, System categories, Dashboard stats, Audit log |
-| **Use Cases** | VerifyEmployer, ApproveJobPosting, RejectJobPosting, ManageUserAccount, GetDashboardStats, ExportAuditLogs, ManageCategories |
-| **Main Entities** | (uses User, EmployerProfile, JobPosting, AuditLog) |
-| **Repository** | IAdminRepository (composite queries) |
-| **Services** | DashboardService, AuditExportService |
-| **Quan hệ** | Full read/write access đến tất cả module; phát Domain Events cho Notification, Audit |
+| Aspect            | Description                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Mục tiêu**      | Quản trị hệ thống: duyệt doanh nghiệp, duyệt tin, quản lý user, dashboard, audit                                             |
+| **Trách nhiệm**   | Employer verification, Job approval, User management, System categories, Dashboard stats, Audit log                          |
+| **Use Cases**     | VerifyEmployer, ApproveJobPosting, RejectJobPosting, ManageUserAccount, GetDashboardStats, ExportAuditLogs, ManageCategories |
+| **Main Entities** | (uses User, EmployerProfile, JobPosting, AuditLog)                                                                           |
+| **Repository**    | IAdminRepository (composite queries)                                                                                         |
+| **Services**      | DashboardService, AuditExportService                                                                                         |
+| **Quan hệ**       | Full read/write access đến tất cả module; phát Domain Events cho Notification, Audit                                         |
 
 ### 7.2.7 Notification Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Hệ thống thông báo real-time và in-app |
-| **Trách nhiệm** | Gửi thông báo (email, in-app, push), quản lý notification center, mark as read |
-| **Use Cases** | SendNotification, GetUserNotifications, MarkAsRead |
-| **Main Entities** | Notification |
-| **Repository** | INotificationRepository |
-| **Services** | EmailServiceAdapter, WebSocketGateway (Socket.io) |
-| **Quan hệ** | Consumed by tất cả module qua Domain Events; async processing |
+| Aspect            | Description                                                                    |
+| ----------------- | ------------------------------------------------------------------------------ |
+| **Mục tiêu**      | Hệ thống thông báo real-time và in-app                                         |
+| **Trách nhiệm**   | Gửi thông báo (email, in-app, push), quản lý notification center, mark as read |
+| **Use Cases**     | SendNotification, GetUserNotifications, MarkAsRead                             |
+| **Main Entities** | Notification                                                                   |
+| **Repository**    | INotificationRepository                                                        |
+| **Services**      | EmailServiceAdapter, WebSocketGateway (Socket.io)                              |
+| **Quan hệ**       | Consumed by tất cả module qua Domain Events; async processing                  |
 
 ### 7.2.8 Audit Module
 
-| Aspect | Description |
-|--------|-------------|
-| **Mục tiêu** | Ghi log bảo mật và tuân thủ (compliance) |
-| **Trách nhiệm** | Immutable audit trail, query, export |
-| **Use Cases** | GetAuditLogs, ExportAuditLogs |
-| **Main Entities** | AuditLog |
-| **Repository** | IAuditLogRepository |
-| **Services** | AuditLogger (auto-called từ Domain Events) |
-| **Quan hệ** | Receive events từ tất cả module; read-only cho Admin |
+| Aspect            | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| **Mục tiêu**      | Ghi log bảo mật và tuân thủ (compliance)             |
+| **Trách nhiệm**   | Immutable audit trail, query, export                 |
+| **Use Cases**     | GetAuditLogs, ExportAuditLogs                        |
+| **Main Entities** | AuditLog                                             |
+| **Repository**    | IAuditLogRepository                                  |
+| **Services**      | AuditLogger (auto-called từ Domain Events)           |
+| **Quan hệ**       | Receive events từ tất cả module; read-only cho Admin |
 
 ### 7.2.9 AI Extension Modules (Future)
 
-| Module | Interface | Mục đích |
-|--------|-----------|----------|
-| **Resume Analysis** | `IResumeAnalyzer` | Phân tích CV, trích xuất skills, experience, scoring |
-| **Trust Score Engine** | `ITrustScoreEngine` | Tính điểm uy tín Employer/Student dựa trên hành vi, lịch sử |
-| **Recommendation Engine** | `IRecommendationEngine` | Gợi ý việc làm cho Student, gợi ý ứng viên cho Employer |
-| **Fraud Detection** | `IFraudDetector` | Phát hiện job fake, employer giả mạo, application spam |
-| **Skill Matching** | `ISkillMatcher` | Match skills giữa CV và Job requirements |
+| Module                    | Interface               | Mục đích                                                    |
+| ------------------------- | ----------------------- | ----------------------------------------------------------- |
+| **Resume Analysis**       | `IResumeAnalyzer`       | Phân tích CV, trích xuất skills, experience, scoring        |
+| **Trust Score Engine**    | `ITrustScoreEngine`     | Tính điểm uy tín Employer/Student dựa trên hành vi, lịch sử |
+| **Recommendation Engine** | `IRecommendationEngine` | Gợi ý việc làm cho Student, gợi ý ứng viên cho Employer     |
+| **Fraud Detection**       | `IFraudDetector`        | Phát hiện job fake, employer giả mạo, application spam      |
+| **Skill Matching**        | `ISkillMatcher`         | Match skills giữa CV và Job requirements                    |
 
 **Tích hợp:** 
 - Định nghĩa Interface trong `modules/ai/domain/`
@@ -1042,17 +1039,17 @@ erDiagram
 
 ## 8.2 Entity Descriptions
 
-| Entity | Description | Key Relationships |
-|--------|-------------|-------------------|
-| **User** | Core identity, authentication & authorization | 1-1 StudentProfile, 1-1 EmployerProfile, 1-* RefreshToken, 1-* AuditLog, 1-* Notification |
-| **StudentProfile** | Extended profile for students, includes personal info and CV references | 1-1 User, 1-* CV, 1-* Application |
-| **EmployerProfile** | Extended profile for employers, includes company info and verification status | 1-1 User, 1-* JobPosting |
-| **JobPosting** | Job advertisement created by an employer | *-1 EmployerProfile, 1-* Application, 1-* Notification |
-| **Application** | Student’s application to a job posting, references a CV | *-1 JobPosting, *-1 StudentProfile, *-1 CV, 1-* Notification |
-| **CV** | Uploaded resume file metadata | *-1 StudentProfile, 1-1 Application (when used) |
-| **RefreshToken** | JWT refresh token for session management | *-1 User |
-| **AuditLog** | Immutable security/compliance log entry | *-1 User (actor) |
-| **Notification** | In-app or email notification sent to a user | *-1 User (recipient) |
+| Entity              | Description                                                                   | Key Relationships                                                                         |
+| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **User**            | Core identity, authentication & authorization                                 | 1-1 StudentProfile, 1-1 EmployerProfile, 1-* RefreshToken, 1-* AuditLog, 1-* Notification |
+| **StudentProfile**  | Extended profile for students, includes personal info and CV references       | 1-1 User, 1-* CV, 1-* Application                                                         |
+| **EmployerProfile** | Extended profile for employers, includes company info and verification status | 1-1 User, 1-* JobPosting                                                                  |
+| **JobPosting**      | Job advertisement created by an employer                                      | *-1 EmployerProfile, 1-* Application, 1-* Notification                                    |
+| **Application**     | Student’s application to a job posting, references a CV                       | *-1 JobPosting, *-1 StudentProfile, *-1 CV, 1-* Notification                              |
+| **CV**              | Uploaded resume file metadata                                                 | *-1 StudentProfile, 1-1 Application (when used)                                           |
+| **RefreshToken**    | JWT refresh token for session management                                      | *-1 User                                                                                  |
+| **AuditLog**        | Immutable security/compliance log entry                                       | *-1 User (actor)                                                                          |
+| **Notification**    | In-app or email notification sent to a user                                   | *-1 User (recipient)                                                                      |
 
 # 9. Core Business Flow
 
@@ -1192,13 +1189,13 @@ flowchart TD
 
 ## 10.1 RESTful Design Principles
 
-| Principle | Implementation |
-|-----------|----------------|
-| __Resource-based URLs__ | `/api/v1/jobs`, `/api/v1/applications/{id}` |
-| __HTTP Methods__ | GET (read), POST (create), PUT/PATCH (update), DELETE (remove) |
-| __Status Codes__ | 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 429 Too Many Requests, 500 Internal Error |
-| __Versioning__ | URL path versioning (`/api/v1/`) |
-| __Naming__ | Plural nouns, kebab-case (`/job-postings`, `/application-statuses`) |
+| Principle               | Implementation                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| __Resource-based URLs__ | `/api/v1/jobs`, `/api/v1/applications/{id}`                                                                                                                   |
+| __HTTP Methods__        | GET (read), POST (create), PUT/PATCH (update), DELETE (remove)                                                                                                |
+| __Status Codes__        | 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 429 Too Many Requests, 500 Internal Error |
+| __Versioning__          | URL path versioning (`/api/v1/`)                                                                                                                              |
+| __Naming__              | Plural nouns, kebab-case (`/job-postings`, `/application-statuses`)                                                                                           |
 
 ## 10.2 API Versioning
 
@@ -1208,24 +1205,24 @@ flowchart TD
 
 ## 10.3 Resource Naming Conventions
 
-| Resource | Endpoint pattern |
-|----------|------------------|
-| Collection | `GET /api/v1/jobs` |
-| Single item | `GET /api/v1/jobs/{id}` |
-| Sub-resource | `GET /api/v1/jobs/{id}/applications` |
+| Resource          | Endpoint pattern                           |
+| ----------------- | ------------------------------------------ |
+| Collection        | `GET /api/v1/jobs`                         |
+| Single item       | `GET /api/v1/jobs/{id}`                    |
+| Sub-resource      | `GET /api/v1/jobs/{id}/applications`       |
 | Action (non-CRUD) | `POST /api/v1/jobs/{id}/submit-for-review` |
 
 ## 10.4 HTTP Method Mapping
 
-| Operation | Method | Idempotent |
-|-----------|--------|------------|
-| List / Search | GET | Yes |
-| Retrieve | GET | Yes |
-| Create | POST | No |
-| Full update | PUT | Yes |
-| Partial update | PATCH | No |
-| Delete | DELETE | Yes |
-| Custom action | POST | No |
+| Operation      | Method | Idempotent |
+| -------------- | ------ | ---------- |
+| List / Search  | GET    | Yes        |
+| Retrieve       | GET    | Yes        |
+| Create         | POST   | No         |
+| Full update    | PUT    | Yes        |
+| Partial update | PATCH  | No         |
+| Delete         | DELETE | Yes        |
+| Custom action  | POST   | No         |
 
 ## 10.5 Response Format
 
@@ -1282,25 +1279,25 @@ flowchart TD
 
 ### Standard Error Codes (from spec)
 
-| Code | Meaning | HTTP |
-|------|---------|------|
-| B001 | Validation failed | 400 |
-| B002 | Authentication required | 401 |
-| B003 | Forbidden – insufficient role | 403 |
-| B004 | Resource not found | 404 |
-| B005 | Conflict – duplicate or illegal state change | 409 |
-| B006 | Too many requests (rate limit) | 429 |
-| B999 | Unexpected server error | 500 |
+| Code | Meaning                                      | HTTP |
+| ---- | -------------------------------------------- | ---- |
+| B001 | Validation failed                            | 400  |
+| B002 | Authentication required                      | 401  |
+| B003 | Forbidden – insufficient role                | 403  |
+| B004 | Resource not found                           | 404  |
+| B005 | Conflict – duplicate or illegal state change | 409  |
+| B006 | Too many requests (rate limit)               | 429  |
+| B999 | Unexpected server error                      | 500  |
 
 
 # 11. Security Architecture
 
 ## 11.1 Authentication (JWT)
 
-| Token | Expiry | Storage | Usage |
-|-------|--------|---------|-------|
-| __Access Token__ | 15 min | In-memory (React state) | Authorization header `Bearer <token>` |
-| __Refresh Token__ | 7 days | HttpOnly Secure cookie | `/auth/refresh` endpoint |
+| Token             | Expiry | Storage                 | Usage                                 |
+| ----------------- | ------ | ----------------------- | ------------------------------------- |
+| __Access Token__  | 15 min | In-memory (React state) | Authorization header `Bearer <token>` |
+| __Refresh Token__ | 7 days | HttpOnly Secure cookie  | `/auth/refresh` endpoint              |
 
 - __Claims__: `sub`, `email`, `role`, `iat`, `exp`, `jti`.
 - __Rotation__: Refresh token is revoked on use; new pair issued.
@@ -1314,10 +1311,10 @@ flowchart TD
 
 ## 11.3 Authorization (RBAC)
 
-| Role | Permissions |
-|------|-------------|
-| __Student__ | Own profile, CVs, applications, job search |
-| __Employer__ | Company profile, own job postings, own applicants |
+| Role              | Permissions                                           |
+| ----------------- | ----------------------------------------------------- |
+| __Student__       | Own profile, CVs, applications, job search            |
+| __Employer__      | Company profile, own job postings, own applicants     |
 | __Administrator__ | Full system access, user management, approvals, audit |
 
 Implemented via:
@@ -1335,13 +1332,13 @@ Implemented via:
 
 ## 11.5 Rate Limiting
 
-| Endpoint group | Limit |
-|----------------|-------|
-| Auth (login / register) | 5 req/min per IP |
-| Auth (refresh) | 30 req/min per user |
-| Public API (search) | 30 req/min per user |
-| Authenticated API | 100 req/min per user |
-| File upload | 10 req/min per user |
+| Endpoint group          | Limit                |
+| ----------------------- | -------------------- |
+| Auth (login / register) | 5 req/min per IP     |
+| Auth (refresh)          | 30 req/min per user  |
+| Public API (search)     | 30 req/min per user  |
+| Authenticated API       | 100 req/min per user |
+| File upload             | 10 req/min per user  |
 
 Implemented with `express-rate-limit` + Redis store for distributed rate limiting.
 path: docs/architecture.md
@@ -1407,15 +1404,15 @@ path: docs/architecture.md
 
 ### Exception Types
 
-| Type | Description | HTTP |
-|------|-------------|------|
-| __ValidationException__ | Input fails Zod schema | 400 |
-| __AuthenticationException__ | Missing/invalid JWT | 401 |
-| __AuthorizationException__ | Insufficient role | 403 |
-| __NotFoundException__ | Entity not found | 404 |
-| __ConflictException__ | Duplicate or illegal state change | 409 |
-| __RateLimitException__ | Exceeded rate limit | 429 |
-| __InternalServerError__ | Unexpected error | 500 |
+| Type                        | Description                       | HTTP |
+| --------------------------- | --------------------------------- | ---- |
+| __ValidationException__     | Input fails Zod schema            | 400  |
+| __AuthenticationException__ | Missing/invalid JWT               | 401  |
+| __AuthorizationException__  | Insufficient role                 | 403  |
+| __NotFoundException__       | Entity not found                  | 404  |
+| __ConflictException__       | Duplicate or illegal state change | 409  |
+| __RateLimitException__      | Exceeded rate limit               | 429  |
+| __InternalServerError__     | Unexpected error                  | 500  |
 
 ### Response Format
 
@@ -1425,13 +1422,13 @@ Same as the error response format defined in __10.6__ (code, message, details).
 
 ## 15.1 Extension Points
 
-| Module | Interface | Trigger |
-|--------|-----------|---------|
-| **Resume Analysis** | `IResumeAnalyzer.analyze(cv: CV): ResumeInsights` | On CV upload or application submit |
-| **Trust Score Engine** | `ITrustScoreEngine.evaluate(userId: UUID): TrustScore` | Periodic batch job or on-demand |
+| Module                    | Interface                                                           | Trigger                             |
+| ------------------------- | ------------------------------------------------------------------- | ----------------------------------- |
+| **Resume Analysis**       | `IResumeAnalyzer.analyze(cv: CV): ResumeInsights`                   | On CV upload or application submit  |
+| **Trust Score Engine**    | `ITrustScoreEngine.evaluate(userId: UUID): TrustScore`              | Periodic batch job or on-demand     |
 | **Recommendation Engine** | `IRecommendationEngine.recommend(userId: UUID): RecommendationList` | After successful login or on demand |
-| **Fraud Detection** | `IFraudDetector.checkJob(job: JobPosting): FraudResult` | When a job is created/updated |
-| **Skill Matching** | `ISkillMatcher.match(cv: CV, job: JobPosting): MatchScore` | During job search or application |
+| **Fraud Detection**       | `IFraudDetector.checkJob(job: JobPosting): FraudResult`             | When a job is created/updated       |
+| **Skill Matching**        | `ISkillMatcher.match(cv: CV, job: JobPosting): MatchScore`          | During job search or application    |
 
 ### Integration Strategy
 - **Interface-first**: All AI modules expose a TypeScript interface in `modules/ai/domain/`.
@@ -1484,29 +1481,29 @@ graph TB
 
 ## 16.3 Deployment Stages
 
-| Stage | Components | Description |
-|-------|------------|-------------|
-| **Development** | Docker Compose (frontend, backend, MySQL, Redis) | Hot-reload, local DB, mock AI stubs, file storage local |
-| **Staging** | Kubernetes / VM Deployment | Phân tách môi trường riêng biệt, CI pipeline tự động deploy, kiểm thử integration test tự động |
-| **Production** | Kubernetes Cluster / AWS EC2 clusters | Tự động mở rộng (Autoscaling), rolling updates, SSL/TLS Termination, bảo mật bí mật (secrets) qua Vault |
+| Stage           | Components                                       | Description                                                                                             |
+| --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| **Development** | Docker Compose (frontend, backend, MySQL, Redis) | Hot-reload, local DB, mock AI stubs, file storage local                                                 |
+| **Staging**     | Kubernetes / VM Deployment                       | Phân tách môi trường riêng biệt, CI pipeline tự động deploy, kiểm thử integration test tự động          |
+| **Production**  | Kubernetes Cluster / AWS EC2 clusters            | Tự động mở rộng (Autoscaling), rolling updates, SSL/TLS Termination, bảo mật bí mật (secrets) qua Vault |
 
 ## 16.4 Environment Variables
 
-| Variable | Description | Example Value |
-|----------|-------------|---------------|
-| `NODE_ENV` | Môi trường chạy ứng dụng | `production` / `development` / `test` |
-| `PORT` | Cổng HTTP lắng nghe | `3000` |
-| `DATABASE_URL` | Chuỗi kết nối cơ sở dữ liệu MySQL (Prisma) | `mysql://user:pass@host:3306/trusthire_db` |
-| `JWT_SECRET` | Khóa bí mật ký mã token JWT | `super-secret-key-change-in-production` |
-| `JWT_ACCESS_EXPIRES_IN` | Thời gian hết hạn của Access Token | `15m` |
-| `JWT_REFRESH_EXPIRES_IN` | Thời gian hết hạn của Refresh Token | `7d` |
-| `FILE_STORAGE` | Cấu hình loại hình lưu trữ file | `local` / `s3` |
-| `FILE_STORAGE_DEST` | Thư mục lưu trữ file cục bộ | `./uploads` |
-| `REDIS_URL` | Chuỗi kết nối Redis Cache | `redis://localhost:6379` |
-| `SMTP_HOST` | Địa chỉ mail server | `smtp.gmail.com` |
-| `SMTP_PORT` | Cổng kết nối SMTP | `587` |
-| `SMTP_USER` | Tài khoản gửi email | `recruitment@trusthire.vn` |
-| `SMTP_PASS` | Mật khẩu tài khoản email | `email-app-password` |
+| Variable                 | Description                                | Example Value                              |
+| ------------------------ | ------------------------------------------ | ------------------------------------------ |
+| `NODE_ENV`               | Môi trường chạy ứng dụng                   | `production` / `development` / `test`      |
+| `PORT`                   | Cổng HTTP lắng nghe                        | `3000`                                     |
+| `DATABASE_URL`           | Chuỗi kết nối cơ sở dữ liệu MySQL (Prisma) | `mysql://user:pass@host:3306/trusthire_db` |
+| `JWT_SECRET`             | Khóa bí mật ký mã token JWT                | `super-secret-key-change-in-production`    |
+| `JWT_ACCESS_EXPIRES_IN`  | Thời gian hết hạn của Access Token         | `15m`                                      |
+| `JWT_REFRESH_EXPIRES_IN` | Thời gian hết hạn của Refresh Token        | `7d`                                       |
+| `FILE_STORAGE`           | Cấu hình loại hình lưu trữ file            | `local` / `s3`                             |
+| `FILE_STORAGE_DEST`      | Thư mục lưu trữ file cục bộ                | `./uploads`                                |
+| `REDIS_URL`              | Chuỗi kết nối Redis Cache                  | `redis://localhost:6379`                   |
+| `SMTP_HOST`              | Địa chỉ mail server                        | `smtp.gmail.com`                           |
+| `SMTP_PORT`              | Cổng kết nối SMTP                          | `587`                                      |
+| `SMTP_USER`              | Tài khoản gửi email                        | `recruitment@trusthire.vn`                 |
+| `SMTP_PASS`              | Mật khẩu tài khoản email                   | `email-app-password`                       |
 
 ## 16.5 CI/CD Pipeline (GitHub Actions)
 
@@ -1531,13 +1528,13 @@ graph TB
 
 Tổng hợp các quyết định kiến trúc quan trọng cho dự án TrustHire:
 
-| Quyết định (Decision) | Lý do lựa chọn (Reason) |
-|-----------------------|------------------------|
-| **React + Vite** | Tối ưu thời gian build và Hot Module Replacement (HMR), mang lại trải nghiệm phát triển mượt mà nhất cho ứng dụng Single Page Application. |
-| **Prisma ORM** | Cung cấp khả năng Type-safe tối ưu cho TypeScript, tự động tạo migrations chính xác, giảm thiểu rủi ro lỗi truy vấn cơ sở dữ liệu. |
-| **Clean Architecture** | Giúp tách biệt hoàn toàn Logic nghiệp vụ cốt lõi khỏi Database, Framework và các tác nhân bên ngoài, tạo điều kiện thuận lợi cho việc viết Unit Tests độc lập và nâng cao tính bảo trì. |
-| **JWT + Refresh Token** | Đảm bảo tính Stateless cho hệ thống xác thực, tối ưu hiệu năng scale ngang đồng thời đảm bảo bảo mật qua cơ chế thu hồi token (token revocation) linh hoạt. |
-| **Repository Pattern** | Tạo lớp trừu tượng (Abstraction Layer) ngăn chặn sự phụ thuộc trực tiếp của Business Logic vào Prisma ORM hay MySQL, cho phép dễ dàng chuyển đổi hoặc mock khi viết Test. |
-| **Zod** | Thực hiện schema validation mạnh mẽ ở runtime cho cả Request DTOs, tự động suy luận kiểu dữ liệu (Type Inference) đồng bộ hoàn hảo với TypeScript. |
-| **Pino Logger** | Thư viện Logging có hiệu năng cực cao, ghi nhận log dạng cấu trúc JSON, giúp tích hợp tốt với các công cụ phân tích log tập trung. |
-| **Modular Monolith** | Phù hợp với mô hình MVP của TrustHire, giảm bớt sự phức tạp của hạ tầng Microservices ban đầu nhưng vẫn đảm bảo tính module độc lập để dễ dàng phân tách dịch vụ trong tương lai khi tích hợp AI. |
+| Quyết định (Decision)   | Lý do lựa chọn (Reason)                                                                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **React + Vite**        | Tối ưu thời gian build và Hot Module Replacement (HMR), mang lại trải nghiệm phát triển mượt mà nhất cho ứng dụng Single Page Application.                                                        |
+| **Prisma ORM**          | Cung cấp khả năng Type-safe tối ưu cho TypeScript, tự động tạo migrations chính xác, giảm thiểu rủi ro lỗi truy vấn cơ sở dữ liệu.                                                                |
+| **Clean Architecture**  | Giúp tách biệt hoàn toàn Logic nghiệp vụ cốt lõi khỏi Database, Framework và các tác nhân bên ngoài, tạo điều kiện thuận lợi cho việc viết Unit Tests độc lập và nâng cao tính bảo trì.           |
+| **JWT + Refresh Token** | Đảm bảo tính Stateless cho hệ thống xác thực, tối ưu hiệu năng scale ngang đồng thời đảm bảo bảo mật qua cơ chế thu hồi token (token revocation) linh hoạt.                                       |
+| **Repository Pattern**  | Tạo lớp trừu tượng (Abstraction Layer) ngăn chặn sự phụ thuộc trực tiếp của Business Logic vào Prisma ORM hay MySQL, cho phép dễ dàng chuyển đổi hoặc mock khi viết Test.                         |
+| **Zod**                 | Thực hiện schema validation mạnh mẽ ở runtime cho cả Request DTOs, tự động suy luận kiểu dữ liệu (Type Inference) đồng bộ hoàn hảo với TypeScript.                                                |
+| **Pino Logger**         | Thư viện Logging có hiệu năng cực cao, ghi nhận log dạng cấu trúc JSON, giúp tích hợp tốt với các công cụ phân tích log tập trung.                                                                |
+| **Modular Monolith**    | Phù hợp với mô hình MVP của TrustHire, giảm bớt sự phức tạp của hạ tầng Microservices ban đầu nhưng vẫn đảm bảo tính module độc lập để dễ dàng phân tách dịch vụ trong tương lai khi tích hợp AI. |

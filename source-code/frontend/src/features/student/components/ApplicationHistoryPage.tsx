@@ -44,6 +44,11 @@ export default function ApplicationHistoryPage() {
     refetch();
   };
 
+  const handleWithdrawSuccess = () => {
+    // Refetch the current page to show updated data
+    refetch();
+  };
+
   return (
     <div className="min-h-screen bg-paper">
       <div className="mx-auto max-w-3xl px-4 py-8 md:px-6 md:py-12">
@@ -88,6 +93,7 @@ export default function ApplicationHistoryPage() {
                     key={application.id}
                     application={application}
                     isLast={index === historyData.items.length - 1}
+                    onWithdrawSuccess={handleWithdrawSuccess}
                   />
                 ))}
               </div>

@@ -18,4 +18,29 @@ export const ENDPOINTS = {
     APPLICATIONS: "/student/applications",
     JOB_DETAIL: (jobId: string) => `/student/jobs/${jobId}`,
   },
+  EMPLOYER: {
+    COMPANY_PROFILE: "/employer/company-profile",
+    APPLICANTS: "/employer/applicants",
+    APPLICANT_DETAIL: (applicationId: string) =>
+      `/employer/applicants/${applicationId}`,
+  },
+  JOB: {
+    CREATE: "/jobs",
+    UPDATE: (jobId: string) => `/jobs/${jobId}`,
+    SEARCH: "/jobs/search",
+  },
+  EMPLOYER_JOB: {
+    LIST: "/employer/jobs",
+    SUBMIT: (jobId: string) => `/employer/jobs/${jobId}/submit`,
+    CLOSE: (jobId: string) => `/employer/jobs/${jobId}/close`,
+  },
+  ADMIN: {
+    DASHBOARD: "/admin/dashboard",
+    VERIFY_EMPLOYER: (employerId: string) =>
+      `/admin/employers/${employerId}/verify`,
+    APPROVE_JOB: (jobId: string) => `/admin/jobs/${jobId}/approve`,
+    REJECT_JOB: (jobId: string) => `/admin/jobs/${jobId}/reject`,
+    USERS: "/admin/users",
+    UPDATE_USER_STATUS: (userId: string) => `/admin/users/${userId}/status`,
+  },
 } as const;

@@ -1,0 +1,1 @@
+export { PrismaAdminRepository } from "./repositories";
