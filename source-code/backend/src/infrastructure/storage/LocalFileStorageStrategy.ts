@@ -96,9 +96,8 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
   /** Resolved absolute path to the upload root directory. */
   private readonly uploadRoot: string;
 
-  constructor() {
-    const envRoot = process.env.UPLOAD_ROOT?.trim();
-    this.uploadRoot = path.resolve(envRoot || DEFAULT_UPLOAD_ROOT);
+  constructor(uploadRoot: string) {
+    this.uploadRoot = path.resolve(uploadRoot);
     logger.info({ uploadRoot: this.uploadRoot }, "LocalFileStorageStrategy initialized");
   }
 

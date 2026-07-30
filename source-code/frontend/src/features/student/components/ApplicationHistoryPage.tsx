@@ -1,20 +1,8 @@
-/**
- * Student Application History Page – implements TSK-FE-ST-203.
- *
- * ═══════════════════════════════════════════════════════════════════
- * PAGE COMPONENT (Presentation Layer)
- * ═══════════════════════════════════════════════════════════════════
- *
- *   - ✅ Displays application history with vertical timeline
- *   - ✅ Server-side pagination using TanStack Query
- *   - ✅ Loading skeleton state
- *   - ✅ Empty state
- *   - ✅ Error state with retry button
- *   - ✅ Status badges following design.md (Applied → Under Review → Accepted/Rejected/Withdrawn)
- *   - ❌ No direct API calls – uses service layer via hooks
- *   - ❌ No business logic – delegated to hooks / service
+﻿/**
+ * Student Application History Page - implements TSK-FE-ST-203.
  */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useApplicationHistory,
   APPLICATION_HISTORY_PAGE_SIZE,
@@ -26,6 +14,7 @@ import ApplicationHistoryPagination from "./ApplicationHistoryPagination";
 
 export default function ApplicationHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   const {
     data: historyData,
@@ -45,8 +34,11 @@ export default function ApplicationHistoryPage() {
   };
 
   const handleWithdrawSuccess = () => {
-    // Refetch the current page to show updated data
     refetch();
+  };
+
+  const handleFindJobs = () => {
+    navigate("/student/jobs");
   };
 
   return (
@@ -55,10 +47,10 @@ export default function ApplicationHistoryPage() {
         {/* Page header */}
         <div className="mb-8">
           <h1 className="font-display text-2xl font-semibold text-ink md:text-3xl">
-            Lịch sử ứng tuyển
+            Lich su ung tuyen
           </h1>
           <p className="mt-1 font-body text-sm text-ink/60">
-            Theo dõi trạng thái các đơn ứng tuyển của bạn.
+            Theo doi trang thai cac don ung tuyen cua ban.
           </p>
         </div>
 
@@ -69,13 +61,13 @@ export default function ApplicationHistoryPage() {
             role="alert"
           >
             <p className="font-body text-sm font-medium text-danger">
-              {(error as Error).message ?? "Không thể tải lịch sử ứng tuyển."}
+              {(error as Error).message ?? "Khong the tai lich su ung tuyen."}
             </p>
             <button
               onClick={handleRetry}
               className="mt-2 rounded-seal border border-danger px-4 py-1.5 font-body text-sm text-danger transition hover:bg-danger/10"
             >
-              Thử lại
+              Thu lai
             </button>
           </div>
         )}
@@ -100,8 +92,11 @@ export default function ApplicationHistoryPage() {
             ) : (
               <ApplicationHistoryEmptyState
                 action={
-                  <button className="rounded-seal bg-primary px-6 py-2.5 font-body text-white hover:bg-primary-dark">
-                    Tìm việc làm
+                  <button
+                    onClick={handleFindJobs}
+                    className="rounded-seal bg-primary px-6 py-2.5 font-body text-white hover:bg-primary-dark"
+                  >
+                    Tim viec lam
                   </button>
                 }
               />

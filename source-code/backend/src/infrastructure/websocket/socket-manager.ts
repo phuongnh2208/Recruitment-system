@@ -39,6 +39,7 @@
 import { Server as HttpServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { logger } from "../../common/logger";
+import { config } from "../../config";
 import type { TokenProvider } from "../../modules/auth/domain/token-provider";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user";
 
@@ -73,7 +74,7 @@ export class SocketManager {
     this.io = new Server(httpServer, {
       path: NS_PATH,
       cors: {
-        origin: process.env.CLIENT_URL || "*",
+        origin: config.clientUrl || "*",
         methods: ["GET", "POST"],
         credentials: true,
       },

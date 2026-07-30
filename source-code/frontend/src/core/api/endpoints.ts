@@ -1,6 +1,6 @@
-/**
+﻿/**
  * API endpoint constants.
- * All endpoint URLs are centralized here — no hardcoded URLs in components.
+ * All endpoint URLs are centralized here - no hardcoded URLs in components.
  */
 export const ENDPOINTS = {
   AUTH: {
@@ -27,7 +27,8 @@ export const ENDPOINTS = {
   JOB: {
     CREATE: "/jobs",
     UPDATE: (jobId: string) => `/jobs/${jobId}`,
-    SEARCH: "/jobs/search",
+    SEARCH: "/jobs",
+    DETAIL: (jobId: string) => `/jobs/${jobId}`,
   },
   EMPLOYER_JOB: {
     LIST: "/employer/jobs",

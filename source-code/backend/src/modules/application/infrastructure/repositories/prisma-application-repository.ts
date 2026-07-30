@@ -266,6 +266,96 @@ export class PrismaApplicationRepository implements IApplicationRepository {
     }
   }
 
+  // ── PAGINATED METHODS ──────────────────────────────────────────────
+
+  async findByStudentIdPaginated(
+    studentId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Application[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+      const [records, total] = await Promise.all([
+        this.prisma.application.findMany({
+          where: { studentId },
+          orderBy: { appliedAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        this.prisma.application.count({ where: { studentId } }),
+      ]);
+
+      logger.debug(
+        { studentId, page, limit, count: records.length, total },
+        "Applications found by student id (paginated)",
+      );
+
+      return {
+        items: records.map((record) => this.toDomain(record)),
+        total,
+      };
+    } catch (error) {
+      logger.error(
+        { error, studentId, page, limit },
+        "Failed to find applications by student id (paginated)",
+      );
+      throw new InfrastructureException("Failed to find applications by student id (paginated)", {
+        studentId,
+        page,
+        limit,
+      });
+    }
+  }
+
+  async findByEmployerIdPaginated(
+    employerId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Application[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+      const [records, total] = await Promise.all([
+        this.prisma.application.findMany({
+          where: {
+            job: {
+              employerId,
+            },
+          },
+          orderBy: { appliedAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        this.prisma.application.count({
+          where: {
+            job: {
+              employerId,
+            },
+          },
+        }),
+      ]);
+
+      logger.debug(
+        { employerId, page, limit, count: records.length, total },
+        "Applications found by employer id (paginated)",
+      );
+
+      return {
+        items: records.map((record) => this.toDomain(record)),
+        total,
+      };
+    } catch (error) {
+      logger.error(
+        { error, employerId, page, limit },
+        "Failed to find applications by employer id (paginated)",
+      );
+      throw new InfrastructureException("Failed to find applications by employer id (paginated)", {
+        employerId,
+        page,
+        limit,
+      });
+    }
+  }
+
   // ── MAPPING — Domain ↔ Prisma ────────────────────────────────────
 
   /**

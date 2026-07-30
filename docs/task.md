@@ -190,7 +190,7 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 * **Frontend Integration**:
   - [x] **TSK-FE-AD-201**: Dashboard Admin.
   - [x] **TSK-FE-AD-202**: Trang danh sách chờ duyệt.
-  - [ ] **TSK-FE-AD-203**: Trang quản lý người dùng.
+  - [x] **TSK-FE-AD-203**: Trang quản lý người dùng.
 
 ### 4.7 Notification & Audit Module (Thông báo & Nhật ký hệ thống)
 * **Backend Development**:
@@ -281,23 +281,3 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 - **Not Started**: All tasks
 
 ---
-
-## 9. Overall Completion Metrics
-
-| Module             | Backend           | Frontend  |
-| ------------------ | ----------------- | --------- |
-| Auth               | 100%              | 0%        |
-| Student            | 100%              | 100%      |
-| Employer           | 100%              | 67% (2/3) |
-| Job                | 25% (Domain only) | 0%        |
-| Application        | 25% (Domain only) | 0%        |
-| Admin              | 0%                | 0%        |
-| Notification/Audit | 0%                | 0%        |
-| AI Extension       | 0%                | -         |
-| Integration Jobs   | 0%                | -         |
-| Testing & Security | 0%                | -         |
-| Deployment/CI/CD   | 0%                | -         |
-
-**Total Backend Modules Completion**: ~45% (Auth + Student + Employer complete, Job + Application partial, rest not started)
-**Total Frontend Features Completion**: ~30% (Student complete, Employer partial, rest not started)
-**Overall Project Completion**: ~35%

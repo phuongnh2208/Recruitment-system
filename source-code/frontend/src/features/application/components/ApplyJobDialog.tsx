@@ -116,6 +116,11 @@ export default function ApplyJobDialog({
     if (!isOpen) {
       setIsSuccess(false);
       setApplicationData(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
       setValue("cvId", "");
       setValue("coverLetter", "");
     }

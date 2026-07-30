@@ -5,7 +5,7 @@ import { EmployerProfileFactory } from "../domain/employer-profile-factory";
 import { UpdateCompanyProfileUseCase } from "../application/use-cases/update-company-profile-use-case";
 import { GetMyApplicantsUseCase } from "../application/use-cases/get-my-applicants-use-case";
 import { ViewApplicantDetailsUseCase } from "../application/use-cases/view-applicant-details-use-case";
-import type { IApplicationRepository } from "../application/use-cases/get-my-applicants-use-case";
+import type { IApplicationRepository } from "../../application/domain/repositories/application-repository";
 import { EmployerController } from "../presentation/controllers/employer-controller";
 import { createEmployerRouter } from "../presentation/routes/employer-routes";
 

@@ -48,6 +48,7 @@ import pino from "pino";
 import pinoHttp from "pino-http";
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { config } from "../../config";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -70,12 +71,12 @@ const REDACT_CONFIG = {
 /**
  * The single shared Pino logger instance.
  *
- * Configured via environment variable `LOG_LEVEL` (defaults to `"info"`).
+ * Configured via config's logLevel (defaults to `"info"`).
  * Redaction rules are applied globally so no sensitive data can leak through
  * ad-hoc `logger.info()` calls.
  */
 export const logger = pino({
-  level: process.env.LOG_LEVEL || "info",
+  level: config.logLevel,
   redact: REDACT_CONFIG,
 });
 

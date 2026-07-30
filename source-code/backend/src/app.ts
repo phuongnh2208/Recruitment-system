@@ -12,8 +12,8 @@
  *  3. Wire module routers into the Express app
  *  4. Register global middleware (helmet, cors, compression, json, logger)
  *  5. Register global error handler and 404 handler
- *  6. Register health check endpoint
- *  7. Log startup information (environment, port, registered modules)
+ *  6. Register health check endpoint (database, uptime, timestamp, environment)
+ *  7. Log startup information (environment, port, registered modules, node version)
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * CLEAN ARCHITECTURE BOUNDARIES
@@ -31,18 +31,17 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
-import http from "node:http";
-import * as dotenv from "dotenv";
 
 import { PrismaClient } from "./generated/prisma";
 import { logger, httpLoggerMiddleware } from "./common/logger";
 import { createAuthGuard } from "./common/guards/auth-guard";
 import { requireRoles } from "./common/guards/roles-guard";
+import { Role } from "./common/types/role";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions-filter";
 import { JwtTokenProvider } from "./infrastructure/security/jwt-token-provider";
 import { SocketManager, NotificationGateway } from "./infrastructure/websocket";
-import { EmailServiceAdapter } from "./infrastructure/email/email-service-adapter";
-import { LocalFileStorage } from "./infrastructure/file-storage/local-file-storage";
+import { EmailServiceAdapter } from "./infrastructure/email/EmailServiceAdapter";
+import { LocalFileStorageStrategy } from "./infrastructure/storage/LocalFileStorageStrategy";
 import { IFileStorageStrategy } from "./common/interfaces/file-storage-strategy";
 import { IEmailService } from "./common/interfaces/IEmailService";
 
@@ -54,10 +53,16 @@ import { createJobModule } from "./modules/job/composition/job-module";
 import { createApplicationModule } from "./modules/application/composition/application-module";
 import { createAdminModule } from "./modules/admin/composition/admin-module";
 
+// ── Repositories ──────────────────────────────────────────────────────────────
+import { PrismaApplicationRepository } from "./modules/application/infrastructure/repositories/prisma-application-repository";
+import { PrismaJobPostingRepository } from "./modules/job/infrastructure/repositories/prisma-job-posting-repository";
+
 // ── Config ────────────────────────────────────────────────────────────────────
 import { config } from "./config";
 
-dotenv.config();
+// ── Application Metrics ───────────────────────────────────────────────────────
+const startTime = Date.now();
+let isDatabaseConnected = false;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // SHARED SINGLETONS
@@ -66,10 +71,23 @@ dotenv.config();
 /**
  * Single PrismaClient instance for the entire application.
  * Created once here and injected into all modules.
+ * Uses config-based logging levels.
  */
 const prisma = new PrismaClient({
-  log: config.env === "development" ? ["query", "error", "warn"] : ["error"],
+  log: config.env === "development" ? ["error", "warn"] : ["error"],
 });
+
+// Verify database connectivity on startup
+prisma
+  .$connect()
+  .then(() => {
+    isDatabaseConnected = true;
+    logger.info("Database connection established successfully.");
+  })
+  .catch((err) => {
+    isDatabaseConnected = false;
+    logger.error({ err }, "Failed to connect to database on startup.");
+  });
 
 /**
  * Single JWT Token Provider instance.
@@ -83,8 +101,16 @@ const authGuard = createAuthGuard(tokenProvider);
 
 /**
  * Single RoleGuard factory (requireRoles).
+ * This is a factory function that creates role-based middleware.
  */
 const roleGuard = requireRoles;
+
+/**
+ * Pre-created role-specific middleware functions for modules that expect middleware.
+ */
+const studentRoleGuard = requireRoles(Role.STUDENT);
+const employerRoleGuard = requireRoles(Role.EMPLOYER);
+const adminRoleGuard = requireRoles(Role.ADMINISTRATOR);
 
 /**
  * Single Email Service instance.
@@ -94,10 +120,17 @@ const emailService: IEmailService = new EmailServiceAdapter();
 /**
  * Single File Storage Strategy instance.
  */
-const fileStorage: IFileStorageStrategy = new LocalFileStorage(config.uploadDir);
+const fileStorage: IFileStorageStrategy = new LocalFileStorageStrategy(config.uploadRoot);
+
+/**
+ * Shared Repositories (created once, injected into multiple modules)
+ */
+const applicationRepository = new PrismaApplicationRepository(prisma);
+const jobPostingRepository = new PrismaJobPostingRepository(prisma);
 
 /**
  * Socket.io infrastructure (created once, shared with modules that need it).
+ * Initialized in server.ts after HTTP server creation.
  */
 const socketManager: SocketManager | null = null;
 const notificationGateway: NotificationGateway | null = null;
@@ -112,42 +145,48 @@ const notificationGateway: NotificationGateway | null = null;
  */
 function createModules() {
   // ── Auth Module (no cross-module dependencies) ─────────────────────────────
+  // Note: notificationGateway will be set after socket initialization
   const authModule = createAuthModule(prisma, emailService, notificationGateway!);
 
   // ── Job Module (no cross-module dependencies) ──────────────────────────────
+  // Job module expects roleGuard factory (requireRoles)
   const jobModule = createJobModule(prisma, authGuard, roleGuard);
 
   // ── Application Module (depends on Job Module's IJobPostingRepository) ─────
+  // Application module expects roleGuard factory (requireRoles)
   const applicationModule = createApplicationModule({
     prisma,
-    jobPostingRepository: jobModule.useCases.searchJobsUseCase["jobPostingRepository"], // Access via use case
+    jobPostingRepository,
     authGuard,
     roleGuard,
   });
 
-  // ── Student Module (depends on Application Module's IApplicationRepository and Job Module's IJobRepository) ─────
+  // ── Student Module (depends on Application Module's IApplicationRepository and Job Module's IJobPostingRepository) ─────
+  // Student module expects roleGuard middleware (pre-created with STUDENT role)
   const studentModule = createStudentModule({
     prisma,
     fileStorage,
-    applicationRepository: applicationModule.useCases.applyJob["applicationRepository"], // Access via use case
-    jobRepository: jobModule.useCases.searchJobsUseCase["jobPostingRepository"], // Access via use case
+    applicationRepository,
+    jobRepository: jobPostingRepository,
     authGuard,
-    roleGuard,
+    roleGuard: studentRoleGuard,
   });
 
   // ── Employer Module (depends on Application Module's IApplicationRepository) ─────
+  // Employer module expects roleGuard middleware (pre-created with EMPLOYER role)
   const employerModule = createEmployerModule({
     prisma,
-    applicationRepository: applicationModule.useCases.applyJob["applicationRepository"], // Access via use case
+    applicationRepository,
     authGuard,
-    roleGuard,
+    roleGuard: employerRoleGuard,
   });
 
   // ── Admin Module (no cross-module dependencies) ────────────────────────────
+  // Admin module expects roleGuard middleware (pre-created with ADMINISTRATOR role)
   const adminModule = createAdminModule({
     prisma,
     authGuard,
-    roleGuard,
+    roleGuard: adminRoleGuard,
   });
 
   return {
@@ -179,15 +218,16 @@ export function createApp(): express.Application {
   app.use(httpLoggerMiddleware);
 
   // ── Health Check ───────────────────────────────────────────────────────────
-  app.get("/health", (_req, res) => {
+  app.get("/health", async (_req, res) => {
+    const dbStatus = isDatabaseConnected ? "connected" : "disconnected";
     res.json({
       status: "ok",
+      database: dbStatus,
+      uptime: Math.floor((Date.now() - startTime) / 1000),
       timestamp: new Date().toISOString(),
+      environment: config.env,
     });
   });
-
-  // ── Initialize Socket.io (must be done after http server creation) ─────────
-  // Note: Socket initialization is deferred to server.ts where http server exists
 
   // ── Module Routers ─────────────────────────────────────────────────────────
   const modules = createModules();
@@ -234,8 +274,9 @@ export function logStartupInfo(): void {
   logger.info("═══════════════════════════════════════════════════════════════");
   logger.info({ env: config.env }, "Environment: {env}");
   logger.info({ port: config.port }, "Port: {port}");
+  logger.info({ nodeVersion: process.version }, "Node.js Version: {nodeVersion}");
   logger.info(
-    { databaseUrl: config.databaseUrl.replace(/\/\/.*@/, "//***@") },
+    { databaseUrl: config.database.url.replace(/\/\/.*@/, "//***@") },
     "Database: {databaseUrl}",
   );
   logger.info("─ Registered Modules ────────────────────────────────────────");
@@ -259,6 +300,8 @@ export {
   roleGuard,
   emailService,
   fileStorage,
+  applicationRepository,
+  jobPostingRepository,
   socketManager,
   notificationGateway,
   config,

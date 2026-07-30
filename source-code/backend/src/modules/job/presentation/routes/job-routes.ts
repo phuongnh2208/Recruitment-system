@@ -80,21 +80,31 @@ export function createJobRouter(
     throw new Error("createJobRouter: roleGuard is required but was not provided.");
   }
 
-  // Apply authentication to all routes in this router
-  router.use(authGuard);
-
-  // Apply role-based authorization to all routes in this router
-  router.use(roleGuard(Role.EMPLOYER));
-
-  // ─── Protected Endpoints (EMPLOYER only) ──────────────────────────
-  router.post("/jobs", controller.createJob.bind(controller));
-  router.patch("/jobs/:jobId", controller.updateJob.bind(controller));
-  router.post("/jobs/:jobId/submit", controller.submitJob.bind(controller));
-  router.patch("/jobs/:jobId/close", controller.closeJob.bind(controller));
-
   // ─── Public Endpoints ─────────────────────────────────────────────
   // GET /jobs is public – search approved jobs without authentication
   router.get("/jobs", controller.searchJobs.bind(controller));
+
+  // ─── Protected Endpoints (EMPLOYER only) ──────────────────────────
+  // Apply authentication and role guard only to mutation routes
+  router.post("/jobs", authGuard, roleGuard(Role.EMPLOYER), controller.createJob.bind(controller));
+  router.patch(
+    "/jobs/:jobId",
+    authGuard,
+    roleGuard(Role.EMPLOYER),
+    controller.updateJob.bind(controller),
+  );
+  router.post(
+    "/jobs/:jobId/submit",
+    authGuard,
+    roleGuard(Role.EMPLOYER),
+    controller.submitJob.bind(controller),
+  );
+  router.patch(
+    "/jobs/:jobId/close",
+    authGuard,
+    roleGuard(Role.EMPLOYER),
+    controller.closeJob.bind(controller),
+  );
 
   return router;
 }

@@ -1,21 +1,5 @@
-/**
- * Employer Job Dashboard – main page component for managing job postings.
- *
- * ═══════════════════════════════════════════════════════════════════
- * PAGE COMPONENT (Presentation Layer)
- * ═══════════════════════════════════════════════════════════════════
- *
- *   - ✅ Displays list of employer's job postings
- *   - ✅ Search and filter by state
- *   - ✅ Server-side pagination using TanStack Query
- *   - ✅ Loading skeleton state
- *   - ✅ Empty state
- *   - ✅ Error state with retry button
- *   - ✅ Status badges following design.md
- *   - ✅ Action buttons (Edit, Submit, Close)
- *   - ✅ Create New Job button
- *   - ❌ No direct API calls – uses service layer via hooks
- *   - ❌ No business logic – delegated to hooks / service
+﻿/**
+ * Employer Job Dashboard - main page component for managing job postings.
  */
 
 import { useState } from "react";
@@ -73,17 +57,16 @@ export default function EmployerJobDashboard() {
   const handleSubmit = async (jobId: string) => {
     try {
       await submitMutation.mutateAsync(jobId);
-    } catch (err) {
-      // Error is handled by the mutation's onError or can be displayed here
-      console.error("Failed to submit job:", err);
+    } catch {
+      // Error is handled by the mutation onError callback
     }
   };
 
   const handleClose = async (jobId: string) => {
     try {
       await closeMutation.mutateAsync(jobId);
-    } catch (err) {
-      console.error("Failed to close job:", err);
+    } catch {
+      // Error is handled by the mutation onError callback
     }
   };
 
@@ -100,10 +83,10 @@ export default function EmployerJobDashboard() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink md:text-3xl">
-              Quản lý tin tuyển dụng
+              Quan ly tin tuyen dung
             </h1>
             <p className="mt-1 font-body text-sm text-ink/60">
-              Xem và quản lý danh sách tin tuyển dụng của doanh nghiệp bạn.
+              Xem va quan ly danh sach tin tuyen dung cua doanh nghiep ban.
             </p>
           </div>
           <button
@@ -111,7 +94,7 @@ export default function EmployerJobDashboard() {
             onClick={handleCreateNew}
             className="rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            Tạo tin mới
+            Tao tin moi
           </button>
         </div>
 
@@ -130,13 +113,13 @@ export default function EmployerJobDashboard() {
           >
             <p className="font-body text-sm font-medium text-danger">
               {(error as Error).message ??
-                "Không thể tải danh sách tin tuyển dụng."}
+                "Khong the tai danh sach tin tuyen dung."}
             </p>
             <button
               onClick={() => refetch()}
               className="mt-2 rounded-seal border border-danger px-4 py-1.5 font-body text-sm text-danger transition hover:bg-danger/10"
             >
-              Thử lại
+              Thu lai
             </button>
           </div>
         )}
@@ -177,7 +160,7 @@ export default function EmployerJobDashboard() {
               <EmployerJobEmptyState
                 message={
                   search || state
-                    ? "Không tìm thấy tin tuyển dụng phù hợp với bộ lọc của bạn."
+                    ? "Khong tim thay tin tuyen dung phu hop voi bo loc cua ban."
                     : undefined
                 }
                 action={
@@ -187,7 +170,7 @@ export default function EmployerJobDashboard() {
                       onClick={handleCreateNew}
                       className="rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      Tạo tin tuyển dụng đầu tiên
+                      Tao tin tuyen dung dau tien
                     </button>
                   ) : undefined
                 }

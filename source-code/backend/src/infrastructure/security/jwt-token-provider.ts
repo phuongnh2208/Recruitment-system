@@ -1,11 +1,6 @@
 import jwt, { JwtPayload, SignOptions, VerifyErrors } from "jsonwebtoken";
 import { TokenProvider, TokenPayload } from "../../modules/auth/domain/token-provider";
-
-/**
- * Default expiry durations used when environment variables are not set.
- */
-const DEFAULT_ACCESS_EXPIRY = "15m";
-const DEFAULT_REFRESH_EXPIRY = "7d";
+import { config } from "../../config";
 
 /**
  * Concrete Strategy — JWT implementation of TokenProvider.
@@ -36,18 +31,13 @@ const DEFAULT_REFRESH_EXPIRY = "7d";
  *   (JWT_ACCESS_SECRET vs JWT_REFRESH_SECRET).
  *
  * ═══════════════════════════════════════════════════════════════════
- * CONFIGURATION (All from Environment — NO hardcoded values)
+ * CONFIGURATION (From centralized config)
  * ═══════════════════════════════════════════════════════════════════
  *
- * Required:
- *   JWT_ACCESS_SECRET   — Secret key used to sign Access Tokens.
- *   JWT_REFRESH_SECRET  — Secret key used to sign Refresh Tokens.
- *
- * Optional (with sensible defaults):
- *   JWT_ACCESS_EXPIRES_IN   — Access Token expiry duration
- *                             (default: "15m" — 15 minutes).
- *   JWT_REFRESH_EXPIRES_IN  — Refresh Token expiry duration
- *                             (default: "7d" — 7 days).
+ * - jwt.secret            — Access token secret
+ * - jwt.refreshSecret     — Refresh token secret
+ * - jwt.accessTokenExpiry — Access token expiry (default: "15m")
+ * - jwt.refreshTokenExpiry — Refresh token expiry (default: "7d")
  *
  * ═══════════════════════════════════════════════════════════════════
  * LAYER BOUNDARY
@@ -57,7 +47,7 @@ const DEFAULT_REFRESH_EXPIRY = "7d";
  * except at the Composition Root (main.ts). Use Cases and AuthGuard
  * receive TokenProvider via constructor injection only.
  *
- *   ✅ Composition Root (main.ts):
+ *   ✅ Composition Root (app.ts):
  *      const tokenProvider = new JwtTokenProvider();
  *      const authGuard = createAuthGuard(tokenProvider);
  *
@@ -65,9 +55,6 @@ const DEFAULT_REFRESH_EXPIRY = "7d";
  *      private tokenProvider = new JwtTokenProvider();  // FORBIDDEN
  *
  * ═══════════════════════════════════════════════════════════════════
- *
- * TODO (TSK-INF-204): Replace generic Error throws with typed exceptions
- * (e.g., AuthenticationException) once the exception hierarchy is implemented.
  */
 export class JwtTokenProvider implements TokenProvider {
   private readonly accessSecret: string;
@@ -76,17 +63,10 @@ export class JwtTokenProvider implements TokenProvider {
   private readonly refreshExpiresIn: string;
 
   constructor() {
-    this.accessSecret = process.env.JWT_ACCESS_SECRET || "";
-    this.refreshSecret = process.env.JWT_REFRESH_SECRET || "";
-    this.accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || DEFAULT_ACCESS_EXPIRY;
-    this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || DEFAULT_REFRESH_EXPIRY;
-
-    if (!this.accessSecret) {
-      throw new Error("JWT_ACCESS_SECRET is not configured. Set it in environment variables.");
-    }
-    if (!this.refreshSecret) {
-      throw new Error("JWT_REFRESH_SECRET is not configured. Set it in environment variables.");
-    }
+    this.accessSecret = config.jwt.secret;
+    this.refreshSecret = config.jwt.refreshSecret;
+    this.accessExpiresIn = config.jwt.accessTokenExpiry;
+    this.refreshExpiresIn = config.jwt.refreshTokenExpiry;
   }
 
   /**

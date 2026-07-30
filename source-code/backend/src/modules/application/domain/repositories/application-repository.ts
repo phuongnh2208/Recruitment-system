@@ -3,7 +3,7 @@ import { Application } from "../entities/application";
 /**
  * Repository interface for Application aggregate root.
  *
- * ═══════════════════════════════════════════════════════════════════
+ * ══════════════════════════════════════════════════════════════════
  * REPOSITORY PATTERN
  * ═══════════════════════════════════════════════════════════════════
  *
@@ -90,4 +90,32 @@ export interface IApplicationRepository {
    * @returns `true` if the application exists, `false` otherwise.
    */
   exists(id: string): Promise<boolean>;
+
+  /**
+   * Find applications for a student with pagination.
+   *
+   * @param studentId - The unique identifier of the student.
+   * @param page      - The page number (1-based).
+   * @param limit     - The number of items per page.
+   * @returns An object containing the items array and total count.
+   */
+  findByStudentIdPaginated(
+    studentId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Application[]; total: number }>;
+
+  /**
+   * Find applications for an employer with pagination.
+   *
+   * @param employerId - The unique identifier of the employer.
+   * @param page       - The page number (1-based).
+   * @param limit      - The number of items per page.
+   * @returns An object containing the items array and total count.
+   */
+  findByEmployerIdPaginated(
+    employerId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Application[]; total: number }>;
 }
