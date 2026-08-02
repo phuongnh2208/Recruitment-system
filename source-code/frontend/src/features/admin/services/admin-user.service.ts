@@ -41,7 +41,7 @@ async function fetchUsers(
   const { page, pageSize, filters } = params;
   const searchParams = new URLSearchParams();
   searchParams.set("page", page.toString());
-  searchParams.set("pageSize", pageSize.toString());
+  searchParams.set("limit", pageSize.toString());
 
   if (filters.search) {
     searchParams.set("search", filters.search);
@@ -69,7 +69,7 @@ async function fetchUsers(
  */
 async function updateUserStatus(input: UpdateUserStatusInput): Promise<void> {
   await axiosInstance.patch(ENDPOINTS.ADMIN.UPDATE_USER_STATUS(input.userId), {
-    status: input.status,
+    isActive: input.isActive,
   });
 }
 

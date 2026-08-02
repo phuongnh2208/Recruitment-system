@@ -30,3 +30,12 @@ export interface UpdateProfileResponse {
   success: true;
   studentProfileId: string;
 }
+
+/** Response from the get profile API. */
+export interface GetProfileResponse {
+  success: boolean;
+  data: {
+    profile: StudentProfile | null;
+    exists: boolean;
+  };
+}

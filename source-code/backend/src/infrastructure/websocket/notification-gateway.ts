@@ -1,35 +1,33 @@
 /**
  * NotificationGateway – WebSocket Event Handler
  *
- * ═══════════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════
  * PURPOSE
- * ═══════════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════
  *
- * Provides a clean interface for the future Notification Module to send
- * real-time events through Socket.io. This gateway wraps the SocketManager
- * and exposes domain-friendly methods.
+ * Provides a clean interface for the Notification Module to send
+ * real-time events through Socket.io. This gateway wraps the
+ * {@link SocketManagerPort} abstraction and exposes domain-friendly
+ * methods.
  *
- * ═══════════════════════════════════════════════════════════════════════════════
- * HOW NOTIFICATION MODULE WILL USE THIS
- * ═══════════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════
+ * DEPENDENCY INVERSION
+ * ═══════════════════════════════════════════════════════════════════
  *
- *   // In NotificationModule's infrastructure layer:
- *   import { notificationGateway } from "../../infrastructure/websocket";
+ * The gateway depends on the {@link SocketManagerPort} interface, not on
+ * the concrete SocketManager class. This keeps the notification layer
+ * decoupled from the Socket.io infrastructure.
  *
- *   // After persisting a notification:
- *   await notificationGateway.sendNotification(userId, {
- *     id: notif.id,
- *     type: notif.type,
- *     title: notif.title,
- *     message: notif.message,
- *     data: notif.data,
- *     createdAt: notif.createdAt,
- *   });
- *
- * ═══════════════════════════════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════
  */
 
-import { SocketManager } from "./socket-manager";
+import { SocketManagerPort } from "../../common/interfaces/socket-manager-port";
+
+export interface NotificationGatewayPort {
+  sendNotification(userId: string, notification: unknown): void;
+  sendUnreadCount(userId: string, unreadCount: number): void;
+  broadcastAnnouncement(title: string, message: string, data?: unknown): void;
+}
 
 // ── Event name constants ──────────────────────────────────────────────────────
 
@@ -58,8 +56,8 @@ export const NotificationEvents = {
 
 // ── NotificationGateway ───────────────────────────────────────────────────────
 
-export class NotificationGateway {
-  constructor(private readonly socketManager: SocketManager) {}
+export class NotificationGateway implements NotificationGatewayPort {
+  constructor(private readonly socketManager: SocketManagerPort) {}
 
   /**
    * Send a real-time notification to a specific user.

@@ -60,10 +60,12 @@
  */
 
 import { Application } from "../../../application/domain/entities/application";
+import { IStudentProfileRepository } from "../../domain/repositories/student-profile-repository";
 import {
   ValidationException,
   BusinessException,
   InfrastructureException,
+  NotFoundException,
 } from "../../../../common/exceptions";
 import { logger } from "../../../../common/logger";
 
@@ -125,7 +127,10 @@ export interface GetApplicationHistoryResult {
 }
 
 export class GetApplicationHistoryUseCase {
-  constructor(private readonly applicationRepository: IApplicationRepository) {}
+  constructor(
+    private readonly applicationRepository: IApplicationRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
+  ) {}
 
   /**
    * Retrieve the application history for a student with pagination.
@@ -165,9 +170,16 @@ export class GetApplicationHistoryUseCase {
         "History Requested",
       );
 
+      const studentProfile = await this.studentProfileRepository.findByUserId(command.studentId);
+
+      if (!studentProfile?.id) {
+        logger.warn({ userId: command.studentId }, "Student profile not found");
+        throw new NotFoundException(`Student profile for user ${command.studentId} not found`);
+      }
+
       // ── 5. Fetch paginated data from repository ────────────────────
       const { items, total } = await this.applicationRepository.findByStudentIdPaginated(
-        command.studentId,
+        studentProfile.id,
         command.page,
         command.limit,
       );
@@ -178,7 +190,7 @@ export class GetApplicationHistoryUseCase {
       // ── 7. Log success ─────────────────────────────────────────────
       logger.info(
         {
-          studentId: command.studentId,
+          studentId: studentProfile.id,
           count: items.length,
           page: command.page,
         },

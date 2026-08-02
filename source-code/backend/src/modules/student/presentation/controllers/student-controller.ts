@@ -1,10 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { UpdateProfileUseCase } from "../../../student/application/use-cases/update-profile-use-case";
+import { GetProfileUseCase } from "../../../student/application/use-cases/get-profile-use-case";
 import { UploadCVUseCase } from "../../../student/application/use-cases/upload-cv-use-case";
 import { ManageCVListUseCase } from "../../../student/application/use-cases/manage-cv-list-use-case";
 import { GetApplicationHistoryUseCase } from "../../../student/application/use-cases/get-application-history-use-case";
 import { GetJobDetailUseCase } from "../../../student/application/use-cases/get-job-detail-use-case";
+import { SearchJobsUseCase } from "../../../job/application/use-cases/search-jobs-use-case";
+import { AuthenticationException } from "../../../../common/exceptions";
 
 /**
  * StudentController
@@ -56,10 +59,12 @@ import { GetJobDetailUseCase } from "../../../student/application/use-cases/get-
 export class StudentController {
   constructor(
     private readonly updateProfileUseCase: UpdateProfileUseCase,
+    private readonly getProfileUseCase: GetProfileUseCase,
     private readonly uploadCVUseCase: UploadCVUseCase,
     private readonly manageCVListUseCase: ManageCVListUseCase,
     private readonly getApplicationHistoryUseCase: GetApplicationHistoryUseCase,
     private readonly getJobDetailUseCase: GetJobDetailUseCase,
+    private readonly searchJobsUseCase: SearchJobsUseCase,
   ) {}
 
   // ── Zod Schemas ─────────────────────────────────────────────────
@@ -79,6 +84,16 @@ export class StudentController {
   private readonly historyQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(10),
+  });
+
+  /** Schema for job search query parameters. */
+  private readonly searchJobsQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
+    keyword: z.string().optional().default(""),
+    location: z.string().optional().default(""),
+    salaryMin: z.coerce.number().int().nonnegative().optional().nullable(),
+    salaryMax: z.coerce.number().int().nonnegative().optional().nullable(),
   });
 
   // ── Endpoint Methods ────────────────────────────────────────────
@@ -105,19 +120,56 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async updateProfile(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const body = this.updateProfileSchema.parse(req.body);
-    const result = await this.updateProfileUseCase.execute({
-      userId: req.user!.id,
-      fullName: body.fullName,
-      phone: body.phone,
-      address: body.address,
-      school: body.school,
-      major: body.major,
-      graduationYear: body.graduationYear,
-      avatarUrl: body.avatarUrl,
-    });
-    res.status(200).json(result);
+  async updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const body = this.updateProfileSchema.parse(req.body);
+      const result = await this.updateProfileUseCase.execute({
+        userId: req.user.id,
+        fullName: body.fullName,
+        phone: body.phone,
+        address: body.address,
+        school: body.school,
+        major: body.major,
+        graduationYear: body.graduationYear,
+        avatarUrl: body.avatarUrl,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /student/profile
+   *
+   * Retrieves the authenticated student's profile information.
+   *
+   * **Authentication:** Requires a valid JWT. `req.user.id` is used as
+   * the student's userId.
+   *
+   * **Response** – `200 OK` with the profile data or null if not found.
+   *
+   * @param req  - Express Request (with `req.user` set by AuthGuard)
+   * @param res  - Express Response
+   * @param next - Express NextFunction (error forwarder)
+   */
+  async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.getProfileUseCase.execute({
+        userId: req.user.id,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -140,16 +192,35 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async uploadCV(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const file = (req as any).file!;
-    const result = await this.uploadCVUseCase.execute({
-      studentId: req.user!.id,
-      originalFileName: file.originalname,
-      mimeType: file.mimetype,
-      buffer: file.buffer,
-      size: file.size,
-    });
-    res.status(201).json(result);
+  async uploadCV(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const file = (req as Request & { file?: Express.Multer.File }).file;
+      if (!file) {
+        next(new AuthenticationException("File is required."));
+        return;
+      }
+      const result = await this.uploadCVUseCase.execute({
+        studentId: req.user.id,
+        originalFileName: file.originalname,
+        mimeType: file.mimetype,
+        buffer: file.buffer,
+        size: file.size,
+      });
+      // Frontend expects { success: true, data: CVMetadata }
+      // Need to fetch the created CV to return full metadata
+      const cv = await this.manageCVListUseCase.list({ studentId: req.user.id });
+      const createdCv = cv.cvs.find((c) => c.id === result.cvId);
+      res.status(201).json({
+        success: true,
+        data: createdCv,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -166,11 +237,23 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async listCV(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.manageCVListUseCase.list({
-      studentId: req.user!.id,
-    });
-    res.status(200).json(result);
+  async listCV(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.manageCVListUseCase.list({
+        studentId: req.user.id,
+      });
+      // Frontend expects CVMetadata[] directly, not { cvs: CVMetadata[] }
+      res.status(200).json({
+        success: true,
+        data: result.cvs,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -190,12 +273,20 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async deleteCV(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.manageCVListUseCase.delete({
-      studentId: req.user!.id,
-      cvId: req.params.cvId,
-    });
-    res.status(200).json(result);
+  async deleteCV(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.manageCVListUseCase.delete({
+        studentId: req.user.id,
+        cvId: req.params.cvId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -215,12 +306,20 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async setDefaultCV(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.manageCVListUseCase.setDefault({
-      studentId: req.user!.id,
-      cvId: req.params.cvId,
-    });
-    res.status(200).json(result);
+  async setDefaultCV(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.manageCVListUseCase.setDefault({
+        studentId: req.user.id,
+        cvId: req.params.cvId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -242,14 +341,22 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async getApplicationHistory(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const query = this.historyQuerySchema.parse(req.query);
-    const result = await this.getApplicationHistoryUseCase.execute({
-      studentId: req.user!.id,
-      page: query.page,
-      limit: query.limit,
-    });
-    res.status(200).json(result);
+  async getApplicationHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const query = this.historyQuerySchema.parse(req.query);
+      const result = await this.getApplicationHistoryUseCase.execute({
+        studentId: req.user.id,
+        page: query.page,
+        limit: query.limit,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -267,10 +374,62 @@ export class StudentController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async getJobDetail(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.getJobDetailUseCase.execute({
-      jobId: req.params.jobId,
-    });
-    res.status(200).json(result);
+  async getJobDetail(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.getJobDetailUseCase.execute({
+        jobId: req.params.jobId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /student/jobs
+   *
+   * Searches for approved job postings with optional filters.
+   * Only APPROVED jobs are returned (enforced by the use case).
+   *
+   * **Query params:**
+   * - `page`      – page number (1-based, default: 1)
+   * - `limit`     – items per page (default: 10, max: 100)
+   * - `keyword`   – free-text search keyword (optional)
+   * - `location`  – location filter (optional)
+   * - `salaryMin` – minimum salary filter (optional)
+   * - `salaryMax` – maximum salary filter (optional)
+   *
+   * **Response** – `200 OK` with array of matching job postings.
+   *
+   * @param req  - Express Request
+   * @param res  - Express Response
+   * @param next - Express NextFunction (error forwarder)
+   */
+  async searchJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const query = this.searchJobsQuerySchema.parse(req.query);
+      const result = await this.searchJobsUseCase.execute({
+        page: query.page,
+        limit: query.limit,
+        keyword: query.keyword,
+        location: query.location,
+        salaryMin: query.salaryMin ?? undefined,
+        salaryMax: query.salaryMax ?? undefined,
+      });
+
+      // Transform to frontend-expected format with pagination metadata
+      const totalItems = result.jobs.length;
+      const totalPages = Math.ceil(totalItems / query.limit) || 1;
+
+      res.status(200).json({
+        items: result.jobs,
+        page: query.page,
+        size: query.limit,
+        totalPages,
+        totalItems,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }

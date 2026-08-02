@@ -5,6 +5,8 @@ import { SubmitJobPostingUseCase } from "../../application/use-cases/submit-job-
 import { UpdateJobPostingUseCase } from "../../application/use-cases/update-job-posting-use-case";
 import { CloseJobPostingUseCase } from "../../application/use-cases/close-job-posting-use-case";
 import { SearchJobsUseCase } from "../../application/use-cases/search-jobs-use-case";
+import { GetJobDetailUseCase } from "../../application/use-cases/get-job-detail-use-case";
+import { AuthenticationException } from "../../../../common/exceptions";
 
 /**
  * JobController
@@ -60,6 +62,7 @@ export class JobController {
     private readonly updateJobPostingUseCase: UpdateJobPostingUseCase,
     private readonly closeJobPostingUseCase: CloseJobPostingUseCase,
     private readonly searchJobsUseCase: SearchJobsUseCase,
+    private readonly getJobDetailUseCase: GetJobDetailUseCase,
   ) {}
 
   // ── Zod Schemas ─────────────────────────────────────────────────
@@ -123,20 +126,28 @@ export class JobController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async createJob(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const body = this.createJobSchema.parse(req.body);
-    const result = await this.createJobPostingUseCase.execute({
-      employerId: req.user!.id,
-      title: body.title,
-      description: body.description,
-      requirements: body.requirements,
-      location: body.location,
-      salaryMin: body.salaryMin,
-      salaryMax: body.salaryMax,
-      currency: body.currency,
-      expiresAt: body.expiresAt,
-    });
-    res.status(201).json(result);
+  async createJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const body = this.createJobSchema.parse(req.body);
+      const result = await this.createJobPostingUseCase.execute({
+        employerId: req.user.id,
+        title: body.title,
+        description: body.description,
+        requirements: body.requirements,
+        location: body.location,
+        salaryMin: body.salaryMin,
+        salaryMax: body.salaryMax,
+        currency: body.currency,
+        expiresAt: body.expiresAt,
+      });
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -163,20 +174,28 @@ export class JobController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async updateJob(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const body = this.updateJobSchema.parse(req.body);
-    const result = await this.updateJobPostingUseCase.execute({
-      employerId: req.user!.id,
-      jobPostingId: req.params.jobId,
-      title: body.title,
-      description: body.description,
-      requirements: body.requirements,
-      location: body.location,
-      salaryMin: body.salaryMin,
-      salaryMax: body.salaryMax,
-      expiresAt: body.expiresAt,
-    });
-    res.status(200).json(result);
+  async updateJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const body = this.updateJobSchema.parse(req.body);
+      const result = await this.updateJobPostingUseCase.execute({
+        employerId: req.user.id,
+        jobPostingId: req.params.jobId,
+        title: body.title,
+        description: body.description,
+        requirements: body.requirements,
+        location: body.location,
+        salaryMin: body.salaryMin,
+        salaryMax: body.salaryMax,
+        expiresAt: body.expiresAt,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -194,12 +213,20 @@ export class JobController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async submitJob(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.submitJobPostingUseCase.execute({
-      employerId: req.user!.id,
-      jobPostingId: req.params.jobId,
-    });
-    res.status(200).json(result);
+  async submitJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.submitJobPostingUseCase.execute({
+        employerId: req.user.id,
+        jobPostingId: req.params.jobId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -217,12 +244,20 @@ export class JobController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async closeJob(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const result = await this.closeJobPostingUseCase.execute({
-      employerId: req.user!.id,
-      jobPostingId: req.params.jobId,
-    });
-    res.status(200).json(result);
+  async closeJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.closeJobPostingUseCase.execute({
+        employerId: req.user.id,
+        jobPostingId: req.params.jobId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -245,16 +280,76 @@ export class JobController {
    * @param res  - Express Response
    * @param next - Express NextFunction (error forwarder)
    */
-  async searchJobs(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const query = this.searchJobsQuerySchema.parse(req.query);
-    const result = await this.searchJobsUseCase.execute({
-      page: query.page,
-      limit: query.limit,
-      keyword: query.keyword,
-      location: query.location,
-      salaryMin: query.salaryMin ?? undefined,
-      salaryMax: query.salaryMax ?? undefined,
-    });
-    res.status(200).json(result);
+  async searchJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const query = this.searchJobsQuerySchema.parse(req.query);
+      const result = await this.searchJobsUseCase.execute({
+        page: query.page,
+        limit: query.limit,
+        keyword: query.keyword,
+        location: query.location,
+        salaryMin: query.salaryMin ?? undefined,
+        salaryMax: query.salaryMax ?? undefined,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /jobs/:jobId
+   *
+   * Retrieves a job posting by its ID.
+   *
+   * **Path params:**
+   * - `jobId` – the unique identifier of the job posting
+   *
+   * **Response** – `200 OK` with the job posting details.
+   *
+   * @param req  - Express Request
+   * @param res  - Express Response
+   * @param next - Express NextFunction (error forwarder)
+   */
+  async getJobDetail(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.getJobDetailUseCase.execute({
+        jobId: req.params.jobId,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /jobs/employer
+   *
+   * Retrieves all job postings created by the authenticated employer.
+   *
+   * **Authentication:** Requires a valid JWT. `req.user.id` is used as
+   * the employer's userId.
+   *
+   * **Response** – `200 OK` with array of employer's job postings.
+   *
+   * @param req  - Express Request (with `req.user` set by AuthGuard)
+   * @param res  - Express Response
+   * @param next - Express NextFunction (error forwarder)
+   */
+  async getEmployerJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.searchJobsUseCase.execute({
+        page: 1,
+        limit: 100,
+        employerId: req.user.id,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 }

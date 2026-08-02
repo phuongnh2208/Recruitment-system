@@ -26,6 +26,8 @@
  *
  * ═══════════════════════════════════════════════════════════════════
  */
+import { Role } from "./role";
+
 export interface AuthenticatedUser {
   /** Unique identifier of the user (extracted from JWT `sub` claim). */
   readonly id: string;
@@ -34,5 +36,5 @@ export interface AuthenticatedUser {
   readonly email: string;
 
   /** Role assigned to the user (STUDENT | EMPLOYER | ADMINISTRATOR). */
-  readonly role: string;
+  readonly role: Role;
 }

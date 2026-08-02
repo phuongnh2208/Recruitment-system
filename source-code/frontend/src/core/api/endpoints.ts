@@ -16,7 +16,8 @@ export const ENDPOINTS = {
     CV_DELETE: (cvId: string) => `/student/cv/${cvId}`,
     CV_SET_DEFAULT: (cvId: string) => `/student/cv/${cvId}/default`,
     APPLICATIONS: "/student/applications",
-    JOB_DETAIL: (jobId: string) => `/student/jobs/${jobId}`,
+    JOB_DETAIL: (jobId: string) => `/jobs/${jobId}`,
+    JOBS: "/student/jobs",
   },
   EMPLOYER: {
     COMPANY_PROFILE: "/employer/company-profile",
@@ -31,9 +32,16 @@ export const ENDPOINTS = {
     DETAIL: (jobId: string) => `/jobs/${jobId}`,
   },
   EMPLOYER_JOB: {
-    LIST: "/employer/jobs",
-    SUBMIT: (jobId: string) => `/employer/jobs/${jobId}/submit`,
-    CLOSE: (jobId: string) => `/employer/jobs/${jobId}/close`,
+    LIST: "/jobs",
+    SUBMIT: (jobId: string) => `/jobs/${jobId}/submit`,
+    CLOSE: (jobId: string) => `/jobs/${jobId}/close`,
+  },
+  APPLICATION: {
+    APPLY: "/applications",
+    UPDATE_STATUS: (applicationId: string) =>
+      `/applications/${applicationId}/status`,
+    WITHDRAW: (applicationId: string) =>
+      `/applications/${applicationId}/withdraw`,
   },
   ADMIN: {
     DASHBOARD: "/admin/dashboard",

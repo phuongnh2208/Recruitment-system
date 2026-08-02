@@ -39,10 +39,10 @@ async function fetchEmployerJobs(
 ): Promise<EmployerJobsResponse> {
   const queryParams = new URLSearchParams();
   queryParams.set("page", String(params.page));
-  queryParams.set("size", String(params.size));
+  queryParams.set("limit", String(params.size));
 
   if (params.search) {
-    queryParams.set("search", params.search);
+    queryParams.set("keyword", params.search);
   }
 
   if (params.state) {

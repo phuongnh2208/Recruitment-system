@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { PasswordHasher } from "../../modules/auth/domain/password-hasher";
+import { config } from "../../config";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -22,7 +23,8 @@ import { PasswordHasher } from "../../modules/auth/domain/password-hasher";
  * CONFIGURATION
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * The cost factor is read from the environment variable `BCRYPT_COST_FACTOR`.
+ * The cost factor is read from the centralised `config.bcryptCostFactor`
+ * (which reads `BCRYPT_COST_FACTOR` from the environment with validation).
  * If not set, it defaults to **12** (2^12 = 4096 iterations).
  *
  * | Variable            | Required | Default | Description                            |
@@ -39,9 +41,9 @@ import { PasswordHasher } from "../../modules/auth/domain/password-hasher";
  * COST FACTOR RESOLUTION
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Resolved once at module load time:
- * 1. Read `process.env.BCRYPT_COST_FACTOR`
- * 2. If present and parseable, use that value
+ * Resolved once at module load time via `config.bcryptCostFactor`:
+ * 1. Read `BCRYPT_COST_FACTOR` from the centralised config (validated)
+ * 2. If present and within bounds (4–31), use that value
  * 3. Otherwise fall back to 12
  *
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -68,11 +70,11 @@ export class BCryptPasswordHasher implements PasswordHasher {
   /**
    * Create a BCryptPasswordHasher instance.
    *
-   * The cost factor is resolved from process.env.BCRYPT_COST_FACTOR,
+   * The cost factor is resolved from `config.bcryptCostFactor`,
    * falling back to 12 if not set or invalid.
    */
   constructor() {
-    this.costFactor = BCryptPasswordHasher.resolveCostFactor();
+    this.costFactor = config.bcryptCostFactor;
   }
 
   /**
@@ -109,27 +111,5 @@ export class BCryptPasswordHasher implements PasswordHasher {
         `Failed to compare password: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
-  }
-
-  /**
-   * Resolve the BCrypt cost factor from environment or default.
-   *
-   * Priority:
-   * 1. process.env.BCRYPT_COST_FACTOR (if valid number between 4–31)
-   * 2. 12 (safe default)
-   *
-   * @returns The resolved cost factor.
-   */
-  private static resolveCostFactor(): number {
-    const envValue = process.env.BCRYPT_COST_FACTOR?.trim();
-
-    if (envValue) {
-      const parsed = Number.parseInt(envValue, 10);
-      if (!Number.isNaN(parsed) && parsed >= 4 && parsed <= 31) {
-        return parsed;
-      }
-    }
-
-    return 12;
   }
 }

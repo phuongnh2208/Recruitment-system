@@ -121,7 +121,7 @@ import { PrismaClient } from "../../../generated/prisma";
 // ── Common ────────────────────────────────────────────────────────────────────
 import type { IEmailService } from "../../../common/interfaces/IEmailService";
 import type { INotificationStrategy } from "../../../common/interfaces/notification-strategy";
-import { createAuthGuard } from "../../../common/guards";
+import type { Request, Response, NextFunction } from "express";
 
 // ── Domain ────────────────────────────────────────────────────────────────────
 import { PasswordHasher } from "../domain/password-hasher";
@@ -143,7 +143,7 @@ import {
 } from "../../../infrastructure/notification";
 
 // ── Infrastructure — WebSocket ────────────────────────────────────────────────
-import { NotificationGateway } from "../../../infrastructure/websocket/notification-gateway";
+import { NotificationGatewayPort } from "../../../infrastructure/websocket/notification-gateway";
 
 // ── Application — Use Cases ───────────────────────────────────────────────────
 import { RegisterUseCase } from "../application/use-cases/register-use-case";
@@ -151,6 +151,7 @@ import { LoginUseCase } from "../application/use-cases/login-use-case";
 import { LogoutUseCase } from "../application/use-cases/logout-use-case";
 import { ChangePasswordUseCase } from "../application/use-cases/change-password-use-case";
 import { VerifyEmailUseCase } from "../application/use-cases/verify-email-use-case";
+import { RefreshTokenUseCase } from "../application/use-cases/refresh-token-use-case";
 
 // ── Presentation ──────────────────────────────────────────────────────────────
 import { AuthController } from "../presentation/controllers/auth-controller";
@@ -183,6 +184,7 @@ export interface AuthModule {
     logoutUseCase: LogoutUseCase;
     changePasswordUseCase: ChangePasswordUseCase;
     verifyEmailUseCase: VerifyEmailUseCase;
+    refreshTokenUseCase: RefreshTokenUseCase;
   };
 }
 
@@ -225,7 +227,8 @@ export interface AuthModule {
 export function createAuthModule(
   prismaClient: PrismaClient,
   emailService: IEmailService,
-  notificationGateway: NotificationGateway,
+  notificationGateway?: NotificationGatewayPort,
+  authGuard?: (req: Request, res: Response, next: NextFunction) => Promise<void>,
 ): AuthModule {
   // ── 1. Infrastructure Layer ────────────────────────────────────────
   //     1a. Repositories ──────────────────────────────────────────────
@@ -238,12 +241,15 @@ export function createAuthModule(
 
   //     1c. Notification Strategies ───────────────────────────────────
   const emailNotificationStrategy = new EmailNotificationStrategy(emailService);
-  const webSocketNotificationStrategy = new WebSocketNotificationStrategy(notificationGateway);
 
-  const notificationStrategy: INotificationStrategy = new CompositeNotificationStrategy([
-    emailNotificationStrategy,
-    webSocketNotificationStrategy,
-  ]);
+  // WebSocket notification is optional - only create if gateway is provided
+  const strategies: INotificationStrategy[] = [emailNotificationStrategy];
+  if (notificationGateway) {
+    const webSocketNotificationStrategy = new WebSocketNotificationStrategy(notificationGateway);
+    strategies.push(webSocketNotificationStrategy);
+  }
+
+  const notificationStrategy: INotificationStrategy = new CompositeNotificationStrategy(strategies);
 
   // ── 2. Domain Layer ────────────────────────────────────────────────
   const userFactory = new UserFactory(passwordHasher);
@@ -275,6 +281,8 @@ export function createAuthModule(
 
   const verifyEmailUseCase = new VerifyEmailUseCase(userRepository, tokenProvider);
 
+  const refreshTokenUseCase = new RefreshTokenUseCase(refreshTokenRepository, tokenProvider);
+
   // ── 4. Presentation Layer ──────────────────────────────────────────
   const controller = new AuthController(
     registerUseCase,
@@ -282,9 +290,9 @@ export function createAuthModule(
     logoutUseCase,
     changePasswordUseCase,
     verifyEmailUseCase,
+    refreshTokenUseCase,
   );
 
-  const authGuard = createAuthGuard(tokenProvider);
   const router = createAuthRouter(controller, authGuard);
 
   // ── 5. Return ──────────────────────────────────────────────────────
@@ -297,6 +305,7 @@ export function createAuthModule(
       logoutUseCase,
       changePasswordUseCase,
       verifyEmailUseCase,
+      refreshTokenUseCase,
     },
   };
 }

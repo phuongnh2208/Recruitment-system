@@ -104,12 +104,14 @@ export interface IJobPostingRepository {
   findApproved(page: number, limit: number): Promise<PaginatedJobResult>;
 
   /**
-   * Search job postings by criteria.
+   * Search job postings by criteria with pagination.
    * Supports free-text search, location, salary range, and state filters.
    * @param criteria - The search criteria.
-   * @returns Array of matching job postings.
+   * @param page - The page number (1-based, default: 1).
+   * @param limit - The number of items per page (default: 10).
+   * @returns Paginated result of matching job postings.
    */
-  search(criteria: JobSearchCriteria): Promise<JobPosting[]>;
+  search(criteria: JobSearchCriteria, page?: number, limit?: number): Promise<PaginatedJobResult>;
 
   /**
    * Persist a new job posting.

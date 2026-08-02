@@ -121,6 +121,7 @@ import { JobPostingFactory } from "../domain/factories/job-posting-factory";
 
 // ── Infrastructure ────────────────────────────────────────────────────────────
 import { PrismaJobPostingRepository } from "../infrastructure/repositories/prisma-job-posting-repository";
+import { PrismaEmployerRepository } from "../../employer/infrastructure/repositories/prisma-employer-repository";
 
 // ── Application — Use Cases ───────────────────────────────────────────────────
 import { CreateJobPostingUseCase } from "../application/use-cases/create-job-posting-use-case";
@@ -128,6 +129,7 @@ import { SubmitJobPostingUseCase } from "../application/use-cases/submit-job-pos
 import { UpdateJobPostingUseCase } from "../application/use-cases/update-job-posting-use-case";
 import { CloseJobPostingUseCase } from "../application/use-cases/close-job-posting-use-case";
 import { SearchJobsUseCase } from "../application/use-cases/search-jobs-use-case";
+import { GetJobDetailUseCase } from "../application/use-cases/get-job-detail-use-case";
 
 // ── Presentation ──────────────────────────────────────────────────────────────
 import { JobController } from "../presentation/controllers/job-controller";
@@ -146,6 +148,11 @@ import { createJobRouter } from "../presentation/routes/job-routes";
 export interface JobModule {
   /** The fully-wired JobController instance. */
   controller: JobController;
+
+  /** Shared repositories owned by this module. */
+  repositories: {
+    jobPostingRepository: PrismaJobPostingRepository;
+  };
 
   /** The Express Router with all job routes registered. */
   router: Router;
@@ -207,6 +214,7 @@ export function createJobModule(
   // ── 1. Infrastructure Layer ────────────────────────────────────────
   //     1a. Repository ─────────────────────────────────────────────────
   const jobPostingRepository = new PrismaJobPostingRepository(prismaClient);
+  const employerRepository = new PrismaEmployerRepository(prismaClient);
 
   //     1b. Factory ────────────────────────────────────────────────────
   const jobPostingFactory = new JobPostingFactory();
@@ -214,16 +222,28 @@ export function createJobModule(
   // ── 2. Application Layer (Use Cases) ───────────────────────────────
   const createJobPostingUseCase = new CreateJobPostingUseCase(
     jobPostingRepository,
+    employerRepository,
     jobPostingFactory,
   );
 
-  const submitJobPostingUseCase = new SubmitJobPostingUseCase(jobPostingRepository);
+  const submitJobPostingUseCase = new SubmitJobPostingUseCase(
+    jobPostingRepository,
+    employerRepository,
+  );
 
-  const updateJobPostingUseCase = new UpdateJobPostingUseCase(jobPostingRepository);
+  const updateJobPostingUseCase = new UpdateJobPostingUseCase(
+    jobPostingRepository,
+    employerRepository,
+  );
 
-  const closeJobPostingUseCase = new CloseJobPostingUseCase(jobPostingRepository);
+  const closeJobPostingUseCase = new CloseJobPostingUseCase(
+    jobPostingRepository,
+    employerRepository,
+  );
 
   const searchJobsUseCase = new SearchJobsUseCase(jobPostingRepository);
+
+  const getJobDetailUseCase = new GetJobDetailUseCase(jobPostingRepository);
 
   // ── 3. Presentation Layer ──────────────────────────────────────────
   const controller = new JobController(
@@ -232,6 +252,7 @@ export function createJobModule(
     updateJobPostingUseCase,
     closeJobPostingUseCase,
     searchJobsUseCase,
+    getJobDetailUseCase,
   );
 
   // ── 4. Router ──────────────────────────────────────────────────────
@@ -242,6 +263,9 @@ export function createJobModule(
   // ── 5. Return ──────────────────────────────────────────────────────
   return {
     controller,
+    repositories: {
+      jobPostingRepository,
+    },
     router,
     useCases: {
       createJobPostingUseCase,

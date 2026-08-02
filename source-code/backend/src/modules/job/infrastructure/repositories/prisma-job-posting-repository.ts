@@ -162,8 +162,13 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
 
   // ── SEARCH ────────────────────────────────────────────────────────
 
-  async search(criteria: JobSearchCriteria): Promise<JobPosting[]> {
-    const { keyword, location, state, salaryMin, salaryMax } = criteria;
+  async search(
+    criteria: JobSearchCriteria,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<PaginatedJobResult> {
+    const { keyword, location, employerId, state, salaryMin, salaryMax } = criteria;
+    const skip = (page - 1) * limit;
 
     try {
       const where: Prisma.JobPostingWhereInput = {};
@@ -183,25 +188,36 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
         where.location = { contains: location };
       }
 
+      if (employerId) {
+        where.employerId = employerId;
+      }
+
       // State filter — map domain state to Prisma state.
       if (state) {
         where.state = DOMAIN_TO_PRISMA_STATE[state];
       }
 
-      // Build query options.
+      // Build query options with pagination.
       const queryOptions: Prisma.JobPostingFindManyArgs = {
         where,
+        skip,
+        take: limit,
         orderBy: { createdAt: "desc" },
       };
 
-      let records = await this.prisma.jobPosting.findMany(queryOptions);
+      // Execute count and findMany in parallel for efficiency.
+      const [records, total] = await this.prisma.$transaction([
+        this.prisma.jobPosting.findMany(queryOptions),
+        this.prisma.jobPosting.count({ where }),
+      ]);
 
       // In-memory salary filtering (best-effort for string-encoded JSON).
+      let filteredRecords = records;
       if (
         (salaryMin !== undefined && salaryMin !== null) ||
         (salaryMax !== undefined && salaryMax !== null)
       ) {
-        records = records.filter((record) => {
+        filteredRecords = records.filter((record) => {
           const salary = this.parseSalaryRange(record.salaryRange);
           if (
             salaryMin !== undefined &&
@@ -230,12 +246,21 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
           state,
           salaryMin,
           salaryMax,
-          count: records.length,
+          page,
+          limit,
+          total,
+          returnedCount: filteredRecords.length,
         },
         "Job postings search completed",
       );
 
-      return records.map((record) => this.toDomain(record));
+      return {
+        items: filteredRecords.map((record) => this.toDomain(record)),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      };
     } catch (error) {
       logger.error(
         { error, keyword, location, state, salaryMin, salaryMax },

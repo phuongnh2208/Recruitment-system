@@ -84,6 +84,12 @@ export interface UserListItem {
   } | null;
 }
 
+export interface UserListFilters {
+  search?: string;
+  role?: string;
+  status?: string;
+}
+
 export interface PaginatedResult<T> {
   data: T[];
   total: number;
@@ -93,6 +99,11 @@ export interface PaginatedResult<T> {
 }
 
 export interface IAdminRepository {
+  /**
+   * Find a user by ID.
+   */
+  findUserById(id: string): Promise<UserListItem | null>;
+
   /**
    * Get dashboard statistics
    */
@@ -111,7 +122,11 @@ export interface IAdminRepository {
   /**
    * Get users with pagination and filtering
    */
-  getUsers(page: number, limit: number): Promise<PaginatedResult<UserListItem>>;
+  getUsers(
+    page: number,
+    limit: number,
+    filters?: UserListFilters,
+  ): Promise<PaginatedResult<UserListItem>>;
 
   /**
    * Find employer by ID with user details

@@ -34,6 +34,7 @@
 
 import { IApplicationRepository } from "../../domain/repositories/application-repository";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
 import { ApplicationFactory } from "../../domain/factories/application-factory";
 import {
   ValidationException,
@@ -69,6 +70,7 @@ export class ApplyJobUseCase {
   constructor(
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
     private readonly applicationFactory: ApplicationFactory,
   ) {}
 
@@ -78,20 +80,27 @@ export class ApplyJobUseCase {
       this.validateInput(command);
 
       // ── Step 2: Check duplicate application (BR-08) ──────────────
+      const studentProfile = await this.studentProfileRepository.findByUserId(command.studentId);
+
+      if (!studentProfile?.id) {
+        logger.warn({ userId: command.studentId }, "Student profile not found");
+        throw new NotFoundException(`Student profile for user ${command.studentId} not found`);
+      }
+
       const existingApplications = await this.applicationRepository.findByStudentId(
-        command.studentId,
+        studentProfile.id,
       );
       const alreadyApplied = existingApplications.some((app) => app.jobPostingId === command.jobId);
       if (alreadyApplied) {
         logger.warn(
           {
-            studentId: command.studentId,
+            studentId: studentProfile.id,
             jobId: command.jobId,
           },
           "Already Applied",
         );
         throw new ConflictException(
-          `Student ${command.studentId} has already applied to job ${command.jobId}`,
+          `Student ${studentProfile.id} has already applied to job ${command.jobId}`,
         );
       }
 
@@ -119,7 +128,7 @@ export class ApplyJobUseCase {
 
       // ── Step 5: Create Application via Factory ───────────────────
       const application = this.applicationFactory.create({
-        studentId: command.studentId,
+        studentId: studentProfile.id,
         jobPostingId: command.jobId,
         cvId: command.cvId,
       });
@@ -130,7 +139,7 @@ export class ApplyJobUseCase {
       // ── Step 7: Log success ─────────────────────────────────────
       logger.info(
         {
-          studentId: command.studentId,
+          studentId: studentProfile.id,
           jobId: command.jobId,
           applicationId: application.id,
         },

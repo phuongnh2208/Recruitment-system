@@ -73,6 +73,8 @@ export interface SearchJobsCommand {
   keyword?: string;
   /** Location filter (optional). */
   location?: string;
+  /** Employer ID filter (optional). */
+  employerId?: string;
   /** Minimum salary filter (optional). */
   salaryMin?: number;
   /** Maximum salary filter (optional). */
@@ -143,27 +145,29 @@ export class SearchJobsUseCase {
       const criteria: JobSearchCriteria = {
         keyword: command.keyword,
         location: command.location,
+        employerId: command.employerId,
         salaryMin: command.salaryMin,
         salaryMax: command.salaryMax,
         state: "APPROVED",
       };
 
-      // ── 3. Execute repository search ────────────────────────────────
-      const jobs = await this.jobPostingRepository.search(criteria);
+      // ── 3. Execute repository search with pagination ────────────────
+      const result = await this.jobPostingRepository.search(criteria, command.page, command.limit);
 
       // ── 4. Log success ──────────────────────────────────────────────
       logger.info(
         {
           page: command.page,
           limit: command.limit,
-          resultCount: jobs.length,
+          resultCount: result.items.length,
+          total: result.total,
         },
         "Search Completed",
       );
 
       // ── 5. Return result ────────────────────────────────────────────
       return {
-        jobs: jobs.map((job) => ({
+        jobs: result.items.map((job) => ({
           id: job.id!,
           employerId: job.employerId,
           title: job.title,

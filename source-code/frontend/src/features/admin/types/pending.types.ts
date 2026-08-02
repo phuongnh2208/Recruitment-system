@@ -18,6 +18,7 @@ export interface PendingEmployer {
   companyName: string;
   representativeName: string;
   email: string;
+  website?: string | null;
   registeredAt: string; // ISO string
 }
 

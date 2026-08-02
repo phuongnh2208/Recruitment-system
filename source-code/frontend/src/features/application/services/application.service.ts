@@ -36,7 +36,7 @@ import type {
  */
 export async function applyJob(data: ApplyJobInput): Promise<ApplyJobResponse> {
   const response = await axiosInstance.post<ApplyJobResponse>(
-    ENDPOINTS.STUDENT.APPLICATIONS,
+    ENDPOINTS.APPLICATION.APPLY,
     data,
   );
 

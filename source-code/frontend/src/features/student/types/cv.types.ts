@@ -24,17 +24,17 @@ export interface CVMetadata {
 
 /** Response from the CV list API. */
 export interface CvListResponse {
-  success: boolean;
+  success: true;
   data: CVMetadata[];
 }
 
 /** Response from the CV upload API. */
 export interface CvUploadResponse {
-  success: boolean;
+  success: true;
   data: CVMetadata;
 }
 
 /** Response from set-default / delete APIs. */
 export interface CvActionResponse {
-  success: boolean;
+  success: true;
 }

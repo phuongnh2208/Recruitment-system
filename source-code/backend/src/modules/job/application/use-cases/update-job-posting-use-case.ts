@@ -57,6 +57,7 @@
  */
 
 import { IJobPostingRepository } from "../../domain/repositories/job-posting-repository";
+import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -100,7 +101,10 @@ export interface UpdateJobPostingResult {
 }
 
 export class UpdateJobPostingUseCase {
-  constructor(private readonly jobPostingRepository: IJobPostingRepository) {}
+  constructor(
+    private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository: IEmployerRepository,
+  ) {}
 
   /**
    * Execute the update job posting flow.
@@ -133,6 +137,13 @@ export class UpdateJobPostingUseCase {
         throw new ValidationException("jobPostingId is required");
       }
 
+      const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+
+      if (!employerProfile?.id) {
+        logger.warn({ userId: command.employerId }, "Employer profile not found");
+        throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+      }
+
       // ── 2. Load job posting via Repository ────────────────────────
       const job = await this.jobPostingRepository.findById(command.jobPostingId);
 
@@ -142,11 +153,11 @@ export class UpdateJobPostingUseCase {
       }
 
       // ── 3. Ownership check ────────────────────────────────────────
-      if (job.employerId !== command.employerId) {
+      if (job.employerId !== employerProfile.id) {
         logger.warn(
           {
             jobPostingId: command.jobPostingId,
-            employerId: command.employerId,
+            employerId: employerProfile.id,
             jobOwnerId: job.employerId,
           },
           "Unauthorized Update",
@@ -199,7 +210,7 @@ export class UpdateJobPostingUseCase {
       logger.info(
         {
           jobPostingId: command.jobPostingId,
-          employerId: command.employerId,
+          employerId: employerProfile.id,
         },
         "Job Updated",
       );

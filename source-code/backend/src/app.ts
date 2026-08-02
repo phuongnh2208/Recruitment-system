@@ -39,7 +39,7 @@ import { requireRoles } from "./common/guards/roles-guard";
 import { Role } from "./common/types/role";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions-filter";
 import { JwtTokenProvider } from "./infrastructure/security/jwt-token-provider";
-import { SocketManager, NotificationGateway } from "./infrastructure/websocket";
+import { NotificationGatewayPort } from "./infrastructure/websocket/notification-gateway";
 import { EmailServiceAdapter } from "./infrastructure/email/EmailServiceAdapter";
 import { LocalFileStorageStrategy } from "./infrastructure/storage/LocalFileStorageStrategy";
 import { IFileStorageStrategy } from "./common/interfaces/file-storage-strategy";
@@ -54,9 +54,6 @@ import { createApplicationModule } from "./modules/application/composition/appli
 import { createAdminModule } from "./modules/admin/composition/admin-module";
 
 // ── Repositories ──────────────────────────────────────────────────────────────
-import { PrismaApplicationRepository } from "./modules/application/infrastructure/repositories/prisma-application-repository";
-import { PrismaJobPostingRepository } from "./modules/job/infrastructure/repositories/prisma-job-posting-repository";
-
 // ── Config ────────────────────────────────────────────────────────────────────
 import { config } from "./config";
 
@@ -123,17 +120,27 @@ const emailService: IEmailService = new EmailServiceAdapter();
 const fileStorage: IFileStorageStrategy = new LocalFileStorageStrategy(config.uploadRoot);
 
 /**
- * Shared Repositories (created once, injected into multiple modules)
+ * Notification gateway is injected lazily by server.ts once Socket.io exists.
  */
-const applicationRepository = new PrismaApplicationRepository(prisma);
-const jobPostingRepository = new PrismaJobPostingRepository(prisma);
+let activeNotificationGateway: NotificationGatewayPort | undefined;
 
-/**
- * Socket.io infrastructure (created once, shared with modules that need it).
- * Initialized in server.ts after HTTP server creation.
- */
-const socketManager: SocketManager | null = null;
-const notificationGateway: NotificationGateway | null = null;
+export function setNotificationGateway(
+  notificationGateway: NotificationGatewayPort | undefined,
+): void {
+  activeNotificationGateway = notificationGateway;
+}
+
+const notificationGatewayProxy: NotificationGatewayPort = {
+  sendNotification(userId: string, notification: unknown): void {
+    activeNotificationGateway?.sendNotification(userId, notification);
+  },
+  sendUnreadCount(userId: string, unreadCount: number): void {
+    activeNotificationGateway?.sendUnreadCount(userId, unreadCount);
+  },
+  broadcastAnnouncement(title: string, message: string, data?: unknown): void {
+    activeNotificationGateway?.broadcastAnnouncement(title, message, data);
+  },
+};
 
 // ──────────────────────────────────────────────────────────────────────────────
 // MODULE INSTANTIATION
@@ -145,8 +152,7 @@ const notificationGateway: NotificationGateway | null = null;
  */
 function createModules() {
   // ── Auth Module (no cross-module dependencies) ─────────────────────────────
-  // Note: notificationGateway will be set after socket initialization
-  const authModule = createAuthModule(prisma, emailService, notificationGateway!);
+  const authModule = createAuthModule(prisma, emailService, notificationGatewayProxy, authGuard);
 
   // ── Job Module (no cross-module dependencies) ──────────────────────────────
   // Job module expects roleGuard factory (requireRoles)
@@ -156,7 +162,7 @@ function createModules() {
   // Application module expects roleGuard factory (requireRoles)
   const applicationModule = createApplicationModule({
     prisma,
-    jobPostingRepository,
+    jobPostingRepository: jobModule.repositories.jobPostingRepository,
     authGuard,
     roleGuard,
   });
@@ -166,8 +172,9 @@ function createModules() {
   const studentModule = createStudentModule({
     prisma,
     fileStorage,
-    applicationRepository,
-    jobRepository: jobPostingRepository,
+    applicationRepository: applicationModule.repositories.applicationRepository,
+    jobRepository: jobModule.repositories.jobPostingRepository,
+    jobPostingRepository: jobModule.repositories.jobPostingRepository,
     authGuard,
     roleGuard: studentRoleGuard,
   });
@@ -176,7 +183,7 @@ function createModules() {
   // Employer module expects roleGuard middleware (pre-created with EMPLOYER role)
   const employerModule = createEmployerModule({
     prisma,
-    applicationRepository,
+    applicationRepository: applicationModule.repositories.applicationRepository,
     authGuard,
     roleGuard: employerRoleGuard,
   });
@@ -209,10 +216,11 @@ function createModules() {
  */
 export function createApp(): express.Application {
   const app = express();
+  const corsOrigin = config.clientUrl === "*" ? false : config.clientUrl;
 
   // ── Global Middleware (order matters) ──────────────────────────────────────
   app.use(helmet());
-  app.use(cors({ origin: config.clientUrl || "*" }));
+  app.use(cors({ origin: corsOrigin, credentials: corsOrigin !== false }));
   app.use(compression());
   app.use(express.json());
   app.use(httpLoggerMiddleware);
@@ -293,16 +301,4 @@ export function logStartupInfo(): void {
 // EXPORTS FOR SERVER.TS
 // ──────────────────────────────────────────────────────────────────────────────
 
-export {
-  prisma,
-  tokenProvider,
-  authGuard,
-  roleGuard,
-  emailService,
-  fileStorage,
-  applicationRepository,
-  jobPostingRepository,
-  socketManager,
-  notificationGateway,
-  config,
-};
+export { prisma, tokenProvider, authGuard, roleGuard, emailService, fileStorage, config };

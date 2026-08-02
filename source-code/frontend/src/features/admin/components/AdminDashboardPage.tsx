@@ -18,8 +18,6 @@
 
 import { useAdminDashboard } from "../hooks/useAdminDashboard";
 import DashboardStatCard from "./DashboardStatCard";
-import PendingEmployerTable from "./PendingEmployerTable";
-import PendingJobTable from "./PendingJobTable";
 import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardEmptyState from "./DashboardEmptyState";
 
@@ -80,7 +78,7 @@ export default function AdminDashboardPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     <DashboardStatCard
                       label="Tổng người dùng"
-                      value={dashboardData.stats.totalUsers}
+                      value={dashboardData.totalUsers}
                       icon={
                         <svg
                           className="h-6 w-6"
@@ -98,7 +96,7 @@ export default function AdminDashboardPage() {
                     />
                     <DashboardStatCard
                       label="Sinh viên"
-                      value={dashboardData.stats.students}
+                      value={dashboardData.totalStudents}
                       icon={
                         <svg
                           className="h-6 w-6"
@@ -114,7 +112,7 @@ export default function AdminDashboardPage() {
                     />
                     <DashboardStatCard
                       label="Nhà tuyển dụng"
-                      value={dashboardData.stats.employers}
+                      value={dashboardData.totalEmployers}
                       icon={
                         <svg
                           className="h-6 w-6"
@@ -137,7 +135,7 @@ export default function AdminDashboardPage() {
                     />
                     <DashboardStatCard
                       label="Tin tuyển dụng"
-                      value={dashboardData.stats.jobs}
+                      value={dashboardData.totalJobs}
                       icon={
                         <svg
                           className="h-6 w-6"
@@ -155,7 +153,7 @@ export default function AdminDashboardPage() {
                     />
                     <DashboardStatCard
                       label="Đơn ứng tuyển"
-                      value={dashboardData.stats.applications}
+                      value={dashboardData.totalApplications}
                       icon={
                         <svg
                           className="h-6 w-6"
@@ -182,23 +180,34 @@ export default function AdminDashboardPage() {
                   </div>
                 </section>
 
-                {/* Pending employers table */}
-                {dashboardData.pendingEmployers.length > 0 && (
-                  <PendingEmployerTable
-                    employers={dashboardData.pendingEmployers}
-                  />
+                {/* Pending items summary */}
+                {(dashboardData.pendingEmployers > 0 ||
+                  dashboardData.pendingJobs > 0) && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="rounded-lg border border-ink/10 bg-white p-6">
+                      <h3 className="font-display text-lg font-semibold text-ink">
+                        Nhà tuyển dụng chờ duyệt
+                      </h3>
+                      <p className="mt-2 font-body text-3xl font-bold text-primary">
+                        {dashboardData.pendingEmployers}
+                      </p>
+                      <p className="mt-1 font-body text-sm text-ink/60">
+                        Nhà tuyển dụng đang chờ xác minh
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-ink/10 bg-white p-6">
+                      <h3 className="font-display text-lg font-semibold text-ink">
+                        Tin tuyển dụng chờ duyệt
+                      </h3>
+                      <p className="mt-2 font-body text-3xl font-bold text-primary">
+                        {dashboardData.pendingJobs}
+                      </p>
+                      <p className="mt-1 font-body text-sm text-ink/60">
+                        Tin tuyển dụng đang chờ phê duyệt
+                      </p>
+                    </div>
+                  </div>
                 )}
-
-                {/* Pending jobs table */}
-                {dashboardData.pendingJobs.length > 0 && (
-                  <PendingJobTable jobs={dashboardData.pendingJobs} />
-                )}
-
-                {/* Empty state when no pending items */}
-                {dashboardData.pendingEmployers.length === 0 &&
-                  dashboardData.pendingJobs.length === 0 && (
-                    <DashboardEmptyState message="Không có mục chờ duyệt nào." />
-                  )}
               </div>
             ) : (
               <DashboardEmptyState />

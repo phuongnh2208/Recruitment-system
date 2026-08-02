@@ -64,6 +64,7 @@
  */
 
 import { IJobPostingRepository } from "../../domain/repositories/job-posting-repository";
+import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
 import {
   JobPostingFactory,
   CreateJobPostingInput,
@@ -72,6 +73,7 @@ import {
   ValidationException,
   BusinessException,
   InfrastructureException,
+  NotFoundException,
 } from "../../../../common/exceptions";
 import { logger } from "../../../../common/logger";
 
@@ -112,6 +114,7 @@ export interface CreateJobPostingResult {
 export class CreateJobPostingUseCase {
   constructor(
     private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository: IEmployerRepository,
     private readonly jobPostingFactory: JobPostingFactory,
   ) {}
 
@@ -159,9 +162,16 @@ export class CreateJobPostingUseCase {
         throw new ValidationException("expiresAt is required");
       }
 
+      const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+
+      if (!employerProfile?.id) {
+        logger.warn({ userId: command.employerId }, "Employer profile not found");
+        throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+      }
+
       // ── 2. Create JobPosting entity via Factory ───────────────────
       const factoryInput: CreateJobPostingInput = {
-        employerId: command.employerId,
+        employerId: employerProfile.id,
         title: command.title,
         description: command.description,
         requirements: command.requirements,
@@ -181,7 +191,7 @@ export class CreateJobPostingUseCase {
       logger.info(
         {
           jobPostingId: jobPosting.id,
-          employerId: command.employerId,
+          employerId: employerProfile.id,
         },
         "Job Created",
       );

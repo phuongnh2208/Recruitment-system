@@ -1,4 +1,5 @@
 import { Application } from "../../../application/domain/entities/application";
+import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -22,7 +23,10 @@ export interface ViewApplicantDetailsResult {
 }
 
 export class ViewApplicantDetailsUseCase {
-  constructor(private readonly applicationRepository: IApplicationRepository) {}
+  constructor(
+    private readonly applicationRepository: IApplicationRepository,
+    private readonly jobPostingRepository: IJobPostingRepository,
+  ) {}
 
   async execute(command: ViewApplicantDetailsCommand): Promise<ViewApplicantDetailsResult> {
     try {
@@ -56,9 +60,20 @@ export class ViewApplicantDetailsUseCase {
         throw new NotFoundException("Application not found");
       }
 
-      if (
-        (application as Application & { employerId?: string }).employerId !== command.employerId
-      ) {
+      const job = await this.jobPostingRepository.findById(application.jobPostingId);
+
+      if (!job) {
+        logger.warn(
+          {
+            jobPostingId: application.jobPostingId,
+            applicationId: command.applicationId,
+          },
+          "Job Not Found",
+        );
+        throw new NotFoundException(`Job posting ${application.jobPostingId} not found`);
+      }
+
+      if (job.employerId !== command.employerId) {
         logger.warn(
           {
             employerId: command.employerId,

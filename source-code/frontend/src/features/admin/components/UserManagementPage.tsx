@@ -96,7 +96,7 @@ export default function UserManagementPage() {
     (user: User) => {
       updateUserStatus({
         userId: user.id,
-        status: user.status === "ACTIVE" ? "DISABLED" : "ACTIVE",
+        isActive: user.status !== "ACTIVE",
       });
     },
     [updateUserStatus],

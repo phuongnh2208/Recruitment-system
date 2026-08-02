@@ -32,6 +32,7 @@ export class StudentProfile {
   private _address: string | null;
   private _university: string | null;
   private _major: string | null;
+  private _graduationYear: number | null;
   private _avatarUrl: string | null;
   private _defaultCvId: string | null;
   private _role: string;
@@ -46,6 +47,7 @@ export class StudentProfile {
     this._address = props.address;
     this._university = props.university;
     this._major = props.major;
+    this._graduationYear = props.graduationYear;
     this._avatarUrl = props.avatarUrl;
     this._defaultCvId = props.defaultCvId;
     this._role = props.role;
@@ -81,6 +83,10 @@ export class StudentProfile {
 
   get major(): string | null {
     return this._major;
+  }
+
+  get graduationYear(): number | null {
+    return this._graduationYear;
   }
 
   get avatarUrl(): string | null {
@@ -134,43 +140,38 @@ export class StudentProfile {
     this._updatedAt = new Date();
   }
 
-  /**
-   * Change the student's phone number.
-   *
-   * @param phone - The new phone number (nullable).
-   */
-  changePhone(phone: string | null): void {
+  updateFullName(fullName: string): void {
+    this._fullName = fullName;
+    this._updatedAt = new Date();
+  }
+
+  updatePhone(phone: string | null): void {
     this._phone = phone;
     this._updatedAt = new Date();
   }
 
-  /**
-   * Change the student's address.
-   *
-   * @param address - The new address (nullable).
-   */
-  changeAddress(address: string | null): void {
+  updateAddress(address: string | null): void {
     this._address = address;
     this._updatedAt = new Date();
   }
 
-  /**
-   * Change the student's university.
-   *
-   * @param university - The new university (nullable).
-   */
-  changeUniversity(university: string | null): void {
+  updateUniversity(university: string | null): void {
     this._university = university;
     this._updatedAt = new Date();
   }
 
-  /**
-   * Change the student's major.
-   *
-   * @param major - The new major (nullable).
-   */
-  changeMajor(major: string | null): void {
+  updateMajor(major: string | null): void {
     this._major = major;
+    this._updatedAt = new Date();
+  }
+
+  updateGraduationYear(graduationYear: number | null): void {
+    this._graduationYear = graduationYear;
+    this._updatedAt = new Date();
+  }
+
+  updateAvatarUrl(avatarUrl: string | null): void {
+    this._avatarUrl = avatarUrl;
     this._updatedAt = new Date();
   }
 
@@ -208,6 +209,7 @@ export interface StudentProfileProps {
   address: string | null;
   university: string | null;
   major: string | null;
+  graduationYear: number | null;
   avatarUrl: string | null;
   defaultCvId: string | null;
   role: string;

@@ -89,6 +89,7 @@ import { CVMetadataFactory } from "../domain/factories/cv-metadata-factory";
 
 // ── Application Layer ─────────────────────────────────────────────
 import { UpdateProfileUseCase } from "../application/use-cases/update-profile-use-case";
+import { GetProfileUseCase } from "../application/use-cases/get-profile-use-case";
 import { UploadCVUseCase } from "../application/use-cases/upload-cv-use-case";
 import { ManageCVListUseCase } from "../application/use-cases/manage-cv-list-use-case";
 import {
@@ -99,6 +100,8 @@ import {
   GetJobDetailUseCase,
   IJobRepository,
 } from "../application/use-cases/get-job-detail-use-case";
+import { SearchJobsUseCase } from "../../job/application/use-cases/search-jobs-use-case";
+import type { IJobPostingRepository } from "../../job/domain/repositories/job-posting-repository";
 
 // ── Presentation Layer ────────────────────────────────────────────
 import { StudentController } from "../presentation/controllers/student-controller";
@@ -126,6 +129,11 @@ export interface StudentModuleDependencies {
    * from the App level when it becomes available.
    */
   jobRepository?: IJobRepository;
+  /**
+   * Optional: Repository for JobPosting entity (full interface).
+   * Used by SearchJobsUseCase for searching approved jobs.
+   */
+  jobPostingRepository?: IJobPostingRepository;
   /**
    * Optional: Authentication guard middleware.
    * If not provided, the router will skip auth protection (dev mode).
@@ -199,6 +207,8 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
     studentProfileFactory,
   );
 
+  const getProfileUseCase = new GetProfileUseCase(studentProfileRepository);
+
   const uploadCVUseCase = new UploadCVUseCase(
     studentProfileRepository,
     cvRepository,
@@ -220,7 +230,10 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
         "TODO: Create ApplicationHistoryRepository in the Application module.",
     );
   }
-  const getApplicationHistoryUseCase = new GetApplicationHistoryUseCase(deps.applicationRepository);
+  const getApplicationHistoryUseCase = new GetApplicationHistoryUseCase(
+    deps.applicationRepository,
+    studentProfileRepository,
+  );
 
   // ── GetJobDetailUseCase ───────────────────────────────────────────
   // TODO: Create a concrete JobRepository in the Job module and wire
@@ -236,13 +249,23 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
   }
   const getJobDetailUseCase = new GetJobDetailUseCase(deps.jobRepository);
 
+  if (!deps.jobPostingRepository) {
+    throw new Error(
+      "[StudentModule] jobPostingRepository is required. " +
+        "Please provide an IJobPostingRepository implementation from the App level.",
+    );
+  }
+  const searchJobsUseCase = new SearchJobsUseCase(deps.jobPostingRepository);
+
   // ── 4. Presentation — Controller ──────────────────────────────────
   const controller = new StudentController(
     updateProfileUseCase,
+    getProfileUseCase,
     uploadCVUseCase,
     manageCVListUseCase,
     getApplicationHistoryUseCase,
     getJobDetailUseCase,
+    searchJobsUseCase,
   );
 
   // ── 5. Presentation — Router ──────────────────────────────────────

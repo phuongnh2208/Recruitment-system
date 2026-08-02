@@ -29,6 +29,10 @@ export interface EmailConfig {
  * @returns A validated {@link EmailConfig} object.
  */
 export function loadEmailConfig(): EmailConfig {
+  if (config.env !== "development" && !config.smtp.host) {
+    throw new Error("SMTP_HOST is required when email delivery is enabled.");
+  }
+
   return {
     host: config.smtp.host,
     port: config.smtp.port,

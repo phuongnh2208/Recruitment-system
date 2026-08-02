@@ -42,6 +42,8 @@ import { logger } from "../../common/logger";
 import { config } from "../../config";
 import type { TokenProvider } from "../../modules/auth/domain/token-provider";
 import type { AuthenticatedUser } from "../../common/types/authenticated-user";
+import { Role } from "../../common/types/role";
+import type { SocketManagerPort } from "../../common/interfaces/socket-manager-port";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -63,7 +65,7 @@ interface AuthenticatedSocket extends Socket {
 
 // ── SocketManager ─────────────────────────────────────────────────────────────
 
-export class SocketManager {
+export class SocketManager implements SocketManagerPort {
   private readonly io: Server;
   private readonly tokenProvider: TokenProvider;
   private initialized = false;
@@ -71,15 +73,21 @@ export class SocketManager {
   constructor(httpServer: HttpServer, tokenProvider: TokenProvider) {
     this.tokenProvider = tokenProvider;
 
+    // ── CORS hardening ─────────────────────────────────────────────────
+    // A wildcard origin is NEVER allowed for Socket.io. When CLIENT_URL
+    // is "*", CORS is disabled entirely — the server refuses cross-origin
+    // connections rather than reflecting arbitrary origins.
+    const allowedOrigin = config.clientUrl === "*" ? false : config.clientUrl;
+
     this.io = new Server(httpServer, {
       path: NS_PATH,
       cors: {
-        origin: config.clientUrl || "*",
+        origin: allowedOrigin,
         methods: ["GET", "POST"],
-        credentials: true,
+        credentials: allowedOrigin !== false,
+        allowedHeaders: ["Authorization"],
       },
-      // Only allow WebSocket transport – no long-polling fallback for cleaner infra
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
     });
   }
 
@@ -102,12 +110,23 @@ export class SocketManager {
     this.initialized = true;
 
     // ── Authentication middleware ──────────────────────────────────────────
-    // Every connecting socket must present a valid JWT in the `token` query
-    // parameter or in the `auth.token` handshake field.
+    // Every connecting socket must present a valid JWT in the handshake auth
+    // field. Tokens passed via query string or URL are explicitly rejected.
     this.io.use(async (socket: Socket, next) => {
       try {
-        const token =
-          (socket.handshake.query.token as string) || (socket.handshake.auth?.token as string);
+        // ── Reject token in query string (security) ─────────────────
+        // Tokens in query strings can leak into server logs, browser
+        // history, and CDN access logs. Only handshake auth is allowed.
+        const queryToken = socket.handshake.query?.token as string | undefined;
+        if (queryToken) {
+          logger.warn(
+            { socketId: socket.id },
+            "Socket connection refused: token must not be passed via query string",
+          );
+          return next(new Error("Token must be provided via handshake auth, not query string"));
+        }
+
+        const token = socket.handshake.auth?.token as string | undefined;
 
         if (!token) {
           logger.warn({ socketId: socket.id }, "Socket connection refused: no token provided");
@@ -120,7 +139,7 @@ export class SocketManager {
         (socket as AuthenticatedSocket).user = {
           id: payload.sub,
           email: payload.email,
-          role: payload.role,
+          role: payload.role as Role,
         };
 
         next();

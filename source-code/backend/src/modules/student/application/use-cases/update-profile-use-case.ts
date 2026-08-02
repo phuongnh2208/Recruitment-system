@@ -107,6 +107,8 @@ export class UpdateProfileUseCase {
         throw new ValidationException("phone is required");
       }
 
+      const graduationYear = this.parseGraduationYear(command.graduationYear);
+
       // ── 2. Find existing profile by userId ───────────────────────
       const existingProfile = await this.repository.findByUserId(command.userId);
 
@@ -118,10 +120,12 @@ export class UpdateProfileUseCase {
           role: "STUDENT",
         });
 
-        // TODO: update additional fields on new profile
-        // Entity does not have individual methods for:
-        //   updatePhone(), updateAddress(), updateSchool(), updateMajor(),
-        //   updateGraduationYear(), updateAvatarUrl()
+        profile.updatePhone(command.phone);
+        profile.updateAddress(command.address);
+        profile.updateUniversity(command.school);
+        profile.updateMajor(command.major);
+        profile.updateGraduationYear(graduationYear);
+        profile.updateAvatarUrl(command.avatarUrl.trim().length > 0 ? command.avatarUrl : null);
 
         const created = await this.repository.create(profile);
 
@@ -136,14 +140,15 @@ export class UpdateProfileUseCase {
       }
 
       // ── 4. Profile exists → update via entity business methods ──
-      // TODO: call individual business methods when entity supports them
-      //   existingProfile.updateFullName(command.fullName);
-      //   existingProfile.updatePhone(command.phone);
-      //   existingProfile.updateAddress(command.address);
-      //   existingProfile.updateSchool(command.school);
-      //   existingProfile.updateMajor(command.major);
-      //   existingProfile.updateGraduationYear(command.graduationYear);
-      //   existingProfile.updateAvatarUrl(command.avatarUrl);
+      existingProfile.updateFullName(command.fullName);
+      existingProfile.updatePhone(command.phone);
+      existingProfile.updateAddress(command.address);
+      existingProfile.updateUniversity(command.school);
+      existingProfile.updateMajor(command.major);
+      existingProfile.updateGraduationYear(graduationYear);
+      existingProfile.updateAvatarUrl(
+        command.avatarUrl.trim().length > 0 ? command.avatarUrl : null,
+      );
 
       // ── 5. Persist updated profile ───────────────────────────────
       const updated = await this.repository.update(existingProfile);
@@ -180,5 +185,19 @@ export class UpdateProfileUseCase {
 
       throw new InfrastructureException("Profile update failed", details);
     }
+  }
+
+  private parseGraduationYear(value: string): number | null {
+    if (!value || value.trim().length === 0) {
+      throw new ValidationException("graduationYear is required");
+    }
+
+    const parsed = Number.parseInt(value, 10);
+
+    if (Number.isNaN(parsed)) {
+      throw new ValidationException("graduationYear must be a valid number");
+    }
+
+    return parsed;
   }
 }

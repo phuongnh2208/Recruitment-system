@@ -70,13 +70,10 @@ export class ManageUserAccountUseCase {
         "User Account Management Requested",
       );
 
-      // ── Step 2: Find the user ───────────────────────────────────────────
-      const users = await this.adminRepository.getUsers(1, 1);
+      // ── Step 2: Find the user by id ─────────────────────────────────────
+      const user = await this.adminRepository.findUserById(command.userId);
 
-      // ── Step 3: Verify user exists (check in paginated list) ────────────
-      const userExists = users.data.some((user) => user.id === command.userId);
-
-      if (!userExists) {
+      if (!user) {
         logger.warn(
           {
             userId: command.userId,
@@ -86,10 +83,10 @@ export class ManageUserAccountUseCase {
         throw new NotFoundException(`User ${command.userId} not found`);
       }
 
-      // ── Step 4: Update user active status ───────────────────────────────
+      // ── Step 3: Update user active status ───────────────────────────────
       await this.adminRepository.updateUserStatus(command.userId, command.isActive);
 
-      // ── Step 5: Log success ─────────────────────────────────────────────
+      // ── Step 4: Log success ─────────────────────────────────────────────
       logger.info(
         {
           userId: command.userId,
@@ -98,7 +95,7 @@ export class ManageUserAccountUseCase {
         "User Account Status Updated",
       );
 
-      // ── Step 6: Return result ───────────────────────────────────────────
+      // ── Step 5: Return result ───────────────────────────────────────────
       return {
         success: true,
       };

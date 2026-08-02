@@ -40,7 +40,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { NotificationGateway } from "../../websocket/notification-gateway";
+import { NotificationGatewayPort } from "../../websocket/notification-gateway";
 import {
   INotificationStrategy,
   NotificationMessage,
@@ -60,7 +60,7 @@ import { logger } from "../../../common/logger";
  *   await strategy.send({ userId: "abc", title: "Hello", message: "World" });
  */
 export class WebSocketNotificationStrategy implements INotificationStrategy {
-  constructor(private readonly notificationGateway: NotificationGateway) {}
+  constructor(private readonly notificationGateway: NotificationGatewayPort) {}
 
   /**
    * Send a real-time notification to the target user.

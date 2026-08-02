@@ -1,8 +1,10 @@
 import { PrismaClient } from "../../../generated/prisma";
 import type { Request, Response, NextFunction } from "express";
 import { PrismaEmployerRepository } from "../infrastructure/repositories/prisma-employer-repository";
+import { PrismaJobPostingRepository } from "../../job/infrastructure/repositories/prisma-job-posting-repository";
 import { EmployerProfileFactory } from "../domain/employer-profile-factory";
 import { UpdateCompanyProfileUseCase } from "../application/use-cases/update-company-profile-use-case";
+import { GetCompanyProfileUseCase } from "../application/use-cases/get-company-profile-use-case";
 import { GetMyApplicantsUseCase } from "../application/use-cases/get-my-applicants-use-case";
 import { ViewApplicantDetailsUseCase } from "../application/use-cases/view-applicant-details-use-case";
 import type { IApplicationRepository } from "../../application/domain/repositories/application-repository";
@@ -21,6 +23,7 @@ export interface EmployerModuleOutput {
   router: ReturnType<typeof createEmployerRouter>;
   useCases: {
     updateCompanyProfile: UpdateCompanyProfileUseCase;
+    getCompanyProfile: GetCompanyProfileUseCase;
     getMyApplicants: GetMyApplicantsUseCase;
     viewApplicantDetails: ViewApplicantDetailsUseCase;
   };
@@ -28,6 +31,7 @@ export interface EmployerModuleOutput {
 
 export function createEmployerModule(deps: EmployerModuleDependencies): EmployerModuleOutput {
   const employerRepository = new PrismaEmployerRepository(deps.prisma);
+  const jobPostingRepository = new PrismaJobPostingRepository(deps.prisma);
   const employerProfileFactory = new EmployerProfileFactory();
 
   const updateCompanyProfileUseCase = new UpdateCompanyProfileUseCase(
@@ -35,12 +39,21 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
     employerProfileFactory,
   );
 
-  const getMyApplicantsUseCase = new GetMyApplicantsUseCase(deps.applicationRepository);
+  const getCompanyProfileUseCase = new GetCompanyProfileUseCase(employerRepository);
 
-  const viewApplicantDetailsUseCase = new ViewApplicantDetailsUseCase(deps.applicationRepository);
+  const getMyApplicantsUseCase = new GetMyApplicantsUseCase(
+    deps.applicationRepository,
+    employerRepository,
+  );
+
+  const viewApplicantDetailsUseCase = new ViewApplicantDetailsUseCase(
+    deps.applicationRepository,
+    jobPostingRepository,
+  );
 
   const controller = new EmployerController(
     updateCompanyProfileUseCase,
+    getCompanyProfileUseCase,
     getMyApplicantsUseCase,
     viewApplicantDetailsUseCase,
   );
@@ -52,6 +65,7 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
     router,
     useCases: {
       updateCompanyProfile: updateCompanyProfileUseCase,
+      getCompanyProfile: getCompanyProfileUseCase,
       getMyApplicants: getMyApplicantsUseCase,
       viewApplicantDetails: viewApplicantDetailsUseCase,
     },

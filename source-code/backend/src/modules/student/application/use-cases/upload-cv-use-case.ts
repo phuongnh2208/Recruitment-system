@@ -173,6 +173,11 @@ export class UploadCVUseCase {
         throw new NotFoundException("Student profile not found");
       }
 
+      if (!studentProfile.id) {
+        logger.warn("Student Profile ID is missing");
+        throw new InfrastructureException("Student profile ID is missing");
+      }
+
       // ── 3. Validate MIME type ─────────────────────────────────────
       if (!ACCEPTED_MIME_TYPES.includes(command.mimeType as (typeof ACCEPTED_MIME_TYPES)[number])) {
         logger.warn("Invalid File – only application/pdf is accepted");
@@ -189,14 +194,15 @@ export class UploadCVUseCase {
       const fileUuid = randomUUID();
       const fileExtension = extname(command.originalFileName);
       const fileName = `${fileUuid}${fileExtension}`;
-      const storagePath = `uploads/cv/${command.studentId}/${fileName}`;
+      const storagePath = `cv/${command.studentId}/${fileName}`;
 
       // ── 6. Upload file via storage strategy ───────────────────────
       const uploadResult = await this.storage.upload(command.buffer, storagePath);
 
       // ── 7. Create CVMetadata via factory ──────────────────────────
+      // Use StudentProfile ID (not User ID) for the CV relation
       const metadata = this.cvMetadataFactory.create({
-        studentId: command.studentId,
+        studentId: studentProfile.id!,
         fileName,
         originalFileName: command.originalFileName,
         mimeType: command.mimeType,

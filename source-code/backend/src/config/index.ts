@@ -63,6 +63,19 @@ function optionalIntEnv(name: string, defaultValue: number): number {
   return parsed;
 }
 
+function optionalBoundedIntEnv(
+  name: string,
+  defaultValue: number,
+  min: number,
+  max: number,
+): number {
+  const value = optionalIntEnv(name, defaultValue);
+  if (value < min || value > max) {
+    throw new Error(`❌ INVALID ENVIRONMENT VARIABLE: ${name} must be between ${min} and ${max}`);
+  }
+  return value;
+}
+
 // ── Validated Env Enum ──────────────────────────────────────────────────
 type Environment = "development" | "production" | "test";
 
@@ -81,6 +94,7 @@ export const config = {
   clientUrl: optionalEnv("CLIENT_URL", "*"),
   logLevel: optionalEnv("LOG_LEVEL", "info"),
   uploadRoot: optionalEnv("UPLOAD_ROOT", "uploads"),
+  bcryptCostFactor: optionalBoundedIntEnv("BCRYPT_COST_FACTOR", 12, 4, 31),
 
   database: {
     url: requireEnv("DATABASE_URL"),
@@ -101,6 +115,10 @@ export const config = {
     from: optionalEnv("SMTP_FROM", "noreply@trusthire.com"),
   },
 } as const;
+
+if (config.jwt.secret === config.jwt.refreshSecret) {
+  throw new Error("❌ JWT access secret and refresh secret must be different");
+}
 
 // ── Type Export ─────────────────────────────────────────────────────────
 export type Config = typeof config;

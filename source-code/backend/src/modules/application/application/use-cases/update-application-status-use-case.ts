@@ -35,6 +35,7 @@
 
 import { IApplicationRepository } from "../../domain/repositories/application-repository";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
+import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -75,6 +76,7 @@ export class UpdateApplicationStatusUseCase {
   constructor(
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository: IEmployerRepository,
   ) {}
 
   async execute(command: UpdateApplicationStatusCommand): Promise<UpdateApplicationStatusResult> {
@@ -90,6 +92,13 @@ export class UpdateApplicationStatusUseCase {
         },
         "Status Update Requested",
       );
+
+      const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+
+      if (!employerProfile?.id) {
+        logger.warn({ userId: command.employerId }, "Employer profile not found");
+        throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+      }
 
       // ── Step 2: Find the application ────────────────────────────
       const application = await this.applicationRepository.findById(command.applicationId);
@@ -121,10 +130,10 @@ export class UpdateApplicationStatusUseCase {
         );
       }
 
-      if (job.employerId !== command.employerId) {
+      if (job.employerId !== employerProfile.id) {
         logger.warn(
           {
-            employerId: command.employerId,
+            employerId: employerProfile.id,
             applicationId: command.applicationId,
             jobPostingId: application.jobPostingId,
           },
@@ -145,7 +154,7 @@ export class UpdateApplicationStatusUseCase {
       logger.info(
         {
           applicationId: command.applicationId,
-          employerId: command.employerId,
+          employerId: employerProfile.id,
           status: command.status,
         },
         "Application Status Updated",

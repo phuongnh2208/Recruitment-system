@@ -99,6 +99,7 @@ export class StudentProfileFactory {
       address: null,
       university: null,
       major: null,
+      graduationYear: null,
       avatarUrl: null,
       defaultCvId: null,
       role: input.role,

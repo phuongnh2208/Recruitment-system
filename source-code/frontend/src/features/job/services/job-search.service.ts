@@ -39,10 +39,10 @@ async function searchJobs(
 ): Promise<JobSearchResponse> {
   const queryParams = new URLSearchParams();
   queryParams.set("page", String(params.page));
-  queryParams.set("size", String(params.size));
+  queryParams.set("limit", String(params.size));
 
   if (params.search) {
-    queryParams.set("search", params.search);
+    queryParams.set("keyword", params.search);
   }
 
   if (params.location) {
@@ -58,7 +58,7 @@ async function searchJobs(
   }
 
   const response = await axiosInstance.get<JobSearchResponse>(
-    `${ENDPOINTS.JOB.SEARCH}?${queryParams.toString()}`,
+    `${ENDPOINTS.STUDENT.JOBS}?${queryParams.toString()}`,
   );
 
   return response.data;

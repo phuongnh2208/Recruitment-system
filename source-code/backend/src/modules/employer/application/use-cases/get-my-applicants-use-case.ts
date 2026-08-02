@@ -1,8 +1,10 @@
 import { Application } from "../../../application/domain/entities/application";
+import { IEmployerRepository } from "../../domain/repositories/employer-repository";
 import {
   ValidationException,
   BusinessException,
   InfrastructureException,
+  NotFoundException,
 } from "../../../../common/exceptions";
 import { logger } from "../../../../common/logger";
 
@@ -29,7 +31,10 @@ export interface GetMyApplicantsResult {
 }
 
 export class GetMyApplicantsUseCase {
-  constructor(private readonly applicationRepository: IApplicationRepository) {}
+  constructor(
+    private readonly applicationRepository: IApplicationRepository,
+    private readonly employerRepository: IEmployerRepository,
+  ) {}
 
   async execute(command: GetMyApplicantsCommand): Promise<GetMyApplicantsResult> {
     try {
@@ -57,8 +62,15 @@ export class GetMyApplicantsUseCase {
         "Applicants Requested",
       );
 
+      const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+
+      if (!employerProfile?.id) {
+        logger.warn({ userId: command.employerId }, "Employer profile not found");
+        throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+      }
+
       const { items, total } = await this.applicationRepository.findByEmployerIdPaginated(
-        command.employerId,
+        employerProfile.id,
         command.page,
         command.limit,
       );
@@ -67,7 +79,7 @@ export class GetMyApplicantsUseCase {
 
       logger.info(
         {
-          employerId: command.employerId,
+          employerId: employerProfile.id,
           count: items.length,
           page: command.page,
         },

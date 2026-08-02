@@ -81,26 +81,34 @@ export function createJobRouter(
   }
 
   // ─── Public Endpoints ─────────────────────────────────────────────
-  // GET /jobs is public – search approved jobs without authentication
-  router.get("/jobs", controller.searchJobs.bind(controller));
+  // GET / is public – search approved jobs without authentication
+  router.get("/", controller.searchJobs.bind(controller));
+
+  // ─── Public Job Detail Endpoint ───────────────────────────────────
+  // GET /:jobId retrieves approved job details – no auth required
+  router.get("/:jobId", controller.getJobDetail.bind(controller));
+
+  // ─── Employer Jobs Endpoint ───────────────────────────────────────
+  // GET /employer retrieves all jobs created by the authenticated employer
+  router.get("/employer", authGuard, controller.getEmployerJobs.bind(controller));
 
   // ─── Protected Endpoints (EMPLOYER only) ──────────────────────────
   // Apply authentication and role guard only to mutation routes
-  router.post("/jobs", authGuard, roleGuard(Role.EMPLOYER), controller.createJob.bind(controller));
+  router.post("/", authGuard, roleGuard(Role.EMPLOYER), controller.createJob.bind(controller));
   router.patch(
-    "/jobs/:jobId",
+    "/:jobId",
     authGuard,
     roleGuard(Role.EMPLOYER),
     controller.updateJob.bind(controller),
   );
   router.post(
-    "/jobs/:jobId/submit",
+    "/:jobId/submit",
     authGuard,
     roleGuard(Role.EMPLOYER),
     controller.submitJob.bind(controller),
   );
   router.patch(
-    "/jobs/:jobId/close",
+    "/:jobId/close",
     authGuard,
     roleGuard(Role.EMPLOYER),
     controller.closeJob.bind(controller),

@@ -17,6 +17,7 @@ export function createEmployerRouter(
     router.use(roleGuard);
   }
 
+  router.get("/company-profile", controller.getCompanyProfile.bind(controller));
   router.patch("/company-profile", controller.updateCompanyProfile.bind(controller));
   router.get("/applicants", controller.getMyApplicants.bind(controller));
   router.get("/applicants/:applicationId", controller.viewApplicantDetails.bind(controller));

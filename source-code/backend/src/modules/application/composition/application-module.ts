@@ -119,6 +119,8 @@ import { ApplicationFactory } from "../domain/factories/application-factory";
 
 // ── Infrastructure ────────────────────────────────────────────────────────────
 import { PrismaApplicationRepository } from "../infrastructure/repositories/prisma-application-repository";
+import { PrismaEmployerRepository } from "../../employer/infrastructure/repositories/prisma-employer-repository";
+import { PrismaStudentProfileRepository } from "../../student/infrastructure/repositories/prisma-student-repository";
 
 // ── Application — Use Cases ───────────────────────────────────────────────────
 import { ApplyJobUseCase } from "../application/use-cases/apply-job-use-case";
@@ -152,6 +154,11 @@ export interface ApplicationModuleDependencies {
 export interface ApplicationModule {
   /** The fully-wired ApplicationController instance. */
   controller: ApplicationController;
+
+  /** Shared repositories owned by this module. */
+  repositories: {
+    applicationRepository: PrismaApplicationRepository;
+  };
 
   /** The Express Router with all application routes registered. */
   router: Router;
@@ -207,17 +214,21 @@ export function createApplicationModule(deps: ApplicationModuleDependencies): Ap
   // ── 1. Infrastructure Layer ────────────────────────────────────────
   //     1a. Repository ─────────────────────────────────────────────────
   const applicationRepository = new PrismaApplicationRepository(deps.prisma);
+  const employerRepository = new PrismaEmployerRepository(deps.prisma);
+  const studentProfileRepository = new PrismaStudentProfileRepository(deps.prisma);
 
   // ── 2. Application Layer (Use Cases) ───────────────────────────────
   const applyJobUseCase = new ApplyJobUseCase(
     applicationRepository,
     deps.jobPostingRepository,
+    studentProfileRepository,
     new ApplicationFactory(),
   );
 
   const updateApplicationStatusUseCase = new UpdateApplicationStatusUseCase(
     applicationRepository,
     deps.jobPostingRepository,
+    employerRepository,
   );
 
   const withdrawApplicationUseCase = new WithdrawApplicationUseCase(applicationRepository);
@@ -242,6 +253,9 @@ export function createApplicationModule(deps: ApplicationModuleDependencies): Ap
   // ── 5. Return ──────────────────────────────────────────────────────
   return {
     controller,
+    repositories: {
+      applicationRepository,
+    },
     router,
     useCases: {
       applyJob: applyJobUseCase,

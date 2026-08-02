@@ -157,6 +157,7 @@ export function passwordResetEmail(to: string, token: string): string {
 export function notificationEmail(to: string, subject: string, message: string): string {
   const safeTo = escapeHtml(to);
   const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message).replace(/\r?\n/g, "<br />");
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -179,7 +180,7 @@ export function notificationEmail(to: string, subject: string, message: string):
               <h2 style="color:#1e293b;font-size:20px;margin:0 0 16px 0;">${safeSubject}</h2>
               <p style="color:#475569;font-size:16px;line-height:1.6;margin:0 0 24px 0;">
                 Hi <strong>${safeTo}</strong>,<br /><br />
-                ${message}
+                ${safeMessage}
               </p>
               <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
               <p style="color:#94a3b8;font-size:12px;margin:0;">

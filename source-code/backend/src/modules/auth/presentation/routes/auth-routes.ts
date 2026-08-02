@@ -61,6 +61,7 @@ export function createAuthRouter(
   // ─── Public Endpoints ────────────────────────────────────────────
   router.post("/register", controller.register.bind(controller));
   router.post("/login", controller.login.bind(controller));
+  router.post("/refresh-token", controller.refreshToken.bind(controller));
   router.post("/logout", controller.logout.bind(controller));
   router.get("/verify-email", controller.verifyEmail.bind(controller));
 

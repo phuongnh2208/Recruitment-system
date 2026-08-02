@@ -18,6 +18,12 @@ export type UserRole = "ADMIN" | "EMPLOYER" | "STUDENT";
 /** User account status. */
 export type UserStatus = "ACTIVE" | "DISABLED";
 
+/** Input for updating user status. */
+export interface UpdateUserStatusInput {
+  userId: string;
+  isActive: boolean;
+}
+
 /** User avatar information. */
 export interface UserAvatar {
   url: string | null;
@@ -60,12 +66,6 @@ export interface PaginatedUserResponse {
   totalPages: number;
   currentPage: number;
   pageSize: number;
-}
-
-/** Input for updating user status. */
-export interface UpdateUserStatusInput {
-  userId: string;
-  status: UserStatus;
 }
 
 /** Role badge variant for display. */

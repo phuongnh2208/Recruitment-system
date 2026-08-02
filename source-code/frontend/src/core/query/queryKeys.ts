@@ -16,6 +16,7 @@ export const queryKeys = {
       all: ["student", "cv"] as const,
       list: ["student", "cv", "list"] as const,
     },
+    profile: ["student", "profile"] as const,
     applicationHistory: {
       all: ["student", "application-history"] as const,
       list: (page: number, size: number) =>

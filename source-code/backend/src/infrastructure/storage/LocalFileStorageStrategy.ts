@@ -96,8 +96,12 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
   /** Resolved absolute path to the upload root directory. */
   private readonly uploadRoot: string;
 
+  /** Public URL root segment derived from the configured upload root. */
+  private readonly publicRoot: string;
+
   constructor(uploadRoot: string) {
     this.uploadRoot = path.resolve(uploadRoot);
+    this.publicRoot = this.resolvePublicRoot(uploadRoot);
     logger.info({ uploadRoot: this.uploadRoot }, "LocalFileStorageStrategy initialized");
   }
 
@@ -125,7 +129,7 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
     this.validateMimeType(category, mimeType, file);
 
     // ── Resolve full path & ensure directory exists ──────────────────────
-    const absolutePath = path.join(this.uploadRoot, ...destinationPath.split("/"));
+    const absolutePath = this.resolveWithinRoot(destinationPath);
     const dir = path.dirname(absolutePath);
 
     try {
@@ -165,15 +169,22 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
   // ── delete ──────────────────────────────────────────────────────────────────
 
   /**
-   * Delete a file at the given absolute path.
+   * Delete a file at the given path.
    *
-   * @param filePath - The absolute path of the file to delete (as returned
-   *                   by the `path` field of {@link UploadResult}).
-   * @throws {InfrastructureException} If the deletion fails.
+   * The path can be either the absolute path returned by {@link upload}
+   * or a path relative to the upload root. It is always resolved and
+   * validated against the upload root before deletion to prevent
+   * path traversal attacks.
+   *
+   * @param filePath - The path of the file to delete (as returned by the
+   *                   `path` field of {@link UploadResult}, or relative).
+   * @throws {InfrastructureException} If the deletion fails or the path
+   *         escapes the upload root.
    */
   async delete(filePath: string): Promise<void> {
     try {
-      await unlink(filePath);
+      const absolutePath = this.resolveWithinRoot(filePath);
+      await unlink(absolutePath);
       logger.info({ filePath }, "File deleted successfully");
     } catch (deleteError: unknown) {
       const message = deleteError instanceof Error ? deleteError.message : "Unknown error";
@@ -194,7 +205,8 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
    */
   async exists(filePath: string): Promise<boolean> {
     try {
-      await access(filePath, constants.F_OK);
+      const absolutePath = this.resolveWithinRoot(filePath);
+      await access(absolutePath, constants.F_OK);
       return true;
     } catch {
       return false;
@@ -213,7 +225,7 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
    * @returns A URL string like `"/uploads/cv/abc-123/uuid.pdf"`.
    */
   getPublicUrl(destinationPath: string): string {
-    return `/${DEFAULT_UPLOAD_ROOT}/${destinationPath.replace(/\\/g, "/")}`;
+    return `/${this.publicRoot}/${destinationPath.replace(/\\/g, "/")}`;
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
@@ -261,5 +273,43 @@ export class LocalFileStorageStrategy implements IFileStorageStrategy {
         { category, mimeType },
       );
     }
+  }
+
+  private resolvePublicRoot(uploadRoot: string): string {
+    if (path.isAbsolute(uploadRoot)) {
+      return path.basename(path.resolve(uploadRoot)) || DEFAULT_UPLOAD_ROOT;
+    }
+
+    const cleaned = uploadRoot.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return cleaned || DEFAULT_UPLOAD_ROOT;
+  }
+
+  /**
+   * Resolve a path within the upload root.
+   *
+   * Accepts both absolute paths (as returned by upload) and relative
+   * paths. The resolved path is guaranteed to stay inside the upload
+   * root, preventing path traversal attacks such as `../../etc/passwd`.
+   *
+   * @param inputPath - Absolute or relative path.
+   * @returns The resolved absolute path inside the upload root.
+   * @throws {InfrastructureException} If the resolved path escapes the root.
+   */
+  private resolveWithinRoot(inputPath: string): string {
+    // If the path is already absolute, use it directly; otherwise resolve
+    // it relative to the upload root.
+    const resolved = path.isAbsolute(inputPath)
+      ? path.normalize(inputPath)
+      : path.resolve(this.uploadRoot, inputPath);
+
+    const relativeToRoot = path.relative(this.uploadRoot, resolved);
+
+    if (relativeToRoot.startsWith("..") || path.isAbsolute(relativeToRoot)) {
+      throw new InfrastructureException("Resolved path escapes the upload root.", {
+        inputPath,
+      });
+    }
+
+    return resolved;
   }
 }

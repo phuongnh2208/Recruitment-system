@@ -1,6 +1,7 @@
 import jwt, { JwtPayload, SignOptions, VerifyErrors } from "jsonwebtoken";
 import { TokenProvider, TokenPayload } from "../../modules/auth/domain/token-provider";
 import { config } from "../../config";
+import { AuthenticationException, InfrastructureException } from "../../common/exceptions";
 
 /**
  * Concrete Strategy — JWT implementation of TokenProvider.
@@ -125,11 +126,7 @@ export class JwtTokenProvider implements TokenProvider {
         const decoded = jwt.decode(token);
 
         if (!decoded || typeof decoded !== "object") {
-          reject(
-            new Error(
-              `Token decode failed: decoded value is not an object. Ensure the token is a valid JWT.`,
-            ),
-          );
+          reject(new AuthenticationException("Invalid token format."));
           return;
         }
 
@@ -142,8 +139,8 @@ export class JwtTokenProvider implements TokenProvider {
         });
       } catch (error) {
         reject(
-          new Error(
-            `Token decode failed: ${error instanceof Error ? error.message : "Unknown error"}. Ensure the token is a valid JWT format.`,
+          new AuthenticationException(
+            error instanceof Error ? error.message : "Invalid token format.",
           ),
         );
       }
@@ -172,8 +169,8 @@ export class JwtTokenProvider implements TokenProvider {
           (error: Error | null, token: string | undefined) => {
             if (error || !token) {
               reject(
-                new Error(
-                  `Token generation failed: ${error?.message || "Unknown error"}. Verify that the secret and payload are valid.`,
+                new InfrastructureException(
+                  `Token generation failed: ${error?.message || "Unknown error"}`,
                 ),
               );
               return;
@@ -183,8 +180,8 @@ export class JwtTokenProvider implements TokenProvider {
         );
       } catch (error) {
         reject(
-          new Error(
-            `Token generation failed: ${error instanceof Error ? error.message : "Unknown error"}. Verify that the secret and payload are valid.`,
+          new InfrastructureException(
+            `Token generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           ),
         );
       }
@@ -214,7 +211,7 @@ export class JwtTokenProvider implements TokenProvider {
 
             if (!decoded || typeof decoded !== "object") {
               reject(
-                new Error(
+                new AuthenticationException(
                   `${tokenType} token verification failed: decoded value is not an object.`,
                 ),
               );
@@ -236,7 +233,7 @@ export class JwtTokenProvider implements TokenProvider {
         );
       } catch (error) {
         reject(
-          new Error(
+          new AuthenticationException(
             `${tokenType} token verification failed: ${error instanceof Error ? error.message : "Unknown error"}.`,
           ),
         );
@@ -247,31 +244,30 @@ export class JwtTokenProvider implements TokenProvider {
   /**
    * Map jsonwebtoken errors to descriptive error messages.
    *
-   * TODO (TSK-INF-204): Replace with proper typed exceptions (e.g.,
-   * AuthenticationException) once the common exception hierarchy is in place.
-   *
    * @param error - The VerifyErrors object from jsonwebtoken.
    * @param tokenType - "Access" or "Refresh" for the error message.
-   * @returns An Error with a descriptive message.
+   * @returns An AuthenticationException with a descriptive message.
    */
-  private mapVerifyError(error: VerifyErrors, tokenType: string): Error {
+  private mapVerifyError(error: VerifyErrors, tokenType: string): AuthenticationException {
     switch (error.name) {
       case "TokenExpiredError": {
         const expiredAt = (error as jwt.TokenExpiredError).expiredAt;
-        return new Error(
+        return new AuthenticationException(
           `${tokenType} token has expired${expiredAt ? ` at ${expiredAt.toISOString()}` : ""}. Please obtain a new token.`,
         );
       }
       case "JsonWebTokenError":
-        return new Error(
+        return new AuthenticationException(
           `${tokenType} token is invalid: ${error.message}. Ensure the token was issued by this server and has not been tampered with.`,
         );
       case "NotBeforeError":
-        return new Error(
+        return new AuthenticationException(
           `${tokenType} token is not yet active: ${error.message}. The token cannot be used before its 'nbf' claim.`,
         );
       default:
-        return new Error(`${tokenType} token verification failed: ${error.message}.`);
+        return new AuthenticationException(
+          `${tokenType} token verification failed: ${error.message}.`,
+        );
     }
   }
 
@@ -286,13 +282,19 @@ export class JwtTokenProvider implements TokenProvider {
     payload: JwtPayload,
   ): asserts payload is Required<Pick<JwtPayload, "sub" | "email" | "role">> {
     if (!payload.sub || typeof payload.sub !== "string") {
-      throw new Error("Token payload is invalid: missing or invalid 'sub' (userId) claim.");
+      throw new AuthenticationException(
+        "Token payload is invalid: missing or invalid 'sub' claim.",
+      );
     }
     if (!payload.email || typeof payload.email !== "string") {
-      throw new Error("Token payload is invalid: missing or invalid 'email' claim.");
+      throw new AuthenticationException(
+        "Token payload is invalid: missing or invalid 'email' claim.",
+      );
     }
     if (!payload.role || typeof payload.role !== "string") {
-      throw new Error("Token payload is invalid: missing or invalid 'role' claim.");
+      throw new AuthenticationException(
+        "Token payload is invalid: missing or invalid 'role' claim.",
+      );
     }
   }
 }

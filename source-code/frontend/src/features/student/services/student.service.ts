@@ -23,6 +23,7 @@ import { ENDPOINTS } from "../../../core/api/endpoints";
 import type {
   UpdateProfileInput,
   UpdateProfileResponse,
+  GetProfileResponse,
 } from "../types/student.types";
 import type {
   CvListResponse,
@@ -44,6 +45,20 @@ export async function updateProfile(
   const response = await axiosInstance.patch<UpdateProfileResponse>(
     ENDPOINTS.STUDENT.PROFILE,
     data,
+  );
+  return response.data;
+}
+
+/**
+ * Fetch the authenticated student's profile.
+ *
+ * Calls GET /student/profile
+ *
+ * @returns The API response containing the profile data.
+ */
+export async function getProfile(): Promise<GetProfileResponse> {
+  const response = await axiosInstance.get<GetProfileResponse>(
+    ENDPOINTS.STUDENT.PROFILE,
   );
   return response.data;
 }

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
+import multer from "multer";
 import { StudentController } from "../controllers/student-controller";
+import { ValidationException } from "../../../../common/exceptions";
 
 /**
  * Student Routes
@@ -62,32 +64,67 @@ export function createStudentRouter(
   const router = Router();
 
   // ─── Middleware ───────────────────────────────────────────────────
-  // All student-specific endpoints require authentication and STUDENT role
+  // All student-specific endpoints require authentication and STUDENT role.
+  // The public GET /jobs/:jobId route is registered BEFORE the guards so
+  // it remains accessible without authentication.
+  router.get("/jobs/:jobId", controller.getJobDetail.bind(controller));
+
   if (authGuard) {
     router.use(authGuard);
-  } else {
-    // TODO: Attach authentication middleware (e.g. createAuthGuard(tokenProvider))
-    // once the DI container is wired up in the composition root.
   }
 
   if (roleGuard) {
     router.use(roleGuard);
-  } else {
-    // TODO: Attach role middleware (e.g. requireRoles(Role.STUDENT))
-    // once the DI container is wired up in the composition root.
   }
 
+  // ─── Job Search (protected) ───────────────────────────────────────
+  router.get("/jobs", controller.searchJobs.bind(controller));
+
+  // ─── Multer for CV Upload ─────────────────────────────────────────
+  const cvUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype !== "application/pdf") {
+        cb(new Error("Only PDF files are allowed"));
+        return;
+      }
+      cb(null, true);
+    },
+  });
+
+  // ─── Multer error handler ─────────────────────────────────────────
+  // Forward errors to the global exception filter instead of building
+  // manual responses. This keeps the response shape consistent.
+  const handleMulterError = (err: unknown, _req: Request, _res: Response, next: NextFunction) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        next(new ValidationException("File too large. Maximum size is 5MB."));
+        return;
+      }
+      next(new ValidationException(err.message));
+      return;
+    }
+    if (err) {
+      next(new ValidationException(err instanceof Error ? err.message : "File upload failed"));
+      return;
+    }
+    next();
+  };
+
   // ─── Protected Endpoints ─────────────────────────────────────────
+  router.get("/profile", controller.getProfile.bind(controller));
   router.patch("/profile", controller.updateProfile.bind(controller));
-  router.post("/cv/upload", controller.uploadCV.bind(controller));
+  router.post(
+    "/cv/upload",
+    cvUpload.single("file"),
+    handleMulterError,
+    controller.uploadCV.bind(controller),
+  );
   router.get("/cv", controller.listCV.bind(controller));
   router.delete("/cv/:cvId", controller.deleteCV.bind(controller));
   router.patch("/cv/:cvId/default", controller.setDefaultCV.bind(controller));
   router.get("/applications", controller.getApplicationHistory.bind(controller));
-
-  // ─── Public / No-Auth Endpoints ──────────────────────────────────
-  // GET /jobs/:jobId retrieves approved job details – no auth required
-  router.get("/jobs/:jobId", controller.getJobDetail.bind(controller));
 
   return router;
 }

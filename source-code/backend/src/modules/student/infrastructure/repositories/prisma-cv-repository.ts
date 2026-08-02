@@ -95,6 +95,7 @@ type CVPrismaModel = {
   id: string;
   studentId: string;
   fileName: string;
+  originalFileName: string | null;
   filePath: string;
   fileSize: number;
   mimeType: string;
@@ -364,7 +365,7 @@ export class PrismaCVRepository implements ICVRepository {
    * Mapping notes:
    * - `filePath` (Prisma) → `storagePath` (Domain)
    * - `fileName` (Prisma) → `fileName` (Domain)
-   * - No `originalFileName` in database → uses `fileName` as fallback
+   * - `originalFileName` (Prisma) → `originalFileName` (Domain)
    * - No `updatedAt` in database → uses `uploadedAt` as fallback
    *
    * @param model - The Prisma CV model (from the database).
@@ -375,7 +376,7 @@ export class PrismaCVRepository implements ICVRepository {
       id: model.id,
       studentId: model.studentId,
       fileName: model.fileName,
-      originalFileName: model.fileName,
+      originalFileName: model.originalFileName ?? model.fileName,
       mimeType: model.mimeType,
       fileSize: model.fileSize,
       storagePath: model.filePath,
@@ -389,8 +390,6 @@ export class PrismaCVRepository implements ICVRepository {
    * Map a CVMetadata domain entity to a Prisma `CVCreateInput`.
    *
    * The `id` is omitted so Prisma generates it automatically (cuid).
-   * The `originalFileName` (domain concept) has no corresponding
-   * database column and is therefore skipped.
    *
    * @param entity - The CVMetadata domain entity to persist.
    * @returns A Prisma CVCreateInput object.
@@ -398,6 +397,7 @@ export class PrismaCVRepository implements ICVRepository {
   private toCreateInput(entity: CVMetadata): Prisma.CVCreateInput {
     return {
       fileName: entity.fileName,
+      originalFileName: entity.originalFileName,
       filePath: entity.storagePath,
       fileSize: entity.fileSize,
       mimeType: entity.mimeType,
@@ -422,6 +422,7 @@ export class PrismaCVRepository implements ICVRepository {
   private toUpdateInput(entity: CVMetadata): Prisma.CVUpdateInput {
     return {
       fileName: entity.fileName,
+      originalFileName: entity.originalFileName,
       filePath: entity.storagePath,
       fileSize: entity.fileSize,
       mimeType: entity.mimeType,

@@ -12,36 +12,28 @@
  *   - ❌ No API calls
  */
 
-/** Dashboard statistics summary. */
+/** Dashboard statistics summary - matches backend GetDashboardStatsResult. */
 export interface DashboardStats {
   totalUsers: number;
-  students: number;
-  employers: number;
-  jobs: number;
-  applications: number;
+  totalStudents: number;
+  totalEmployers: number;
+  totalJobs: number;
+  totalApplications: number;
+  pendingEmployers: number;
+  pendingJobs: number;
+  retrievedAt: string;
 }
 
-/** A pending employer awaiting verification. */
-export interface PendingEmployer {
-  id: string;
-  companyName: string;
-  email: string;
-  website: string;
-  registeredAt: string; // ISO string
-}
+export type { PendingEmployer, PendingJob } from "./pending.types";
 
-/** A pending job posting awaiting approval. */
-export interface PendingJob {
-  id: string;
-  title: string;
-  employerName: string;
-  createdAt: string; // ISO string
-  state: "Pending";
-}
-
-/** Full response from the admin dashboard API. */
+/** Full response from the admin dashboard API - flat structure from backend. */
 export interface DashboardResponse {
-  stats: DashboardStats;
-  pendingEmployers: PendingEmployer[];
-  pendingJobs: PendingJob[];
+  totalUsers: number;
+  totalStudents: number;
+  totalEmployers: number;
+  totalJobs: number;
+  totalApplications: number;
+  pendingEmployers: number;
+  pendingJobs: number;
+  retrievedAt: string;
 }

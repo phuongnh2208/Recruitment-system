@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Role } from "../types/role";
+import { AuthenticationException, ForbiddenException } from "../exceptions";
 
 /**
  * Type representing the set of roles required to access a resource.
@@ -53,17 +54,14 @@ export function requireRoles(
 ): (req: Request, res: Response, next: NextFunction) => void {
   const allowedRoleSet = new Set<RoleValues>(allowedRoles.map((role) => role as RoleValues));
 
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     // ── Step 1: Ensure the request is authenticated ───────────
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: "B002",
-          message: "Authentication required. RolesGuard must be used after AuthGuard.",
-        },
-        meta: { timestamp: new Date().toISOString() },
-      });
+      next(
+        new AuthenticationException(
+          "Authentication required. RolesGuard must be used after AuthGuard.",
+        ),
+      );
       return;
     }
 
@@ -71,14 +69,11 @@ export function requireRoles(
     const userRole = req.user.role as RoleValues;
 
     if (!allowedRoleSet.has(userRole)) {
-      res.status(403).json({
-        success: false,
-        error: {
-          code: "B003",
-          message: `Forbidden. Required role: ${Array.from(allowedRoleSet).join(" or ")}. Your role: ${userRole}.`,
-        },
-        meta: { timestamp: new Date().toISOString() },
-      });
+      next(
+        new ForbiddenException(
+          `Forbidden. Required role: ${Array.from(allowedRoleSet).join(" or ")}. Your role: ${userRole}.`,
+        ),
+      );
       return;
     }
 

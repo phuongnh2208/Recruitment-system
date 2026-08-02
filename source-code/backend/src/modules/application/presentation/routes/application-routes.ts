@@ -22,14 +22,14 @@ export function createApplicationRouter(
 
   router.use(authGuard);
 
-  router.post("/applications", roleGuard(Role.STUDENT), controller.applyJob.bind(controller));
+  router.post("/", roleGuard(Role.STUDENT), controller.applyJob.bind(controller));
   router.patch(
-    "/applications/:applicationId/status",
+    "/:applicationId/status",
     roleGuard(Role.EMPLOYER),
     controller.updateApplicationStatus.bind(controller),
   );
   router.patch(
-    "/applications/:applicationId/withdraw",
+    "/:applicationId/withdraw",
     roleGuard(Role.STUDENT),
     controller.withdrawApplication.bind(controller),
   );

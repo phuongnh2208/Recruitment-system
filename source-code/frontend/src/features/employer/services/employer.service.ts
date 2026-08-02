@@ -23,6 +23,7 @@ import { ENDPOINTS } from "../../../core/api/endpoints";
 import type {
   UpdateCompanyProfileInput,
   UpdateCompanyProfileResponse,
+  GetCompanyProfileResponse,
 } from "../types/company-profile.types";
 
 /**
@@ -39,6 +40,20 @@ export async function updateCompanyProfile(
   const response = await axiosInstance.patch<UpdateCompanyProfileResponse>(
     ENDPOINTS.EMPLOYER.COMPANY_PROFILE,
     data,
+  );
+  return response.data;
+}
+
+/**
+ * Fetch the authenticated employer's company profile.
+ *
+ * Calls GET /employer/company-profile
+ *
+ * @returns The API response containing the profile data.
+ */
+export async function getCompanyProfile(): Promise<GetCompanyProfileResponse> {
+  const response = await axiosInstance.get<GetCompanyProfileResponse>(
+    ENDPOINTS.EMPLOYER.COMPANY_PROFILE,
   );
   return response.data;
 }

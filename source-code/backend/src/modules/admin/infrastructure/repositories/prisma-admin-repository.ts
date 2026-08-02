@@ -6,12 +6,49 @@ import {
   PendingJob,
   UserListItem,
   PaginatedResult,
+  UserListFilters,
 } from "../../domain/repositories/admin-repository";
 import { InfrastructureException } from "../../../../common/exceptions/infrastructure-exception";
 import { logger } from "../../../../common/logger";
 
 export class PrismaAdminRepository implements IAdminRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  async findUserById(id: string): Promise<UserListItem | null> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          studentProfile: {
+            select: {
+              id: true,
+              fullName: true,
+              university: true,
+              major: true,
+            },
+          },
+          employerProfile: {
+            select: {
+              id: true,
+              companyName: true,
+              verified: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        logger.debug({ userId: id }, "User not found by id");
+        return null;
+      }
+
+      logger.debug({ userId: id }, "User found by id");
+      return this.toUserListItem(user);
+    } catch (error) {
+      logger.error({ error, userId: id }, "Failed to find user by id");
+      throw new InfrastructureException("Failed to find user by id", { userId: id });
+    }
+  }
 
   async getDashboardStats(): Promise<DashboardStats> {
     try {
@@ -102,13 +139,40 @@ export class PrismaAdminRepository implements IAdminRepository {
     }
   }
 
-  async getUsers(page: number, limit: number): Promise<PaginatedResult<UserListItem>> {
+  async getUsers(
+    page: number,
+    limit: number,
+    filters?: UserListFilters,
+  ): Promise<PaginatedResult<UserListItem>> {
     try {
       const skip = (page - 1) * limit;
+
+      // Build where clause based on filters
+      const where: Prisma.UserWhereInput = {};
+
+      if (filters?.search) {
+        where.OR = [
+          { email: { contains: filters.search } },
+          { studentProfile: { fullName: { contains: filters.search } } },
+          { employerProfile: { companyName: { contains: filters.search } } },
+        ];
+      }
+
+      if (filters?.role) {
+        where.role = filters.role as any;
+      }
+
+      if (filters?.status === "active") {
+        where.isActive = true;
+      } else if (filters?.status === "inactive") {
+        where.isActive = false;
+      }
+
       const [users, total] = await Promise.all([
         this.prisma.user.findMany({
           skip,
           take: limit,
+          where,
           orderBy: { createdAt: "desc" },
           include: {
             studentProfile: {
@@ -128,7 +192,7 @@ export class PrismaAdminRepository implements IAdminRepository {
             },
           },
         }),
-        this.prisma.user.count(),
+        this.prisma.user.count({ where }),
       ]);
 
       logger.debug({ page, limit, total, count: users.length }, "Users retrieved successfully");

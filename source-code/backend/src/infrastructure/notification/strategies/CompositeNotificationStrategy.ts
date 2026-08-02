@@ -29,9 +29,8 @@
  * ERROR HANDLING
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Uses `Promise.all()` so that the first rejection propagates immediately.
- * Each child strategy is responsible for logging its own error before throwing
- * {@link InfrastructureException}. The composite does NOT swallow errors.
+ * Uses `Promise.allSettled()` so every strategy gets a chance to run and the
+ * caller receives a single aggregated failure when one or more strategies fail.
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * USAGE
@@ -85,23 +84,45 @@ export class CompositeNotificationStrategy implements INotificationStrategy {
    *         rejection propagates immediately via `Promise.all()`.
    */
   async send(notification: NotificationMessage): Promise<void> {
-    try {
-      await Promise.all(this.strategies.map((strategy) => strategy.send(notification)));
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+    const results = await Promise.allSettled(
+      this.strategies.map((strategy) => strategy.send(notification)),
+    );
+
+    const failures = results
+      .map((result, index) => ({ result, index }))
+      .filter(
+        (
+          entry,
+        ): entry is {
+          result: PromiseRejectedResult;
+          index: number;
+        } => entry.result.status === "rejected",
+      );
+
+    if (failures.length > 0) {
+      const message = failures
+        .map(
+          ({ result, index }) =>
+            `strategy[${index}]: ${result.reason instanceof Error ? result.reason.message : "Unknown error"}`,
+        )
+        .join("; ");
+
       logger.error(
         {
           totalStrategies: this.strategies.length,
+          failedStrategies: failures.length,
           userId: notification.userId,
           title: notification.title,
           error: message,
         },
         "CompositeNotificationStrategy: one or more strategies failed",
       );
+
       throw new InfrastructureException(`Composite notification failed: ${message}`, {
         userId: notification.userId,
         title: notification.title,
         totalStrategies: this.strategies.length,
+        failedStrategies: failures.length,
       });
     }
   }

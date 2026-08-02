@@ -28,3 +28,12 @@ export interface UpdateCompanyProfileResponse {
   success: true;
   employerProfileId: string;
 }
+
+/** Response from the get company profile API. */
+export interface GetCompanyProfileResponse {
+  success: boolean;
+  data: {
+    profile: EmployerProfile | null;
+    exists: boolean;
+  };
+}

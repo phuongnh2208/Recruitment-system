@@ -24,7 +24,7 @@
  */
 
 import http from "node:http";
-import { createApp, logStartupInfo, prisma } from "./app";
+import { createApp, logStartupInfo, prisma, setNotificationGateway, tokenProvider } from "./app";
 import { config } from "./config";
 import { logger } from "./common/logger";
 
@@ -42,19 +42,14 @@ async function bootstrap(): Promise<void> {
   // ── 3. Initialize Socket.io ────────────────────────────────────────────────
   // Import dynamically to avoid circular dependencies
   const { SocketManager, NotificationGateway } = await import("./infrastructure/websocket");
-  const { JwtTokenProvider } = await import("./infrastructure/security/jwt-token-provider");
 
-  const tokenProvider = new JwtTokenProvider();
+  // Reuse the shared tokenProvider from the app composition root.
   const socketManagerInstance = new SocketManager(server, tokenProvider);
   socketManagerInstance.initialize();
 
   const notificationGatewayInstance = new NotificationGateway(socketManagerInstance);
 
-  // Store references for potential use by other modules
-  // (In a full DI container, these would be injected)
-  // Types are declared in src/types/global.d.ts — no `any` needed
-  globalThis.socketManager = socketManagerInstance;
-  globalThis.notificationGateway = notificationGatewayInstance;
+  setNotificationGateway(notificationGatewayInstance);
 
   // ── 4. Start HTTP Server ───────────────────────────────────────────────────
   server.listen(config.port, () => {
@@ -77,6 +72,8 @@ async function bootstrap(): Promise<void> {
       // Close Socket.io
       socketManagerInstance.getServer().close();
       logger.info("Socket.io closed.");
+
+      setNotificationGateway(undefined);
 
       logger.info("Graceful shutdown complete.");
       process.exit(0);

@@ -303,6 +303,7 @@ export class PrismaStudentProfileRepository implements IStudentProfileRepository
     university: string | null;
     major: string | null;
     graduationYear: number | null;
+    avatarUrl: string | null;
     defaultCvId: string | null;
     createdAt: Date;
     updatedAt: Date;
@@ -315,7 +316,8 @@ export class PrismaStudentProfileRepository implements IStudentProfileRepository
       address: model.address,
       university: model.university,
       major: model.major,
-      avatarUrl: null,
+      graduationYear: model.graduationYear,
+      avatarUrl: model.avatarUrl,
       defaultCvId: model.defaultCvId,
       role: "STUDENT",
       createdAt: model.createdAt,
@@ -341,6 +343,8 @@ export class PrismaStudentProfileRepository implements IStudentProfileRepository
       address: entity.address,
       university: entity.university,
       major: entity.major,
+      graduationYear: entity.graduationYear,
+      avatarUrl: entity.avatarUrl,
       defaultCvId: entity.defaultCvId,
       user: {
         connect: { id: entity.userId },
@@ -364,6 +368,8 @@ export class PrismaStudentProfileRepository implements IStudentProfileRepository
       address: entity.address,
       university: entity.university,
       major: entity.major,
+      graduationYear: entity.graduationYear,
+      avatarUrl: entity.avatarUrl,
       defaultCvId: entity.defaultCvId,
     };
   }

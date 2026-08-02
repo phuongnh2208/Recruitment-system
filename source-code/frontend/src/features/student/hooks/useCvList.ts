@@ -25,8 +25,8 @@ export function useCvList() {
   return useQuery<CVMetadata[]>({
     queryKey: queryKeys.student.cv.all,
     queryFn: async () => {
-      const response = await getCvList();
-      return response.data;
+      const cvListResponse = await getCvList();
+      return cvListResponse.data;
     },
   });
 }

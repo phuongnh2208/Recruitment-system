@@ -62,6 +62,7 @@ model StudentProfile {
   university     String?
   major          String?
   graduationYear Int?
+  avatarUrl      String?
   defaultCvId    String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -130,6 +131,7 @@ model CV {
   id           String         @id @default(cuid())
   studentId    String
   fileName     String
+  originalFileName String?
   filePath     String
   fileSize     Int
   mimeType     String         @default("application/pdf")

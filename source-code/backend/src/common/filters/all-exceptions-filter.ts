@@ -44,7 +44,7 @@ import { logger } from "../logger";
  * ═══════════════════════════════════════════════════════════════════
  */
 export function AllExceptionsFilter(
-  err: Error,
+  err: unknown,
   req: Request,
   res: Response,
   _next: NextFunction,
@@ -117,7 +117,7 @@ interface NormalisedError {
  * - Generic Error                → HTTP 500, B999, generic message
  * - Anything else (unknown)      → HTTP 500, B999, "An unexpected error occurred"
  */
-function normalizeError(err: Error): NormalisedError {
+function normalizeError(err: unknown): NormalisedError {
   if (err instanceof BusinessException) {
     return {
       statusCode: err.statusCode,
