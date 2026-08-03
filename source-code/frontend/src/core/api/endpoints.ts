@@ -35,6 +35,8 @@ export const ENDPOINTS = {
     LIST: "/jobs",
     SUBMIT: (jobId: string) => `/jobs/${jobId}/submit`,
     CLOSE: (jobId: string) => `/jobs/${jobId}/close`,
+    REOPEN: (jobId: string) => `/jobs/${jobId}/reopen`,
+    REPORT: (jobId: string) => `/employer/jobs/${jobId}/report`,
   },
   APPLICATION: {
     APPLY: "/applications",

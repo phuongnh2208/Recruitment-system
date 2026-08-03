@@ -11,6 +11,8 @@ import {
 } from "../hooks/useEmployerJobs";
 import { useSubmitJobPosting } from "../hooks/useEmployerJobs";
 import { useCloseJobPosting } from "../hooks/useEmployerJobs";
+import { useReopenJobPosting } from "../hooks/useEmployerJobs";
+import { employerJobService } from "../services/employer-job.service";
 import EmployerJobCard from "./EmployerJobCard";
 import EmployerJobFilter from "./EmployerJobFilter";
 import EmployerJobSkeleton from "./EmployerJobSkeleton";
@@ -35,6 +37,7 @@ export default function EmployerJobDashboard() {
 
   const submitMutation = useSubmitJobPosting();
   const closeMutation = useCloseJobPosting();
+  const reopenMutation = useReopenJobPosting();
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -70,11 +73,30 @@ export default function EmployerJobDashboard() {
     }
   };
 
+  const handleReopen = async (jobId: string) => {
+    try {
+      await reopenMutation.mutateAsync(jobId);
+    } catch {
+      // Error is handled by the mutation onError callback
+    }
+  };
+
+  const handleExportReport = async (jobId: string) => {
+    try {
+      await employerJobService.downloadRecruitmentReport(jobId);
+    } catch {
+      // Error is handled by the interceptor / global error handler
+    }
+  };
+
   const handleCreateNew = () => {
     navigate("/employer/jobs/create");
   };
 
-  const isMutating = submitMutation.isPending || closeMutation.isPending;
+  const isMutating =
+    submitMutation.isPending ||
+    closeMutation.isPending ||
+    reopenMutation.isPending;
 
   return (
     <div className="min-h-screen bg-paper">
@@ -83,7 +105,7 @@ export default function EmployerJobDashboard() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl font-semibold text-ink md:text-3xl">
-              Quan ly tin tuyen dung
+              Quản lý tin tuyển dụng
             </h1>
             <p className="mt-1 font-body text-sm text-ink/60">
               Xem va quan ly danh sach tin tuyen dung cua doanh nghiep ban.
@@ -140,6 +162,8 @@ export default function EmployerJobDashboard() {
                       onEdit={handleEdit}
                       onSubmit={handleSubmit}
                       onClose={handleClose}
+                      onReopen={handleReopen}
+                      onExportReport={handleExportReport}
                     />
                   ))}
                 </div>

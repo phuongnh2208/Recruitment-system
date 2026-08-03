@@ -87,3 +87,18 @@ export function useCloseJobPosting() {
     },
   });
 }
+
+/**
+ * Mutation for reopening a rejected job posting.
+ */
+export function useReopenJobPosting() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (jobId: string) => employerJobService.reopenJobPosting(jobId),
+    onSuccess: () => {
+      // Invalidate and refetch the jobs list
+      queryClient.invalidateQueries({ queryKey: queryKeys.employerJob.all });
+    },
+  });
+}

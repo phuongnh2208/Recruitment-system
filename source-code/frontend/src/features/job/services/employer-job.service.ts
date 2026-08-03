@@ -91,10 +91,57 @@ async function closeJobPosting(jobId: string): Promise<{ success: true }> {
 }
 
 /**
+ * Reopen a rejected job posting.
+ *
+ * Calls POST /jobs/:jobId/reopen (FR-EM-05)
+ *
+ * @param jobId - The job posting ID to reopen.
+ * @returns The API response containing success status.
+ */
+async function reopenJobPosting(jobId: string): Promise<{ success: true }> {
+  const response = await axiosInstance.post<{ success: true }>(
+    ENDPOINTS.EMPLOYER_JOB.REOPEN(jobId),
+  );
+
+  return response.data;
+}
+
+/**
+ * Download a recruitment report CSV for a CLOSED or EXPIRED job posting.
+ *
+ * Calls GET /employer/jobs/:jobId/report (FR-EM-10)
+ *
+ * The CSV is fetched as a blob (auth token auto-attached by axiosInstance),
+ * then an Object URL is created and the browser download is triggered.
+ *
+ * @param jobId - The job posting ID to export the report for.
+ */
+async function downloadRecruitmentReport(jobId: string): Promise<void> {
+  const response = await axiosInstance.get(
+    ENDPOINTS.EMPLOYER_JOB.REPORT(jobId),
+    {
+      responseType: "blob",
+    },
+  );
+
+  const blob = response.data as Blob;
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "report.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+/**
  * Employer Job Dashboard API service object.
  */
 export const employerJobService = {
   getEmployerJobs: fetchEmployerJobs,
   submitJobPosting,
   closeJobPosting,
+  reopenJobPosting,
+  downloadRecruitmentReport,
 };

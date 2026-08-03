@@ -22,6 +22,10 @@ export interface EmployerJobCardProps {
   onSubmit: (jobId: string) => void;
   /** Callback when close button is clicked. */
   onClose: (jobId: string) => void;
+  /** Callback when reopen button is clicked. */
+  onReopen: (jobId: string) => void;
+  /** Callback when export report button is clicked. */
+  onExportReport: (jobId: string) => void;
 }
 
 /** Status badge color mapping following design.md tokens. */
@@ -57,10 +61,14 @@ export default function EmployerJobCard({
   onEdit,
   onSubmit,
   onClose,
+  onReopen,
+  onExportReport,
 }: EmployerJobCardProps) {
   const canEdit = job.state === "Draft" || job.state === "Rejected";
   const canSubmit = job.state === "Draft";
   const canClose = job.state === "Approved";
+  const canReopen = job.state === "Rejected";
+  const canExportReport = job.state === "Closed" || job.state === "Expired";
 
   return (
     <div className="rounded-card bg-white p-5 shadow-card ring-1 ring-ink/5 transition hover:shadow-raised hover:ring-primary/20">
@@ -170,6 +178,24 @@ export default function EmployerJobCard({
             className="rounded-seal border border-ink/15 px-4 py-1.5 font-body text-sm font-medium text-ink/70 transition hover:bg-sage/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             Đóng tin
+          </button>
+        )}
+        {canReopen && (
+          <button
+            type="button"
+            onClick={() => onReopen(job.id)}
+            className="rounded-seal border border-primary px-4 py-1.5 font-body text-sm font-medium text-primary transition hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            Mở lại
+          </button>
+        )}
+        {canExportReport && (
+          <button
+            type="button"
+            onClick={() => onExportReport(job.id)}
+            className="rounded-seal border border-ink/15 px-4 py-1.5 font-body text-sm font-medium text-ink/70 transition hover:bg-sage/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            Xuất báo cáo
           </button>
         )}
       </div>

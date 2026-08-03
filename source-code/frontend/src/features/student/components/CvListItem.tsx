@@ -50,7 +50,7 @@ export default function CvListItem({ cv }: CvListItemProps) {
       {/* Left side – file info */}
       <div className="flex flex-col">
         <span className="font-body text-sm font-medium text-ink">
-          {cv.fileName}
+          {cv.originalFileName || cv.fileName}
         </span>
         <span className="font-body text-xs text-ink/60">
           {formatFileSize(cv.fileSize)} •{" "}
@@ -65,6 +65,14 @@ export default function CvListItem({ cv }: CvListItemProps) {
             Mặc định
           </span>
         )}
+        <a
+          href={cv.filePath}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-seal border border-primary px-4 py-1.5 font-body text-sm text-primary transition hover:bg-primary-light"
+        >
+          Xem
+        </a>
         <button
           type="button"
           onClick={handleSetDefault}

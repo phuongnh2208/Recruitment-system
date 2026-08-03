@@ -386,6 +386,8 @@ export default function CompanyProfilePage() {
                       }
                       onSubmit={() => {}}
                       onClose={() => {}}
+                      onReopen={() => {}}
+                      onExportReport={() => {}}
                     />
                   ))}
                 </div>

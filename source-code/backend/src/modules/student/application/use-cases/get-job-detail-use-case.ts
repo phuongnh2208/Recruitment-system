@@ -100,22 +100,34 @@ export interface GetJobDetailCommand {
 /**
  * Output DTO for getting job detail.
  */
+export interface JobDetailDto {
+  id: string | null;
+  employerId: string;
+  title: string;
+  description: string;
+  requirements: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  currency: string;
+  location: string;
+  state: string;
+  approvedAt: Date | null;
+  approvedBy: string | null;
+  rejectionReason: string | null;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  companyName: string;
+  companyDescription?: string;
+  website?: string;
+  companyAddress?: string;
+  logoUrl?: string;
+  employerVerified: boolean;
+}
+
 export interface GetJobDetailResult {
   /** The job posting entity with employer details. */
-  job: JobPosting & {
-    /** Company/employer name. */
-    companyName: string;
-    /** Company description. */
-    companyDescription?: string;
-    /** Company website. */
-    website?: string;
-    /** Company address. */
-    companyAddress?: string;
-    /** Company logo URL. */
-    logoUrl?: string;
-    /** Whether the employer is verified. */
-    employerVerified: boolean;
-  };
+  job: JobDetailDto;
 }
 
 export class GetJobDetailUseCase {
@@ -183,8 +195,28 @@ export class GetJobDetailUseCase {
       const employer = await this.employerRepository.findById(job.employerId);
 
       // ── 7. Map employer details to job object ───────────────────────
+      // NOTE: Cannot spread `...job` because JobPosting uses private fields
+      // (_title, _description, etc.) with getters. JSON.stringify would
+      // serialize the private fields as _title, _description — not title,
+      // description — causing the frontend to receive undefined values.
+      // We must explicitly map each field through the getters.
       const enhancedJob = {
-        ...job,
+        id: job.id,
+        employerId: job.employerId,
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        currency: job.currency,
+        location: job.location,
+        state: job.state.value,
+        approvedAt: job.approvedAt,
+        approvedBy: job.approvedBy,
+        rejectionReason: job.rejectionReason,
+        expiresAt: job.expiresAt,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt,
         companyName: employer?.companyName ?? "",
         companyDescription: employer?.description ?? undefined,
         website: employer?.website ?? undefined,
@@ -203,14 +235,7 @@ export class GetJobDetailUseCase {
 
       // ── 9. Return result ───────────────────────────────────────────
       return {
-        job: enhancedJob as JobPosting & {
-          companyName: string;
-          companyDescription?: string;
-          website?: string;
-          companyAddress?: string;
-          logoUrl?: string;
-          employerVerified: boolean;
-        },
+        job: enhancedJob,
       };
     } catch (error) {
       // Re-throw known domain exceptions without wrapping
