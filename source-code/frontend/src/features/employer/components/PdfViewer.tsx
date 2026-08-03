@@ -11,6 +11,8 @@
  *   - ❌ No custom PDF rendering
  *   - ❌ No business logic
  */
+import { useEffect, useState } from "react";
+import { axiosInstance } from "../../../core/api/axios";
 
 export interface PdfViewerProps {
   /** URL to the PDF file to display. */
@@ -20,7 +22,29 @@ export interface PdfViewerProps {
 }
 
 export default function PdfViewer({ pdfUrl, applicantName }: PdfViewerProps) {
-  if (!pdfUrl) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setBlobUrl(null);
+    setError(false);
+    if (!pdfUrl) return;
+
+    let objectUrl: string | null = null;
+    axiosInstance
+      .get(pdfUrl, { responseType: "blob" })
+      .then((response) => {
+        objectUrl = URL.createObjectURL(response.data);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setError(true));
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [pdfUrl]);
+
+  if (!pdfUrl || error) {
     return (
       <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5">
         <h2 className="font-display text-lg font-semibold text-ink">
@@ -40,9 +64,11 @@ export default function PdfViewer({ pdfUrl, applicantName }: PdfViewerProps) {
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
           <p className="mt-4 font-body text-sm text-ink/50">
-            {applicantName
-              ? `${applicantName} chưa tải lên CV.`
-              : "CV không khả dụng."}
+            {error
+              ? "Không thể tải CV. Vui lòng thử lại."
+              : applicantName
+                ? `${applicantName} chưa tải lên CV.`
+                : "CV không khả dụng."}
           </p>
         </div>
       </div>
@@ -55,22 +81,30 @@ export default function PdfViewer({ pdfUrl, applicantName }: PdfViewerProps) {
         <h2 className="font-display text-lg font-semibold text-ink">
           CV ứng viên
         </h2>
-        <a
-          href={pdfUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-seal bg-primary px-4 py-1.5 font-body text-sm font-medium text-white transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          Mở trong tab mới
-        </a>
+        {blobUrl && (
+          <a
+            href={blobUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-seal bg-primary px-4 py-1.5 font-body text-sm font-medium text-white transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            Mở trong tab mới
+          </a>
+        )}
       </div>
       <div className="h-[600px] w-full">
-        <iframe
-          src={pdfUrl}
-          title="CV PDF"
-          className="h-full w-full border-0"
-          sandbox="allow-scripts allow-same-origin"
-        />
+        {blobUrl ? (
+          <iframe
+            src={blobUrl}
+            title="CV PDF"
+            className="h-full w-full border-0"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center font-body text-sm text-ink/50">
+            Đang tải CV...
+          </div>
+        )}
       </div>
     </div>
   );

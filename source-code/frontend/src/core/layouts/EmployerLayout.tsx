@@ -1,10 +1,15 @@
 import { Outlet, NavLink } from "react-router-dom";
+import {
+  BuildingOffice2Icon,
+  ClipboardDocumentListIcon,
+  UsersIcon,
+} from "@heroicons/react/24/outline";
 import { AppHeader } from "../components/AppHeader";
 
 const navItems = [
-  { to: "/employer/company-profile", label: "Hồ sơ công ty", icon: "🏢" },
-  { to: "/employer/jobs", label: "Tin tuyển dụng", icon: "📋" },
-  { to: "/employer/applicants", label: "Ứng viên", icon: "👥" },
+  { to: "/employer/company-profile", label: "Hồ sơ công ty", Icon: BuildingOffice2Icon },
+  { to: "/employer/jobs", label: "Tin tuyển dụng", Icon: ClipboardDocumentListIcon },
+  { to: "/employer/applicants", label: "Ứng viên", Icon: UsersIcon },
 ];
 
 /**
@@ -52,7 +57,7 @@ export function EmployerLayout() {
                     }`
                   }
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <item.Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <span className="hidden lg:inline">{item.label}</span>
                 </NavLink>
               </li>

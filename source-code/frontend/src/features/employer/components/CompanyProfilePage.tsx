@@ -22,6 +22,7 @@
  */
 
 import React from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useCompanyProfileForm } from "../hooks/useCompanyProfileForm";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import {
@@ -150,7 +151,7 @@ function SuccessBanner({ onDismiss }: { onDismiss: () => void }) {
           className="ml-2 font-body text-sm text-primary hover:text-primary-dark"
           aria-label="Đóng thông báo"
         >
-          ✕
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -180,7 +181,7 @@ function ErrorBanner({
           className="ml-2 font-body text-sm text-danger hover:text-danger/80"
           aria-label="Đóng thông báo"
         >
-          ✕
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

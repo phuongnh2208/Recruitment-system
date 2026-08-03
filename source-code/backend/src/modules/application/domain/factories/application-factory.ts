@@ -114,6 +114,8 @@ export interface CreateApplicationInput {
   jobPostingId: string;
   /** The ID of the CV to attach to this application. */
   cvId: string;
+  /** Optional cover letter submitted with the application. */
+  coverLetter?: string | null;
 }
 
 export class ApplicationFactory {
@@ -134,6 +136,7 @@ export class ApplicationFactory {
       studentId: input.studentId,
       jobPostingId: input.jobPostingId,
       cvId: input.cvId,
+      coverLetter: input.coverLetter ?? null,
       state: ApplicationState.applied(),
       rejectionReason: null,
       appliedAt: now,

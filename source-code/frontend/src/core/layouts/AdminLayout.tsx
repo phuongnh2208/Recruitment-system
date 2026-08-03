@@ -1,11 +1,17 @@
 import { Outlet, NavLink } from "react-router-dom";
+import {
+  ChartBarIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 import { AppHeader } from "../components/AppHeader";
 
 const navItems = [
-  { to: "/admin/dashboard", label: "Bảng điều khiển", icon: "📊" },
-  { to: "/admin/pending-approvals", label: "Phê duyệt", icon: "✅" },
-  { to: "/admin/users", label: "Quản lý người dùng", icon: "👥" },
-  { to: "/admin/audit-logs", label: "Audit Log", icon: "📜" },
+  { to: "/admin/dashboard", label: "Bảng điều khiển", Icon: ChartBarIcon },
+  { to: "/admin/pending-approvals", label: "Phê duyệt", Icon: CheckCircleIcon },
+  { to: "/admin/users", label: "Quản lý người dùng", Icon: UsersIcon },
+  { to: "/admin/audit-logs", label: "Nhật ký hệ thống", Icon: DocumentTextIcon },
 ];
 
 /**
@@ -53,7 +59,7 @@ export function AdminLayout() {
                     }`
                   }
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <item.Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <span className="hidden lg:inline">{item.label}</span>
                 </NavLink>
               </li>

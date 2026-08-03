@@ -32,10 +32,10 @@ export default function LoginPage() {
         <div className="rounded-card bg-white p-8 shadow-card ring-1 ring-ink/5">
           <div className="mb-8 text-center">
             <h1 className="font-display text-2xl font-semibold text-ink">
-              Dang nhap
+              Đăng nhập
             </h1>
             <p className="mt-1 font-body text-sm text-ink/60">
-              Dang nhap de tiep tuc su dung he thong
+              Đăng nhập để tiếp tục sử dụng hệ thống
             </p>
           </div>
 
@@ -66,7 +66,7 @@ export default function LoginPage() {
             <div>
               <label htmlFor="password" className="block">
                 <span className="font-body text-sm font-medium text-ink">
-                  Mat khau <span className="text-danger">*</span>
+                  Mật khẩu <span className="text-danger">*</span>
                 </span>
                 <div className="relative mt-1.5">
                   <input
@@ -83,9 +83,9 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 font-body text-xs text-ink/50 hover:text-ink"
-                    aria-label={showPassword ? "An mat khau" : "Hien mat khau"}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
-                    {showPassword ? "An" : "Hien"}
+                    {showPassword ? "Ẩn" : "Hiện"}
                   </button>
                 </div>
                 {errors.password && (
@@ -101,17 +101,17 @@ export default function LoginPage() {
               disabled={loginMutation.isPending}
               className="w-full rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-sage disabled:text-ink/40"
             >
-              {loginMutation.isPending ? "Dang dang nhap..." : "Dang nhap"}
+              {loginMutation.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
 
           <p className="mt-6 text-center font-body text-sm text-ink/60">
-            Chua co tai khoan?{" "}
+            Chưa có tài khoản?{" "}
             <Link
               to="/register"
               className="font-medium text-primary hover:text-primary-dark"
             >
-              Dang ky ngay
+              Đăng ký ngay
             </Link>
           </p>
         </div>

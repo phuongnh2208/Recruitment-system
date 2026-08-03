@@ -28,6 +28,7 @@
  */
 
 import express from "express";
+import path from "path";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
@@ -285,6 +286,13 @@ export function createApp(): express.Application {
   app.use("/api/v1/applications", modules.applicationModule.router);
   app.use("/api/v1/admin", modules.adminModule.router);
   app.use("/api/v1/admin", modules.auditModule.router);
+
+  // Uploaded files (CVs, avatars) — require authentication to view/download
+  app.use(
+    "/api/v1/uploads",
+    authGuard,
+    express.static(path.resolve(config.uploadRoot)),
+  );
 
   // ── 404 Handler ────────────────────────────────────────────────────────────
   app.use((_req, res) => {

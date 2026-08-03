@@ -205,7 +205,7 @@ export class UploadCVUseCase {
         originalFileName: command.originalFileName,
         mimeType: command.mimeType,
         fileSize: command.size,
-        storagePath: uploadResult.path,
+        storagePath,
       });
 
       // ── 8. Persist metadata ───────────────────────────────────────

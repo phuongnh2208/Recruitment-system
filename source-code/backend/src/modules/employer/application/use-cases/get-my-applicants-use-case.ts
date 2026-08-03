@@ -1,5 +1,7 @@
 import { Application } from "../../../application/domain/entities/application";
 import { IEmployerRepository } from "../../domain/repositories/employer-repository";
+import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
 import {
   ValidationException,
   BusinessException,
@@ -22,8 +24,24 @@ export interface GetMyApplicantsCommand {
   limit: number;
 }
 
+const STATE_LABELS: Record<string, string> = {
+  APPLIED: "Applied",
+  UNDER_REVIEW: "Under Review",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+  WITHDRAWN: "Withdrawn",
+};
+
+export interface ApplicantListItem {
+  id: string;
+  applicantName: string;
+  jobTitle: string;
+  appliedDate: string;
+  status: string;
+}
+
 export interface GetMyApplicantsResult {
-  items: Application[];
+  items: ApplicantListItem[];
   page: number;
   limit: number;
   total: number;
@@ -34,6 +52,8 @@ export class GetMyApplicantsUseCase {
   constructor(
     private readonly applicationRepository: IApplicationRepository,
     private readonly employerRepository: IEmployerRepository,
+    private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
   ) {}
 
   async execute(command: GetMyApplicantsCommand): Promise<GetMyApplicantsResult> {
@@ -77,6 +97,23 @@ export class GetMyApplicantsUseCase {
 
       const totalPages = Math.ceil(total / command.limit);
 
+      const enrichedItems: ApplicantListItem[] = await Promise.all(
+        items.map(async (application) => {
+          const [job, student] = await Promise.all([
+            this.jobPostingRepository.findById(application.jobPostingId),
+            this.studentProfileRepository.findById(application.studentId),
+          ]);
+
+          return {
+            id: application.id!,
+            applicantName: student?.fullName ?? "Unknown",
+            jobTitle: job?.title ?? "Unknown",
+            appliedDate: application.appliedAt.toISOString(),
+            status: STATE_LABELS[application.state.value],
+          };
+        }),
+      );
+
       logger.info(
         {
           employerId: employerProfile.id,
@@ -87,7 +124,7 @@ export class GetMyApplicantsUseCase {
       );
 
       return {
-        items,
+        items: enrichedItems,
         page: command.page,
         limit: command.limit,
         total,

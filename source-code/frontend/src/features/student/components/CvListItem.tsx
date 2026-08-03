@@ -12,7 +12,9 @@
  *   - ❌ Business logic – delegated to useDeleteCv / useSetDefaultCv hooks
  *   - ❌ Direct API calls
  */
+import { useState } from "react";
 import { useSetDefaultCv, useDeleteCv } from "../hooks/useCvList";
+import { axiosInstance } from "../../../core/api/axios";
 
 export interface CvListItemProps {
   /** CV metadata to display. */
@@ -33,6 +35,22 @@ export default function CvListItem({ cv }: CvListItemProps) {
   const { mutate: deleteMutate, isPending: isDeleting } = useDeleteCv();
   const { mutate: setDefaultMutate, isPending: isSettingDefault } =
     useSetDefaultCv();
+  const [isOpeningCv, setIsOpeningCv] = useState(false);
+
+  const handleView = async () => {
+    setIsOpeningCv(true);
+    try {
+      const response = await axiosInstance.get(cv.filePath, {
+        responseType: "blob",
+      });
+      const blobUrl = URL.createObjectURL(response.data);
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      window.alert("Không thể mở CV. Vui lòng thử lại.");
+    } finally {
+      setIsOpeningCv(false);
+    }
+  };
 
   const handleDelete = () => {
     // Simple confirmation – can be replaced with a modal later.
@@ -65,14 +83,14 @@ export default function CvListItem({ cv }: CvListItemProps) {
             Mặc định
           </span>
         )}
-        <a
-          href={cv.filePath}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-seal border border-primary px-4 py-1.5 font-body text-sm text-primary transition hover:bg-primary-light"
+        <button
+          type="button"
+          onClick={handleView}
+          disabled={isOpeningCv}
+          className="rounded-seal border border-primary px-4 py-1.5 font-body text-sm text-primary transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Xem
-        </a>
+          {isOpeningCv ? "Đang mở..." : "Xem"}
+        </button>
         <button
           type="button"
           onClick={handleSetDefault}

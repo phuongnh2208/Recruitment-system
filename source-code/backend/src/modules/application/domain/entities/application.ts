@@ -57,6 +57,7 @@ export interface ApplicationProps {
   studentId: string;
   jobPostingId: string;
   cvId: string;
+  coverLetter: string | null;
   state: ApplicationState;
   rejectionReason: string | null;
   appliedAt: Date;
@@ -71,6 +72,7 @@ export class Application {
   private _studentId: string;
   private _jobPostingId: string;
   private _cvId: string;
+  private _coverLetter: string | null;
   private _state: ApplicationState;
   private _rejectionReason: string | null;
   private _appliedAt: Date;
@@ -84,6 +86,7 @@ export class Application {
     this._studentId = props.studentId;
     this._jobPostingId = props.jobPostingId;
     this._cvId = props.cvId;
+    this._coverLetter = props.coverLetter;
     this._state = props.state;
     this._rejectionReason = props.rejectionReason;
     this._appliedAt = props.appliedAt;
@@ -109,6 +112,10 @@ export class Application {
 
   get cvId(): string {
     return this._cvId;
+  }
+
+  get coverLetter(): string | null {
+    return this._coverLetter;
   }
 
   get state(): ApplicationState {

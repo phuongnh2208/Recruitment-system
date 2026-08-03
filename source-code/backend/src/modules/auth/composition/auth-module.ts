@@ -128,6 +128,10 @@ import type { Request, Response, NextFunction } from "express";
 import { PasswordHasher } from "../domain/password-hasher";
 import { TokenProvider } from "../domain/token-provider";
 import { UserFactory } from "../domain/factories/user-factory";
+import { PrismaStudentProfileRepository } from "../../student/infrastructure/repositories/prisma-student-repository";
+import { StudentProfileFactory } from "../../student/domain/factories/student-profile-factory";
+import { PrismaEmployerRepository } from "../../employer/infrastructure/repositories/prisma-employer-repository";
+import { EmployerProfileFactory } from "../../employer/domain/employer-profile-factory";
 
 // ── Infrastructure — Auth Module Repositories ─────────────────────────────────
 import { PrismaUserRepository, PrismaRefreshTokenRepository } from "../infrastructure/repositories";
@@ -257,14 +261,6 @@ export function createAuthModule(
   const userFactory = new UserFactory(passwordHasher);
 
   // ── 3. Application Layer (Use Cases) ───────────────────────────────
-  const registerUseCase = new RegisterUseCase(
-    userRepository,
-    passwordHasher,
-    tokenProvider,
-    notificationStrategy,
-    userFactory,
-  );
-
   const loginUseCase = new LoginUseCase(
     userRepository,
     refreshTokenRepository,
@@ -272,6 +268,19 @@ export function createAuthModule(
     tokenProvider,
     notificationStrategy,
     auditLogger!,
+  );
+
+  const registerUseCase = new RegisterUseCase(
+    userRepository,
+    passwordHasher,
+    tokenProvider,
+    notificationStrategy,
+    userFactory,
+    new PrismaStudentProfileRepository(prismaClient),
+    new StudentProfileFactory(),
+    new PrismaEmployerRepository(prismaClient),
+    new EmployerProfileFactory(),
+    loginUseCase,
   );
 
   const logoutUseCase = new LogoutUseCase(refreshTokenRepository, tokenProvider, auditLogger!);

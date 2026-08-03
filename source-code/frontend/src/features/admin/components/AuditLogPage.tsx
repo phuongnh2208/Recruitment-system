@@ -19,10 +19,10 @@ export default function AuditLogPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Nhật ký hệ thống</h1>
         <input
           type="text"
-          placeholder="Filter by action..."
+          placeholder="Lọc theo hành động..."
           value={action}
           onChange={(e) => {
             setAction(e.target.value);
@@ -32,8 +32,8 @@ export default function AuditLogPage() {
         />
       </div>
 
-      {isLoading && <p className="text-gray-500">Loading audit logs...</p>}
-      {isError && <p className="text-red-500">Failed to load audit logs.</p>}
+      {isLoading && <p className="text-gray-500">Đang tải nhật ký...</p>}
+      {isError && <p className="text-red-500">Không thể tải nhật ký hệ thống.</p>}
 
       {data && (
         <>
@@ -42,19 +42,19 @@ export default function AuditLogPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Timestamp
+                    Thời gian
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Actor
+                    Người thực hiện
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Action
+                    Hành động
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Entity
+                    Đối tượng
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Entity ID
+                    Mã đối tượng
                   </th>
                 </tr>
               </thead>
@@ -82,7 +82,7 @@ export default function AuditLogPage() {
                       colSpan={5}
                       className="px-4 py-8 text-center text-gray-400"
                     >
-                      No audit logs found.
+                      Không tìm thấy nhật ký nào.
                     </td>
                   </tr>
                 )}
@@ -92,9 +92,9 @@ export default function AuditLogPage() {
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
-              Page {data.page} of{" "}
+              Trang {data.page} /{" "}
               {Math.max(1, Math.ceil(data.total / data.limit))} ({data.total}{" "}
-              total)
+              bản ghi)
             </p>
             <div className="flex gap-2">
               <button
@@ -102,14 +102,14 @@ export default function AuditLogPage() {
                 disabled={page <= 1}
                 className="rounded-md border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
               >
-                Previous
+                Trước
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page * data.limit >= data.total}
                 className="rounded-md border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
               >
-                Next
+                Sau
               </button>
             </div>
           </div>

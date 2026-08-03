@@ -21,6 +21,7 @@
  *   - ❌ No direct axios imports
  */
 
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useJobForm, type JobFormMode } from "../hooks/useJobForm";
 import type { JobFormValues } from "../schemas/job.schema";
 
@@ -192,7 +193,7 @@ function SuccessBanner({
           className="ml-2 font-body text-sm text-primary hover:text-primary-dark"
           aria-label="Đóng thông báo"
         >
-          ✕
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -222,7 +223,7 @@ function ErrorBanner({
           className="ml-2 font-body text-sm text-danger hover:text-danger/80"
           aria-label="Đóng thông báo"
         >
-          ✕
+          <XMarkIcon className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

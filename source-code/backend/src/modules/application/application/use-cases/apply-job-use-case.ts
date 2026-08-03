@@ -58,6 +58,8 @@ export interface ApplyJobCommand {
   jobId: string;
   /** The ID of the CV to attach to this application. */
   cvId: string;
+  /** Optional cover letter submitted with the application. */
+  coverLetter?: string | null;
 }
 
 /**
@@ -164,6 +166,7 @@ export class ApplyJobUseCase {
         studentId: studentProfile.id,
         jobPostingId: command.jobId,
         cvId: command.cvId,
+        coverLetter: command.coverLetter,
       });
 
       // ── Step 8: Persist the application ─────────────────────────

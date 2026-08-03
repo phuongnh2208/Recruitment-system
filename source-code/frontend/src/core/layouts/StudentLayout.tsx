@@ -1,13 +1,18 @@
 import { Outlet, NavLink } from "react-router-dom";
+import {
+  UserCircleIcon,
+  BriefcaseIcon,
+  ClipboardDocumentListIcon,
+} from "@heroicons/react/24/outline";
 import { AppHeader } from "../components/AppHeader";
 
 const navItems = [
-  { to: "/student/profile", label: "Hồ sơ cá nhân", icon: "👤" },
-  { to: "/student/jobs", label: "Việc làm", icon: "💼" },
+  { to: "/student/profile", label: "Hồ sơ cá nhân", Icon: UserCircleIcon },
+  { to: "/student/jobs", label: "Việc làm", Icon: BriefcaseIcon },
   {
     to: "/student/application-history",
     label: "Lịch sử ứng tuyển",
-    icon: "📋",
+    Icon: ClipboardDocumentListIcon,
   },
 ];
 
@@ -56,7 +61,7 @@ export function StudentLayout() {
                     }`
                   }
                 >
-                  <span className="text-base">{item.icon}</span>
+                  <item.Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <span className="hidden lg:inline">{item.label}</span>
                 </NavLink>
               </li>

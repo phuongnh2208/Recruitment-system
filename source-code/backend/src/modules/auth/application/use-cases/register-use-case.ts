@@ -31,6 +31,11 @@ import {
 import { UserFactory, CreateUserInput } from "../../domain/factories/user-factory";
 import { Email } from "../../domain/value-objects/email";
 import { Password } from "../../domain/value-objects/password";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
+import { StudentProfileFactory } from "../../../student/domain/factories/student-profile-factory";
+import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
+import { EmployerProfileFactory } from "../../../employer/domain/employer-profile-factory";
+import { LoginUseCase, LoginResult } from "./login-use-case";
 import {
   ConflictException,
   ValidationException,
@@ -43,14 +48,16 @@ export interface RegisterCommand {
   email: string;
   password: string;
   role: string;
+  fullName: string;
+  companyName?: string;
 }
 
-/** Output DTO for the use‑case. */
-export interface RegisterResult {
-  userId: string;
-  email: string;
-  verificationToken: string;
-}
+/**
+ * Output DTO for the use‑case. Registration auto-activates the account
+ * (no external SMTP is configured for this project) and immediately
+ * signs the user in, matching LoginUseCase's response shape.
+ */
+export type RegisterResult = LoginResult;
 
 export class RegisterUseCase {
   constructor(
@@ -59,6 +66,11 @@ export class RegisterUseCase {
     private readonly tokenProvider: TokenProvider,
     private readonly notificationStrategy: INotificationStrategy,
     private readonly userFactory: UserFactory,
+    private readonly studentProfileRepository: IStudentProfileRepository,
+    private readonly studentProfileFactory: StudentProfileFactory,
+    private readonly employerRepository: IEmployerRepository,
+    private readonly employerProfileFactory: EmployerProfileFactory,
+    private readonly loginUseCase: LoginUseCase,
   ) {}
 
   /** Execute the registration flow. */
@@ -84,36 +96,50 @@ export class RegisterUseCase {
       const user = await this.userFactory.create(createInput);
 
       // 4️⃣ Persist the user.
-      await this.userRepository.create(user);
-      logger.info({ userId: user.id, email: user.email }, "User Registered");
+      const persistedUser = await this.userRepository.create(user);
+      logger.info({ userId: persistedUser.id, email: persistedUser.email }, "User Registered");
 
-      // 5️⃣ Generate verification token.
-      const payload: TokenPayload = {
-        sub: user.id as unknown as string,
-        email: user.email,
-        role: user.role,
-        purpose: "VERIFY_EMAIL",
-      };
-      const verificationToken = await this.tokenProvider.generateAccessToken(payload);
+      // 4️⃣b Create the role-specific profile (StudentProfile / EmployerProfile).
+      const userId = persistedUser.id as unknown as string;
+      if (command.role === "STUDENT") {
+        const studentProfile = this.studentProfileFactory.create({
+          userId,
+          fullName: command.fullName,
+          role: command.role,
+        });
+        await this.studentProfileRepository.create(studentProfile);
+      } else if (command.role === "EMPLOYER") {
+        const employerProfile = this.employerProfileFactory.create({
+          userId,
+          companyName: command.companyName!,
+        });
+        await this.employerRepository.create(employerProfile);
+      }
 
-      // 6️⃣ Send verification e‑mail.
+      // 5️⃣ Auto-activate the account (no external SMTP is wired up for
+      //     this project, so gating login on e‑mail verification would
+      //     lock every new user out).
+      persistedUser.activate();
+      persistedUser.verifyEmail();
+      await this.userRepository.update(persistedUser);
+
+      // 6️⃣ Send a welcome notification (best-effort, non-blocking).
       const notification: NotificationMessage = {
-        userId: user.id as unknown as string,
-        title: "Verify your e‑mail",
-        message: "Please verify your e‑mail address by clicking the link.",
-        metadata: {
-          email: user.email,
-          verificationToken,
-        },
+        userId,
+        title: "Chào mừng bạn đến với TrustHire",
+        message: "Tài khoản của bạn đã được tạo thành công.",
+        metadata: { email: persistedUser.email },
       };
-      await this.notificationStrategy.send(notification);
+      this.notificationStrategy.send(notification).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logger.warn({ userId, error: errorMessage }, "Failed to send welcome notification");
+      });
 
-      // 7️⃣ Return result.
-      return {
-        userId: user.id as unknown as string,
-        email: user.email,
-        verificationToken,
-      };
+      // 7️⃣ Sign the new user in immediately.
+      return await this.loginUseCase.execute({
+        email: command.email,
+        password: command.password,
+      });
     } catch (error) {
       // Map known domain errors, otherwise wrap as InfrastructureException.
       if (error instanceof ConflictException || error instanceof ValidationException) {

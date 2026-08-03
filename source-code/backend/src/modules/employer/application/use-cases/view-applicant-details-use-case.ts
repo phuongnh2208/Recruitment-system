@@ -1,6 +1,9 @@
 import { Application } from "../../../application/domain/entities/application";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
 import { IEmployerRepository } from "../../domain/repositories/employer-repository";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
+import { ICVRepository } from "../../../student/domain/repositories/cv-repository";
+import { IUserRepository } from "../../../auth/domain/repositories/user-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -19,8 +22,29 @@ export interface ViewApplicantDetailsCommand {
   applicationId: string;
 }
 
+const STATE_LABELS: Record<string, string> = {
+  APPLIED: "Applied",
+  UNDER_REVIEW: "Under Review",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+  WITHDRAWN: "Withdrawn",
+};
+
 export interface ViewApplicantDetailsResult {
-  application: Application;
+  id: string;
+  jobTitle: string;
+  student: {
+    fullName: string;
+    email: string;
+    phone: string | null;
+    university: string | null;
+    major: string | null;
+    graduationYear: number | null;
+  };
+  coverLetter: string | null;
+  status: string;
+  appliedDate: string;
+  cvUrl: string | null;
 }
 
 export class ViewApplicantDetailsUseCase {
@@ -28,6 +52,9 @@ export class ViewApplicantDetailsUseCase {
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
     private readonly employerRepository: IEmployerRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
+    private readonly cvRepository: ICVRepository,
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async execute(command: ViewApplicantDetailsCommand): Promise<ViewApplicantDetailsResult> {
@@ -100,6 +127,21 @@ export class ViewApplicantDetailsUseCase {
         );
       }
 
+      const studentProfile = await this.studentProfileRepository.findById(application.studentId);
+      if (!studentProfile) {
+        logger.warn({ studentId: application.studentId }, "Student Profile Not Found");
+        throw new NotFoundException(`Student profile ${application.studentId} not found`);
+      }
+
+      const studentUser = await this.userRepository.findById(studentProfile.userId);
+      if (!studentUser) {
+        logger.warn({ userId: studentProfile.userId }, "Student User Not Found");
+        throw new NotFoundException(`User ${studentProfile.userId} not found`);
+      }
+
+      const cv = await this.cvRepository.findById(application.cvId);
+      const cvUrl = cv ? `/uploads/${cv.storagePath.replace(/\\/g, "/")}` : null;
+
       logger.info(
         {
           applicationId: command.applicationId,
@@ -108,7 +150,22 @@ export class ViewApplicantDetailsUseCase {
         "Applicant Detail Loaded",
       );
 
-      return { application };
+      return {
+        id: application.id!,
+        jobTitle: job.title,
+        student: {
+          fullName: studentProfile.fullName,
+          email: studentUser.email,
+          phone: studentProfile.phone,
+          university: studentProfile.university,
+          major: studentProfile.major,
+          graduationYear: studentProfile.graduationYear,
+        },
+        coverLetter: application.coverLetter,
+        status: STATE_LABELS[application.state.value],
+        appliedDate: application.appliedAt.toISOString(),
+        cvUrl,
+      };
     } catch (error) {
       if (
         error instanceof ValidationException ||

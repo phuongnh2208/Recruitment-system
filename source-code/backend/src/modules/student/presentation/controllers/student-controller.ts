@@ -49,7 +49,7 @@ function toCvDto(cv: CVMetadata) {
     originalFileName: cv.originalFileName,
     mimeType: cv.mimeType,
     fileSize: cv.fileSize,
-    filePath: cv.storagePath,
+    filePath: `/uploads/${cv.storagePath.replace(/\\/g, "/")}`,
     isDefault: cv.isDefault,
     uploadedAt: cv.uploadedAt.toISOString(),
   };

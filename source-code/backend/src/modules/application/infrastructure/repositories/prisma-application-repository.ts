@@ -417,6 +417,7 @@ export class PrismaApplicationRepository implements IApplicationRepository {
       studentId: model.studentId,
       jobPostingId: model.jobId,
       cvId: model.cvId,
+      coverLetter: model.coverLetter,
       state: domainState,
       rejectionReason: model.rejectionReason,
       appliedAt: model.appliedAt,
@@ -449,6 +450,7 @@ export class PrismaApplicationRepository implements IApplicationRepository {
       cv: {
         connect: { id: entity.cvId },
       },
+      coverLetter: entity.coverLetter,
       state: DOMAIN_TO_PRISMA_STATE[entity.state.value],
       appliedAt: entity.appliedAt,
       updatedAt: entity.updatedAt,

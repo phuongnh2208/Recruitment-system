@@ -13,6 +13,7 @@
  *   - ❌ Direct API calls
  */
 import { useRef } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useCvUpload } from "../hooks/useCvUpload";
 
 export default function CvUploadZone() {
@@ -68,7 +69,7 @@ export default function CvUploadZone() {
               className="ml-2 font-body text-sm text-primary hover:text-primary-dark"
               aria-label="Đóng thông báo"
             >
-              ✕
+              <XMarkIcon className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>

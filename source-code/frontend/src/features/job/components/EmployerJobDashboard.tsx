@@ -184,7 +184,7 @@ export default function EmployerJobDashboard() {
               <EmployerJobEmptyState
                 message={
                   search || state
-                    ? "Khong tim thay tin tuyen dung phu hop voi bo loc cua ban."
+                    ? "Không tìm thấy tin tuyển dụng phù hợp với bộ lọc của bạn."
                     : undefined
                 }
                 action={

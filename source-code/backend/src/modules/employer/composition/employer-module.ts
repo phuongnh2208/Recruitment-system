@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { PrismaEmployerRepository } from "../infrastructure/repositories/prisma-employer-repository";
 import { PrismaJobPostingRepository } from "../../job/infrastructure/repositories/prisma-job-posting-repository";
 import { PrismaStudentProfileRepository } from "../../student/infrastructure/repositories/prisma-student-repository";
+import { PrismaCVRepository } from "../../student/infrastructure/repositories/prisma-cv-repository";
 import { PrismaUserRepository } from "../../auth/infrastructure/repositories/prisma-user-repository";
 import { EmployerProfileFactory } from "../domain/employer-profile-factory";
 import { UpdateCompanyProfileUseCase } from "../application/use-cases/update-company-profile-use-case";
@@ -51,12 +52,17 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
   const getMyApplicantsUseCase = new GetMyApplicantsUseCase(
     deps.applicationRepository,
     employerRepository,
+    jobPostingRepository,
+    new PrismaStudentProfileRepository(deps.prisma),
   );
 
   const viewApplicantDetailsUseCase = new ViewApplicantDetailsUseCase(
     deps.applicationRepository,
     jobPostingRepository,
     employerRepository,
+    new PrismaStudentProfileRepository(deps.prisma),
+    new PrismaCVRepository(deps.prisma),
+    new PrismaUserRepository(deps.prisma),
   );
 
   const generateRecruitmentReportUseCase = new GenerateRecruitmentReportUseCase(

@@ -15,6 +15,7 @@ export class ApplicationController {
   private readonly applyJobSchema = z.object({
     jobId: z.string().min(1),
     cvId: z.string().min(1),
+    coverLetter: z.string().optional().nullable(),
   });
 
   private readonly updateApplicationStatusSchema = z.object({
@@ -33,6 +34,7 @@ export class ApplicationController {
         studentId: req.user.id,
         jobId: body.jobId,
         cvId: body.cvId,
+        coverLetter: body.coverLetter,
       });
       res.status(201).json({ success: true, data: result });
     } catch (error) {

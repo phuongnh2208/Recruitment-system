@@ -13,7 +13,7 @@
  * 1. Validate jobId, rejectionReason must not be empty.
  * 2. Find the job posting by jobId.
  * 3. Verify the job posting exists.
- * 4. Verify the job posting state is SUBMITTED.
+ * 4. Verify the job posting state is PENDING.
  * 5. Update job approval status to REJECTED with rejection reason.
  * 6. Log success.
  * 7. Return { success: true }.
@@ -98,16 +98,16 @@ export class RejectJobPostingUseCase {
       }
 
       // ── Step 4: Verify job posting state is SUBMITTED ───────────────────
-      if (job.state !== "SUBMITTED") {
+      if (job.state !== "PENDING") {
         logger.warn(
           {
             jobId: command.jobId,
             currentState: job.state,
           },
-          "Job Posting Not in SUBMITTED State",
+          "Job Posting Not in PENDING State",
         );
         throw new ConflictException(
-          `Job posting ${command.jobId} is in state ${job.state}, expected SUBMITTED`,
+          `Job posting ${command.jobId} is in state ${job.state}, expected PENDING`,
         );
       }
 

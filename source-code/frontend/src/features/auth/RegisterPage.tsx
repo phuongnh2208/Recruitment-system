@@ -48,10 +48,10 @@ export default function RegisterPage() {
         <div className="rounded-card bg-white p-8 shadow-card ring-1 ring-ink/5">
           <div className="mb-8 text-center">
             <h1 className="font-display text-2xl font-semibold text-ink">
-              Dang ky
+              Đăng ký
             </h1>
             <p className="mt-1 font-body text-sm text-ink/60">
-              Tao tai khoan moi de bat dau
+              Tạo tài khoản mới để bắt đầu
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function RegisterPage() {
                     {...register("role")}
                     className="text-primary focus:ring-primary/20"
                   />
-                  <span className="font-body text-sm text-ink">Sinh vien</span>
+                  <span className="font-body text-sm text-ink">Sinh viên</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input
@@ -100,7 +100,7 @@ export default function RegisterPage() {
                     {...register("role")}
                     className="text-primary focus:ring-primary/20"
                   />
-                  <span className="font-body text-sm text-ink">Nha tuyen dung</span>
+                  <span className="font-body text-sm text-ink">Nhà tuyển dụng</span>
                 </label>
               </div>
             </div>
@@ -108,13 +108,13 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="fullName" className="block">
                 <span className="font-body text-sm font-medium text-ink">
-                  {selectedRole === "EMPLOYER" ? "Nguoi dai dien" : "Ho ten"}{" "}
+                  {selectedRole === "EMPLOYER" ? "Người đại diện" : "Họ tên"}{" "}
                   <span className="text-danger">*</span>
                 </span>
                 <input
                   id="fullName"
                   type="text"
-                  placeholder="Nguyen Van A"
+                  placeholder="Nguyễn Văn A"
                   className={`mt-1.5 w-full rounded-lg border bg-white px-4 py-2.5 font-body text-sm text-ink placeholder:text-ink/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                     errors.fullName ? "border-danger" : "border-ink/15"
                   }`}
@@ -132,12 +132,12 @@ export default function RegisterPage() {
               <div>
                 <label htmlFor="companyName" className="block">
                   <span className="font-body text-sm font-medium text-ink">
-                    Ten cong ty <span className="text-danger">*</span>
+                    Tên công ty <span className="text-danger">*</span>
                   </span>
                   <input
                     id="companyName"
                     type="text"
-                    placeholder="Cong ty ABC"
+                    placeholder="Công ty ABC"
                     className={`mt-1.5 w-full rounded-lg border bg-white px-4 py-2.5 font-body text-sm text-ink placeholder:text-ink/30 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                       errors.companyName ? "border-danger" : "border-ink/15"
                     }`}
@@ -155,7 +155,7 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="password" className="block">
                 <span className="font-body text-sm font-medium text-ink">
-                  Mat khau <span className="text-danger">*</span>
+                  Mật khẩu <span className="text-danger">*</span>
                 </span>
                 <div className="relative mt-1.5">
                   <input
@@ -172,9 +172,9 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 font-body text-xs text-ink/50 hover:text-ink"
-                    aria-label={showPassword ? "An mat khau" : "Hien mat khau"}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
-                    {showPassword ? "An" : "Hien"}
+                    {showPassword ? "Ẩn" : "Hiện"}
                   </button>
                 </div>
                 {errors.password && (
@@ -188,7 +188,7 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="confirmPassword" className="block">
                 <span className="font-body text-sm font-medium text-ink">
-                  Xac nhan mat khau <span className="text-danger">*</span>
+                  Xác nhận mật khẩu <span className="text-danger">*</span>
                 </span>
                 <input
                   id="confirmPassword"
@@ -213,17 +213,17 @@ export default function RegisterPage() {
               disabled={registerMutation.isPending}
               className="w-full rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-sage disabled:text-ink/40"
             >
-              {registerMutation.isPending ? "Dang dang ky..." : "Dang ky"}
+              {registerMutation.isPending ? "Đang đăng ký..." : "Đăng ký"}
             </button>
           </form>
 
           <p className="mt-6 text-center font-body text-sm text-ink/60">
-            Da co tai khoan?{" "}
+            Đã có tài khoản?{" "}
             <Link
               to="/login"
               className="font-medium text-primary hover:text-primary-dark"
             >
-              Dang nhap
+              Đăng nhập
             </Link>
           </p>
         </div>

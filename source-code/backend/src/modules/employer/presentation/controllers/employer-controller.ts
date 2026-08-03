@@ -7,7 +7,6 @@ import { ViewApplicantDetailsUseCase } from "../../application/use-cases/view-ap
 import { GenerateRecruitmentReportUseCase } from "../../application/use-cases/generate-recruitment-report-use-case";
 import { AuthenticationException } from "../../../../common/exceptions";
 import { EmployerProfile } from "../../domain/employer-profile";
-import { Application } from "../../../application/domain/entities/application";
 
 /**
  * Map an EmployerProfile domain entity to a flat DTO for HTTP serialization.
@@ -30,29 +29,6 @@ function toEmployerProfileDto(profile: EmployerProfile) {
   };
 }
 
-/**
- * Map an Application domain entity to a flat DTO for HTTP serialization.
- *
- * Domain entities use private fields + getters, so JSON.stringify would
- * emit `_studentId` instead of `studentId`. This mapper ensures the wire
- * format matches what the frontend expects.
- */
-function toApplicationDto(application: Application) {
-  return {
-    id: application.id,
-    studentId: application.studentId,
-    jobPostingId: application.jobPostingId,
-    cvId: application.cvId,
-    state: application.state.value,
-    rejectionReason: application.rejectionReason,
-    appliedAt: application.appliedAt.toISOString(),
-    reviewedAt: application.reviewedAt ? application.reviewedAt.toISOString() : null,
-    reviewedBy: application.reviewedBy,
-    createdAt: application.createdAt.toISOString(),
-    updatedAt: application.updatedAt.toISOString(),
-  };
-}
-
 export class EmployerController {
   constructor(
     private readonly updateCompanyProfileUseCase: UpdateCompanyProfileUseCase,
@@ -71,7 +47,7 @@ export class EmployerController {
 
   private readonly applicantsQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(10),
+    size: z.coerce.number().int().min(1).max(100).default(10),
   });
 
   async updateCompanyProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -139,16 +115,16 @@ export class EmployerController {
       const result = await this.getMyApplicantsUseCase.execute({
         employerId: req.user.id,
         page: query.page,
-        limit: query.limit,
+        limit: query.size,
       });
       res.status(200).json({
         success: true,
         data: {
-          items: result.items.map(toApplicationDto),
+          items: result.items,
           page: result.page,
-          limit: result.limit,
-          total: result.total,
+          size: result.limit,
           totalPages: result.totalPages,
+          totalItems: result.total,
         },
       });
     } catch (error) {
@@ -168,9 +144,7 @@ export class EmployerController {
       });
       res.status(200).json({
         success: true,
-        data: {
-          application: toApplicationDto(result.application),
-        },
+        data: result,
       });
     } catch (error) {
       next(error);

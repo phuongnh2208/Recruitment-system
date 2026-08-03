@@ -10,16 +10,23 @@ import { PASSWORD_REGEX } from "../password.constants";
  *   1 number, and 1 special character (@$!%*?&#)
  * - role: must be either "STUDENT" or "EMPLOYER"
  */
-export const registerSchema = z.object({
-  email: z.string().email("Invalid email format").trim().toLowerCase(),
-  password: z
-    .string()
-    .regex(
-      PASSWORD_REGEX,
-      "Password must be 8–32 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character (@$!%*?&#)",
-    ),
-  role: z.enum(["STUDENT", "EMPLOYER"] as const),
-});
+export const registerSchema = z
+  .object({
+    email: z.string().email("Invalid email format").trim().toLowerCase(),
+    password: z
+      .string()
+      .regex(
+        PASSWORD_REGEX,
+        "Password must be 8–32 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 special character (@$!%*?&#)",
+      ),
+    role: z.enum(["STUDENT", "EMPLOYER"] as const),
+    fullName: z.string().trim().min(1, "Full name is required"),
+    companyName: z.string().trim().min(1).optional(),
+  })
+  .refine((data) => data.role !== "EMPLOYER" || !!data.companyName, {
+    message: "Company name is required for employer accounts",
+    path: ["companyName"],
+  });
 
 /** Inferred RegisterDto type from the Zod schema. */
 export type RegisterDto = z.infer<typeof registerSchema>;
