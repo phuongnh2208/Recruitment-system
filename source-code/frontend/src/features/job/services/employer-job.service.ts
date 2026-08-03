@@ -49,11 +49,13 @@ async function fetchEmployerJobs(
     queryParams.set("state", params.state);
   }
 
-  const response = await axiosInstance.get<EmployerJobsResponse>(
-    `${ENDPOINTS.EMPLOYER_JOB.LIST}?${queryParams.toString()}`,
-  );
+  // Backend returns { success: true, data: { items, page, size, totalPages, totalItems } }
+  const response = await axiosInstance.get<{
+    success: true;
+    data: EmployerJobsResponse;
+  }>(`${ENDPOINTS.EMPLOYER_JOB.LIST}?${queryParams.toString()}`);
 
-  return response.data;
+  return response.data.data;
 }
 
 /**

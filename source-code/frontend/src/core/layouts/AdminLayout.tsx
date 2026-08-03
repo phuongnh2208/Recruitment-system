@@ -5,6 +5,7 @@ const navItems = [
   { to: "/admin/dashboard", label: "Bảng điều khiển", icon: "📊" },
   { to: "/admin/pending-approvals", label: "Phê duyệt", icon: "✅" },
   { to: "/admin/users", label: "Quản lý người dùng", icon: "👥" },
+  { to: "/admin/audit-logs", label: "Audit Log", icon: "📜" },
 ];
 
 /**

@@ -30,6 +30,11 @@
  */
 
 import { IAdminRepository } from "../../domain/repositories/admin-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
+import {
+  INotificationStrategy,
+  NotificationMessage,
+} from "../../../../common/interfaces/notification-strategy";
 import {
   ValidationException,
   NotFoundException,
@@ -59,7 +64,11 @@ export interface RejectJobPostingResult {
 }
 
 export class RejectJobPostingUseCase {
-  constructor(private readonly adminRepository: IAdminRepository) {}
+  constructor(
+    private readonly adminRepository: IAdminRepository,
+    private readonly auditLogger: IAuditLogger,
+    private readonly notificationStrategy: INotificationStrategy,
+  ) {}
 
   async execute(command: RejectJobPostingCommand): Promise<RejectJobPostingResult> {
     try {
@@ -118,6 +127,32 @@ export class RejectJobPostingUseCase {
         },
         "Job Posting Rejected",
       );
+
+      // ── Step 6b: Audit log (non-blocking) ──────────────────────────────
+      this.auditLogger
+        .log(command.adminId, "JOB_REJECTED", "JOB_POSTING", command.jobId, {
+          reason: command.rejectionReason,
+        })
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn({ jobId: command.jobId, error: errorMessage }, "Failed to write audit log");
+        });
+
+      // ── Step 6c: Send notification (non-blocking) ─────────────────────
+      const notification: NotificationMessage = {
+        userId: job.employer.user.id,
+        title: "Tin tuyển dụng đã bị từ chối",
+        message: `Tin tuyển dụng "${job.title}" của bạn đã bị từ chối. Lý do: ${command.rejectionReason}`,
+        type: "job_rejected",
+        metadata: { email: job.employer.user.email },
+      };
+      this.notificationStrategy.send(notification).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logger.warn(
+          { jobId: command.jobId, error: errorMessage },
+          "Failed to send job rejection notification",
+        );
+      });
 
       // ── Step 7: Return result ───────────────────────────────────────────
       return {

@@ -64,7 +64,7 @@ export function useProfileForm(
       fullName: "",
       phone: "",
       address: "",
-      school: "",
+      university: "",
       major: "",
       graduationYear: "",
       ...defaultValues,

@@ -53,8 +53,8 @@ export interface UpdateProfileCommand {
   phone: string;
   /** The address of the student. */
   address: string;
-  /** The school/university of the student. */
-  school: string;
+  /** The university of the student. */
+  university: string;
   /** The major of the student. */
   major: string;
   /** The graduation year of the student. */
@@ -122,7 +122,7 @@ export class UpdateProfileUseCase {
 
         profile.updatePhone(command.phone);
         profile.updateAddress(command.address);
-        profile.updateUniversity(command.school);
+        profile.updateUniversity(command.university);
         profile.updateMajor(command.major);
         profile.updateGraduationYear(graduationYear);
         profile.updateAvatarUrl(command.avatarUrl.trim().length > 0 ? command.avatarUrl : null);
@@ -143,7 +143,7 @@ export class UpdateProfileUseCase {
       existingProfile.updateFullName(command.fullName);
       existingProfile.updatePhone(command.phone);
       existingProfile.updateAddress(command.address);
-      existingProfile.updateUniversity(command.school);
+      existingProfile.updateUniversity(command.university);
       existingProfile.updateMajor(command.major);
       existingProfile.updateGraduationYear(graduationYear);
       existingProfile.updateAvatarUrl(
@@ -189,7 +189,7 @@ export class UpdateProfileUseCase {
 
   private parseGraduationYear(value: string): number | null {
     if (!value || value.trim().length === 0) {
-      throw new ValidationException("graduationYear is required");
+      return null;
     }
 
     const parsed = Number.parseInt(value, 10);

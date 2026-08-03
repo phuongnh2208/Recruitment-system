@@ -1,9 +1,7 @@
 /**
  * Student Module Composition Root
  *
- * ═══════════════════════════════════════════════════════════════════
  * COMPOSITION ROOT
- * ═══════════════════════════════════════════════════════════════════
  *
  * The Composition Root is the single entry point where all dependencies
  * for the Student module are wired together. It is the **only** place
@@ -12,9 +10,7 @@
  * All layers (Infrastructure, Domain, Application, Presentation) are
  * assembled here following Clean Architecture principles.
  *
- * ═══════════════════════════════════════════════════════════════════
  * DEPENDENCY INJECTION
- * ═══════════════════════════════════════════════════════════════════
  *
  * - Only constructor injection is used.
  * - No Service Locator pattern.
@@ -25,9 +21,7 @@
  * Every dependency is passed explicitly from the outside (App level)
  * via the `createStudentModule(...)` function.
  *
- * ═══════════════════════════════════════════════════════════════════
  * CLEAN ARCHITECTURE BOUNDARY ENFORCEMENT
- * ═══════════════════════════════════════════════════════════════════
  *
  * - Controllers, Routers, Use Cases, and Repositories do NOT create
  *   their own dependencies.
@@ -35,42 +29,40 @@
  * - Prisma is imported ONLY in the infrastructure layer — never here.
  * - Domain remains pure with zero external dependencies.
  *
- * ═══════════════════════════════════════════════════════════════════
  * DEPENDENCY GRAPH
- * ═══════════════════════════════════════════════════════════════════
  *
  *   PrismaClient (from App level)
- *         │
- *         ▼
- *   ┌─────────────────────────────┐
- *   │  PrismaStudentProfileRepo   │
- *   │  PrismaCVRepository         │
- *   └──────────┬──────────────────┘
- *              │
- *              ▼
- *   ┌─────────────────────────────┐
- *   │  StudentProfileFactory      │
- *   │  CVMetadataFactory          │
- *   └──────────┬──────────────────┘
- *              │
- *              ▼
- *   ┌─────────────────────────────┐
- *   │  UpdateProfileUseCase       │
- *   │  UploadCVUseCase            │
- *   │  ManageCVListUseCase        │
- *   │  GetApplicationHistoryUC    │
- *   │  GetJobDetailUseCase        │
- *   └──────────┬──────────────────┘
- *              │
- *              ▼
- *   ┌─────────────────────────────┐
- *   │  StudentController          │
- *   └──────────┬──────────────────┘
- *              │
- *              ▼
- *   ┌─────────────────────────────┐
- *   │  StudentRouter              │
- *   └─────────────────────────────┘
+ *         |
+ *         v
+ *   +------------------+
+ *   |  PrismaStudentProfileRepo   |
+ *   |  PrismaCVRepository         |
+ *   +------------------+
+ *              |
+ *              v
+ *   +------------------+
+ *   |  StudentProfileFactory      |
+ *   |  CVMetadataFactory          |
+ *   +------------------+
+ *              |
+ *              v
+ *   +------------------+
+ *   |  UpdateProfileUseCase       |
+ *   |  UploadCVUseCase            |
+ *   |  ManageCVListUseCase        |
+ *   |  GetApplicationHistoryUC    |
+ *   |  GetJobDetailUseCase        |
+ *   +------------------+
+ *              |
+ *              v
+ *   +------------------+
+ *   |  StudentController          |
+ *   +------------------+
+ *              |
+ *              v
+ *   +------------------+
+ *   |  StudentRouter              |
+ *   +------------------+
  *
  * @category Composition Root
  */
@@ -79,15 +71,15 @@ import { PrismaClient } from "../../../generated/prisma";
 import { IFileStorageStrategy } from "../../../common/interfaces/file-storage-strategy";
 import type { Request, Response, NextFunction } from "express";
 
-// ── Infrastructure Layer ──────────────────────────────────────────
+// Infrastructure Layer
 import { PrismaStudentProfileRepository } from "../infrastructure/repositories/prisma-student-repository";
 import { PrismaCVRepository } from "../infrastructure/repositories/prisma-cv-repository";
 
-// ── Domain Layer ──────────────────────────────────────────────────
+// Domain Layer
 import { StudentProfileFactory } from "../domain/factories/student-profile-factory";
 import { CVMetadataFactory } from "../domain/factories/cv-metadata-factory";
 
-// ── Application Layer ─────────────────────────────────────────────
+// Application Layer
 import { UpdateProfileUseCase } from "../application/use-cases/update-profile-use-case";
 import { GetProfileUseCase } from "../application/use-cases/get-profile-use-case";
 import { UploadCVUseCase } from "../application/use-cases/upload-cv-use-case";
@@ -102,8 +94,9 @@ import {
 } from "../application/use-cases/get-job-detail-use-case";
 import { SearchJobsUseCase } from "../../job/application/use-cases/search-jobs-use-case";
 import type { IJobPostingRepository } from "../../job/domain/repositories/job-posting-repository";
+import type { IEmployerRepository } from "../../employer/domain/repositories/employer-repository";
 
-// ── Presentation Layer ────────────────────────────────────────────
+// Presentation Layer
 import { StudentController } from "../presentation/controllers/student-controller";
 import { createStudentRouter } from "../presentation/routes/student-routes";
 
@@ -134,6 +127,11 @@ export interface StudentModuleDependencies {
    * Used by SearchJobsUseCase for searching approved jobs.
    */
   jobPostingRepository?: IJobPostingRepository;
+  /**
+   * Optional: Repository for Employer entity.
+   * Used by GetJobDetailUseCase to fetch employer details.
+   */
+  employerRepository?: IEmployerRepository;
   /**
    * Optional: Authentication guard middleware.
    * If not provided, the router will skip auth protection (dev mode).
@@ -167,41 +165,37 @@ export interface StudentModuleOutput {
 /**
  * Create the Student Module with all its dependencies wired together.
  *
- * ═══════════════════════════════════════════════════════════════════
  * COMPOSITION ROOT — ONLY PLACE ALLOWED TO USE `new`
- * ═══════════════════════════════════════════════════════════════════
  *
  * This function receives dependencies from the App level and wires the
  * entire Student module object graph. No class inside the Student module
  * instantiates its own dependencies — everything is created here and
  * injected via constructors.
  *
- * ═══════════════════════════════════════════════════════════════════
  * DEPENDENCY INJECTION FLOW
- * ═══════════════════════════════════════════════════════════════════
  *
  *   App Level                     Student Module Composition Root
- *   ┌──────────────────┐          ┌──────────────────────────────────┐
- *   │ PrismaClient     │────────> │ Repositories                     │
- *   │ FileStorage      │────────> │ UseCases                         │
- *   │ AuthGuard        │────────> │ Router (middleware)              │
- *   │ RoleGuard        │────────> │ Router (middleware)              │
- *   └──────────────────┘          └──────────────────────────────────┘
+ *   +------------------+          +------------------+
+ *   | PrismaClient     |--------->| Repositories     |
+ *   | FileStorage      |--------->| UseCases         |
+ *   | AuthGuard        |--------->| Router (middleware) |
+ *   | RoleGuard        |--------->| Router (middleware) |
+ *   +------------------+          +------------------+
  *
  * @param deps - External dependencies injected from the App level.
  * @returns A fully wired StudentModuleOutput containing controller,
  *          router, and all use cases.
  */
 export function createStudentModule(deps: StudentModuleDependencies): StudentModuleOutput {
-  // ── 1. Infrastructure — Repositories ──────────────────────────────
+  // 1. Infrastructure — Repositories
   const studentProfileRepository = new PrismaStudentProfileRepository(deps.prisma);
   const cvRepository = new PrismaCVRepository(deps.prisma);
 
-  // ── 2. Domain — Factories ─────────────────────────────────────────
+  // 2. Domain — Factories
   const studentProfileFactory = new StudentProfileFactory();
   const cvMetadataFactory = new CVMetadataFactory();
 
-  // ── 3. Application — Use Cases ────────────────────────────────────
+  // 3. Application — Use Cases
   const updateProfileUseCase = new UpdateProfileUseCase(
     studentProfileRepository,
     studentProfileFactory,
@@ -216,9 +210,13 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
     deps.fileStorage,
   );
 
-  const manageCVListUseCase = new ManageCVListUseCase(cvRepository, deps.fileStorage);
+  const manageCVListUseCase = new ManageCVListUseCase(
+    cvRepository,
+    studentProfileRepository,
+    deps.fileStorage,
+  );
 
-  // ── GetApplicationHistoryUseCase ──────────────────────────────────
+  // GetApplicationHistoryUseCase
   // TODO: Create a concrete ApplicationHistoryRepository in the
   // Application module and wire it here. Currently the use case
   // depends on IApplicationRepository which must be provided from
@@ -235,7 +233,7 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
     studentProfileRepository,
   );
 
-  // ── GetJobDetailUseCase ───────────────────────────────────────────
+  // GetJobDetailUseCase
   // TODO: Create a concrete JobRepository in the Job module and wire
   // it here. Currently the use case depends on IJobRepository which
   // must be provided from the App level since no implementation
@@ -247,7 +245,19 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
         "TODO: Create JobRepository in the Job module.",
     );
   }
-  const getJobDetailUseCase = new GetJobDetailUseCase(deps.jobRepository);
+  // GetJobDetailUseCase now requires both jobPostingRepository and employerRepository
+  // We use jobPostingRepository (IJobPostingRepository) which extends IJobRepository
+  // and we need to provide employerRepository from the App level
+  if (!deps.employerRepository) {
+    throw new Error(
+      "[StudentModule] employerRepository is required. " +
+        "Please provide an IEmployerRepository implementation from the App level.",
+    );
+  }
+  const getJobDetailUseCase = new GetJobDetailUseCase(
+    deps.jobPostingRepository!,
+    deps.employerRepository,
+  );
 
   if (!deps.jobPostingRepository) {
     throw new Error(
@@ -257,7 +267,7 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
   }
   const searchJobsUseCase = new SearchJobsUseCase(deps.jobPostingRepository);
 
-  // ── 4. Presentation — Controller ──────────────────────────────────
+  // 4. Presentation — Controller
   const controller = new StudentController(
     updateProfileUseCase,
     getProfileUseCase,
@@ -268,7 +278,7 @@ export function createStudentModule(deps: StudentModuleDependencies): StudentMod
     searchJobsUseCase,
   );
 
-  // ── 5. Presentation — Router ──────────────────────────────────────
+  // 5. Presentation — Router
   const router = createStudentRouter(controller, deps.authGuard, deps.roleGuard);
 
   return {

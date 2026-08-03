@@ -1,5 +1,6 @@
 import { Application } from "../../../application/domain/entities/application";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
+import { IEmployerRepository } from "../../domain/repositories/employer-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -26,6 +27,7 @@ export class ViewApplicantDetailsUseCase {
   constructor(
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository: IEmployerRepository,
   ) {}
 
   async execute(command: ViewApplicantDetailsCommand): Promise<ViewApplicantDetailsResult> {
@@ -73,7 +75,19 @@ export class ViewApplicantDetailsUseCase {
         throw new NotFoundException(`Job posting ${application.jobPostingId} not found`);
       }
 
-      if (job.employerId !== command.employerId) {
+      // Resolve User.id → EmployerProfile.id before comparing ownership.
+      const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+      if (!employerProfile?.id) {
+        logger.warn(
+          {
+            employerId: command.employerId,
+          },
+          "Employer Profile Not Found",
+        );
+        throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+      }
+
+      if (job.employerId !== employerProfile.id) {
         logger.warn(
           {
             employerId: command.employerId,

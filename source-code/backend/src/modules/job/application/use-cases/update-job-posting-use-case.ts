@@ -58,6 +58,7 @@
 
 import { IJobPostingRepository } from "../../domain/repositories/job-posting-repository";
 import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
 import {
   ValidationException,
   AuthenticationException,
@@ -104,6 +105,7 @@ export class UpdateJobPostingUseCase {
   constructor(
     private readonly jobPostingRepository: IJobPostingRepository,
     private readonly employerRepository: IEmployerRepository,
+    private readonly auditLogger: IAuditLogger,
   ) {}
 
   /**
@@ -214,6 +216,17 @@ export class UpdateJobPostingUseCase {
         },
         "Job Updated",
       );
+
+      // ── 7b. Audit log (non-blocking) ──────────────────────────────
+      this.auditLogger
+        .log(command.employerId, "JOB_UPDATED", "JOB_POSTING", command.jobPostingId)
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn(
+            { jobPostingId: command.jobPostingId, error: errorMessage },
+            "Failed to write audit log",
+          );
+        });
 
       return {
         success: true,

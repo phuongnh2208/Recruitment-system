@@ -112,8 +112,10 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
   - [x] **TSK-AUTH-104 (Presentation)**: Thiết lập `AuthController` định nghĩa các routing, áp dụng validation DTOs bằng Zod schemas.
     - **Implementation**: `source-code/backend/src/modules/auth/presentation/controllers/`, `source-code/backend/src/modules/auth/presentation/routes/`, `source-code/backend/src/modules/auth/presentation/dto/`, `source-code/backend/src/modules/auth/presentation/validators/`
 * **Frontend Integration**:
-  - [ ] **TSK-AUTH-201**: Phát triển trang Đăng ký (Register Form) với kiểm tra chính sách mật khẩu nghiêm ngặt.
-  - [ ] **TSK-AUTH-202**: Phát triển trang Đăng nhập (Login Form) và lưu trữ Access Token.
+  - [x] **TSK-AUTH-201**: Phát triển trang Đăng ký (Register Form) với kiểm tra chính sách mật khẩu nghiêm ngặt.
+    - **Implementation**: `source-code/frontend/src/features/auth/RegisterPage.tsx`, `source-code/frontend/src/App.tsx`
+  - [x] **TSK-AUTH-202**: Phát triển trang Đăng nhập (Login Form) và lưu trữ Access Token.
+    - **Implementation**: `source-code/frontend/src/features/auth/LoginPage.tsx`, `source-code/frontend/src/App.tsx`
   - [ ] **TSK-AUTH-203**: Phát triển trang Xác thực Email, trang Yêu cầu đổi mật khẩu và trang Đổi mật khẩu.
 
 ### 4.2 Student Module
@@ -195,10 +197,13 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 ### 4.7 Notification & Audit Module (Thông báo & Nhật ký hệ thống)
 * **Backend Development**:
   - [ ] **TSK-SYS-201 (Notification)**: Hiện thực cơ chế đăng ký và nhận diện Domain Events.
-  - [ ] **TSK-SYS-202 (Audit Log)**: Tạo module lưu nhật ký hệ thống.
+  - [x] **TSK-SYS-202 (Audit Log)**: Tạo module lưu nhật ký hệ thống.
+    - **Implementation**: `source-code/backend/src/modules/audit/`
 * **Frontend Integration**:
-  - [ ] **TSK-FE-SYS-201**: Icon thông báo trên Header.
-  - [ ] **TSK-FE-SYS-202 (Admin)**: Trang xem Audit Log.
+  - [x] **TSK-FE-SYS-201**: Icon thông báo trên Header.
+    - **Implementation**: `source-code/frontend/src/core/components/NotificationIcon.tsx`
+  - [x] **TSK-FE-SYS-202 (Admin)**: Trang xem Audit Log.
+    - **Implementation**: `source-code/frontend/src/features/admin/components/AuditLogPage.tsx`
 
 ### 4.8 AI Extension Points Stub Module (Chuẩn bị mở rộng AI)
 * **Backend Development**:
@@ -209,9 +214,11 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 
 ## 5. Phase 4: Integration & Scheduled Jobs (Tích hợp & Tác vụ tự động)
 
-- [ ] **TSK-INT-401**: Hiện thực tiến trình tự động đóng tin tuyển dụng hết hạn (`JobExpiryJob`).
+- [x] **TSK-INT-401**: Hiện thực tiến trình tự động đóng tin tuyển dụng hết hạn (`JobExpiryJob`).
+  - **Implementation**: `source-code/backend/src/infrastructure/scheduler/job-expiry-job.ts`
 - [ ] **TSK-INT-402**: Hiện thực tiến trình dọn dẹp file rác định kỳ (`FileCleanupJob`).
-- [ ] **TSK-INT-403**: Hiện thực tính năng xuất báo cáo CSV cho nhà tuyển dụng.
+- [x] **TSK-INT-403**: Hiện thực tính năng xuất báo cáo CSV cho nhà tuyển dụng.
+  - **Implementation**: `source-code/backend/src/modules/employer/application/use-cases/generate-recruitment-report-use-case.ts`
 - [ ] **TSK-INT-404**: Hiện thực tính năng xuất Audit Log ra CSV cho Admin.
 
 ---
@@ -241,38 +248,39 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 
 ### Auth Module (Xác thực)
 - **Completed**: Domain, Infrastructure, Application (5 use cases), Presentation (controllers, routes, DTOs, validators), Composition
-- **Not Started**: Frontend Register (TSK-AUTH-201), Frontend Login (TSK-AUTH-202), Frontend Email Verification (TSK-AUTH-203)
+- **Completed**: Frontend Register (TSK-AUTH-201), Frontend Login (TSK-AUTH-202)
+- **Not Started**: Frontend Email Verification (TSK-AUTH-203)
 
 ### Student Module (Sinh viên)
 - **Completed**: Domain (entities, factories), Infrastructure (repositories), Application (5 use cases), Presentation (controllers, routes), Composition
 - **Completed**: Frontend Profile Management (TSK-FE-ST-201), Frontend CV Management (TSK-FE-ST-202), Frontend Application History (TSK-FE-ST-203)
 
 ### Employer Module (Nhà tuyển dụng)
-- **Completed**: Domain (entities, factories), Infrastructure (repositories), Application (3 use cases), Presentation (controllers, routes), Composition
-- **Completed**: Frontend Company Profile (TSK-FE-EM-201), Frontend Applicant Management (TSK-FE-EM-202)
-- **Not Started**: Frontend Applicant Detail (TSK-FE-EM-203)
+- **Completed**: Domain (entities, factories), Infrastructure (repositories), Application (4 use cases), Presentation (controllers, routes), Composition
+- **Completed**: Frontend Company Profile (TSK-FE-EM-201), Frontend Applicant Management (TSK-FE-EM-202), Frontend Applicant Detail (TSK-FE-EM-203)
 
 ### Job Module (Tin tuyển dụng)
-- **In Progress**: Domain layer exists
-- **Not Started**: Application, Infrastructure, Presentation, Composition
-- **Not Started**: All Frontend tasks (TSK-FE-JOB-201 → 204)
+- **Completed**: Domain, Infrastructure, Application (7 use cases), Presentation (controllers, routes), Composition
+- **Completed**: All Frontend tasks (TSK-FE-JOB-201 → 204)
 
 ### Application Module (Ứng tuyển)
-- **In Progress**: Domain layer exists
-- **Not Started**: Application, Infrastructure, Presentation, Composition
-- **Not Started**: All Frontend tasks (TSK-FE-APP-201 → 203)
+- **Completed**: Domain, Infrastructure, Application (3 use cases), Presentation (controllers, routes), Composition
+- **Completed**: All Frontend tasks (TSK-FE-APP-201 → 203)
 
 ### Admin Module (Quản trị)
-- **Not Started**: All backend and frontend tasks
+- **Completed**: Domain/Infrastructure, Application (7 use cases), Presentation (controllers, routes), Composition
+- **Completed**: All Frontend tasks (TSK-FE-AD-201 → 203)
 
 ### Notification & Audit
-- **Not Started**: All tasks
+- **Completed**: Audit Log module (TSK-SYS-202), Notification Icon (TSK-FE-SYS-201), Audit Log page (TSK-FE-SYS-202)
+- **Not Started**: Notification Domain Events (TSK-SYS-201)
 
 ### AI Extension
 - **Not Started**: All tasks
 
 ### Integration & Scheduled Jobs
-- **Not Started**: All tasks
+- **Completed**: JobExpiryJob (TSK-INT-401), Recruitment Report CSV (TSK-INT-403)
+- **Not Started**: FileCleanupJob (TSK-INT-402), Audit Log CSV export (TSK-INT-404)
 
 ### Testing & Security
 - **Not Started**: All tasks
@@ -281,3 +289,10 @@ Giai đoạn này tập trung vào thiết lập cấu trúc khung (scaffolding)
 - **Not Started**: All tasks
 
 ---
+
+## 9. Change Log
+
+| Date       | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| 2026-07-20 | Khởi tạo phiên bản 1.1                                         |
+| 2026-08-03 | Cập nhật trạng thái triển khai sau đợt sửa lỗi TSK-FIX-601→610 |

@@ -29,6 +29,7 @@
  */
 
 import { IAdminRepository } from "../../domain/repositories/admin-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
 import {
   ValidationException,
   NotFoundException,
@@ -45,6 +46,8 @@ export interface ManageUserAccountCommand {
   userId: string;
   /** The new active status for the user. */
   isActive: boolean;
+  /** The ID of the admin performing the action. */
+  adminId?: string;
 }
 
 /**
@@ -55,7 +58,10 @@ export interface ManageUserAccountResult {
 }
 
 export class ManageUserAccountUseCase {
-  constructor(private readonly adminRepository: IAdminRepository) {}
+  constructor(
+    private readonly adminRepository: IAdminRepository,
+    private readonly auditLogger: IAuditLogger,
+  ) {}
 
   async execute(command: ManageUserAccountCommand): Promise<ManageUserAccountResult> {
     try {
@@ -94,6 +100,20 @@ export class ManageUserAccountUseCase {
         },
         "User Account Status Updated",
       );
+
+      // ── Step 4b: Audit log (non-blocking) ──────────────────────────────
+      const actorId = command.adminId ?? command.userId;
+      this.auditLogger
+        .log(
+          actorId,
+          command.isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
+          "USER",
+          command.userId,
+        )
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn({ userId: command.userId, error: errorMessage }, "Failed to write audit log");
+        });
 
       // ── Step 5: Return result ───────────────────────────────────────────
       return {

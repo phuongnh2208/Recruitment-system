@@ -57,11 +57,13 @@ async function searchJobs(
     queryParams.set("salaryMax", String(params.salaryMax));
   }
 
-  const response = await axiosInstance.get<JobSearchResponse>(
-    `${ENDPOINTS.STUDENT.JOBS}?${queryParams.toString()}`,
-  );
+  // Backend returns { success: true, data: { items, page, size, totalPages, totalItems } }
+  const response = await axiosInstance.get<{
+    success: true;
+    data: JobSearchResponse;
+  }>(`${ENDPOINTS.STUDENT.JOBS}?${queryParams.toString()}`);
 
-  return response.data;
+  return response.data.data;
 }
 
 /**

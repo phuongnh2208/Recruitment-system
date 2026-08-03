@@ -21,6 +21,7 @@ export function createEmployerRouter(
   router.patch("/company-profile", controller.updateCompanyProfile.bind(controller));
   router.get("/applicants", controller.getMyApplicants.bind(controller));
   router.get("/applicants/:applicationId", controller.viewApplicantDetails.bind(controller));
+  router.get("/jobs/:jobId/report", controller.generateRecruitmentReport.bind(controller));
 
   return router;
 }

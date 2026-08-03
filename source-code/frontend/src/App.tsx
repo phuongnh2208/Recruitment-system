@@ -14,19 +14,43 @@ import { GlobalLoading } from "./core/components/GlobalLoading";
 const LoginPage = lazy(() => import("./features/auth/LoginPage"));
 const RegisterPage = lazy(() => import("./features/auth/RegisterPage"));
 
-const ApplicationHistoryPage = lazy(() => import("./features/student/components/ApplicationHistoryPage"));
-const ApplicantDetailPage = lazy(() => import("./features/employer/components/ApplicantDetailPage"));
-const ApplicantsPage = lazy(() => import("./features/employer/components/ApplicantsPage"));
-const CompanyProfilePage = lazy(() => import("./features/employer/components/CompanyProfilePage"));
-const EmployerJobDashboard = lazy(() => import("./features/job/components/EmployerJobDashboard"));
+const ApplicationHistoryPage = lazy(
+  () => import("./features/student/components/ApplicationHistoryPage"),
+);
+const ApplicantDetailPage = lazy(
+  () => import("./features/employer/components/ApplicantDetailPage"),
+);
+const ApplicantsPage = lazy(
+  () => import("./features/employer/components/ApplicantsPage"),
+);
+const CompanyProfilePage = lazy(
+  () => import("./features/employer/components/CompanyProfilePage"),
+);
+const EmployerJobDashboard = lazy(
+  () => import("./features/job/components/EmployerJobDashboard"),
+);
 const JobFormPage = lazy(() => import("./features/job/components/JobFormPage"));
-const JobDetailPage = lazy(() => import("./features/job/components/JobDetailPage"));
-const JobSearchPage = lazy(() => import("./features/job/components/JobSearchPage"));
-const StudentCvPage = lazy(() => import("./features/student/components/StudentCvPage"));
-const StudentProfilePage = lazy(() => import("./features/student/components/StudentProfilePage"));
-const AdminDashboardPage = lazy(() => import("./features/admin/components/AdminDashboardPage"));
-const PendingApprovalPage = lazy(() => import("./features/admin/components/PendingApprovalPage"));
-const UserManagementPage = lazy(() => import("./features/admin/components/UserManagementPage"));
+const JobDetailPage = lazy(
+  () => import("./features/job/components/JobDetailPage"),
+);
+const JobSearchPage = lazy(
+  () => import("./features/job/components/JobSearchPage"),
+);
+const StudentProfilePage = lazy(
+  () => import("./features/student/components/StudentProfilePage"),
+);
+const AdminDashboardPage = lazy(
+  () => import("./features/admin/components/AdminDashboardPage"),
+);
+const PendingApprovalPage = lazy(
+  () => import("./features/admin/components/PendingApprovalPage"),
+);
+const UserManagementPage = lazy(
+  () => import("./features/admin/components/UserManagementPage"),
+);
+const AuditLogPage = lazy(
+  () => import("./features/admin/components/AuditLogPage"),
+);
 
 function App() {
   return (
@@ -43,7 +67,10 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
             <Route element={<StudentLayout />}>
               <Route path="/student/profile" element={<StudentProfilePage />} />
-              <Route path="/student/cv" element={<StudentCvPage />} />
+              <Route
+                path="/student/cv"
+                element={<Navigate to="/student/profile" replace />}
+              />
               <Route
                 path="/student/application-history"
                 element={<ApplicationHistoryPage />}
@@ -66,8 +93,14 @@ function App() {
                 element={<ApplicantDetailPage />}
               />
               <Route path="/employer/jobs" element={<EmployerJobDashboard />} />
-              <Route path="/employer/jobs/create" element={<JobFormPage mode="create" />} />
-              <Route path="/employer/jobs/:jobId/edit" element={<JobFormPage mode="edit" />} />
+              <Route
+                path="/employer/jobs/create"
+                element={<JobFormPage mode="create" />}
+              />
+              <Route
+                path="/employer/jobs/:jobId/edit"
+                element={<JobFormPage mode="edit" />}
+              />
             </Route>
           </Route>
 
@@ -80,6 +113,7 @@ function App() {
                 element={<PendingApprovalPage />}
               />
               <Route path="/admin/users" element={<UserManagementPage />} />
+              <Route path="/admin/audit-logs" element={<AuditLogPage />} />
             </Route>
           </Route>
 

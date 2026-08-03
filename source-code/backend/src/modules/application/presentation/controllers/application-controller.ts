@@ -34,7 +34,7 @@ export class ApplicationController {
         jobId: body.jobId,
         cvId: body.cvId,
       });
-      res.status(201).json(result);
+      res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -53,7 +53,7 @@ export class ApplicationController {
         status: body.status,
         reason: body.reason,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -69,7 +69,7 @@ export class ApplicationController {
         studentId: req.user.id,
         applicationId: req.params.applicationId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

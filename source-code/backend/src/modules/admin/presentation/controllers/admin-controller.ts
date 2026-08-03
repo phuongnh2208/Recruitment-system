@@ -6,6 +6,7 @@ import { RejectJobPostingUseCase } from "../../application/use-cases/reject-job-
 import { ManageUserAccountUseCase } from "../../application/use-cases/manage-user-account-use-case";
 import { GetDashboardStatsUseCase } from "../../application/use-cases/get-dashboard-stats-use-case";
 import { GetUsersUseCase } from "../../application/use-cases/get-users-use-case";
+import { GetPendingApprovalsUseCase } from "../../application/use-cases/get-pending-approvals-use-case";
 import { AuthenticationException } from "../../../../common/exceptions";
 
 export class AdminController {
@@ -16,9 +17,10 @@ export class AdminController {
     private readonly manageUserAccountUseCase: ManageUserAccountUseCase,
     private readonly getDashboardStatsUseCase: GetDashboardStatsUseCase,
     private readonly getUsersUseCase: GetUsersUseCase,
+    private readonly getPendingApprovalsUseCase: GetPendingApprovalsUseCase,
   ) {}
 
-  // ── Zod Schemas ─────────────────────────────────────────────────
+  // Zod Schemas
 
   private readonly verifyEmployerSchema = z.object({
     employerId: z.string().min(1),
@@ -45,12 +47,12 @@ export class AdminController {
     status: z.string().optional(),
   });
 
-  // ── Endpoint Methods ────────────────────────────────────────────
+  // Endpoint Methods
 
   async getDashboardStats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await this.getDashboardStatsUseCase.execute();
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -66,7 +68,95 @@ export class AdminController {
         role: query.role,
         status: query.status,
       });
-      res.status(200).json(result);
+
+      // Map UserListItem (backend) to User (frontend expected shape)
+      function toUserListDto(user: {
+        id: string;
+        email: string;
+        role: string;
+        isActive: boolean;
+        emailVerified: boolean;
+        failedLoginAttempts: number;
+        lockedUntil: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        studentProfile: {
+          id: string;
+          fullName: string;
+          university: string | null;
+          major: string | null;
+        } | null;
+        employerProfile: {
+          id: string;
+          companyName: string;
+          verified: boolean;
+        } | null;
+      }) {
+        // Map backend role to frontend role (ADMINISTRATOR -> ADMIN)
+        const roleMap: Record<string, "ADMIN" | "EMPLOYER" | "STUDENT"> = {
+          ADMINISTRATOR: "ADMIN",
+          EMPLOYER: "EMPLOYER",
+          STUDENT: "STUDENT",
+        };
+
+        return {
+          id: user.id,
+          fullName:
+            user.studentProfile?.fullName ?? user.employerProfile?.companyName ?? user.email,
+          email: user.email,
+          role: roleMap[user.role] ?? "STUDENT",
+          status: user.isActive ? "ACTIVE" : "DISABLED",
+          avatar: { url: null, alt: "" },
+          createdAt: user.createdAt.toISOString(),
+        };
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          users: result.data.map(toUserListDto),
+          totalItems: result.total,
+          totalPages: result.totalPages,
+          currentPage: result.page,
+          pageSize: result.limit,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPendingApprovals(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.getPendingApprovalsUseCase.execute();
+
+      // Map backend PendingEmployer (nested user object) to frontend-expected flat shape
+      const pendingEmployers = result.pendingEmployers.map((employer) => ({
+        id: employer.id,
+        companyName: employer.companyName,
+        representativeName: employer.user?.email ?? "",
+        email: employer.user?.email ?? "",
+        website: employer.website,
+        registeredAt: employer.createdAt.toISOString(),
+      }));
+
+      // Map backend PendingJob (nested employer object) to frontend-expected flat shape
+      const pendingJobs = result.pendingJobs.map((job) => ({
+        id: job.id,
+        title: job.title,
+        employerName: job.employer?.companyName ?? "",
+        employerId: job.employerId,
+        createdAt: job.createdAt.toISOString(),
+        state: "Pending" as const,
+      }));
+
+      res.status(200).json({
+        success: true,
+        data: {
+          pendingEmployers,
+          pendingJobs,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -83,7 +173,7 @@ export class AdminController {
         employerId: params.employerId,
         adminId: req.user.id,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -100,7 +190,7 @@ export class AdminController {
         jobId: params.jobId,
         adminId: req.user.id,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -121,7 +211,7 @@ export class AdminController {
         adminId: req.user.id,
         rejectionReason: params.rejectionReason,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -134,7 +224,7 @@ export class AdminController {
         userId: req.params.userId,
         isActive: body.isActive,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

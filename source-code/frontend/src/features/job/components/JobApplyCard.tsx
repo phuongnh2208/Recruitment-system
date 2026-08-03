@@ -1,5 +1,5 @@
 /**
- * Job Apply Card – sidebar with company info, apply button, and save button.
+ * Job Apply Card – sidebar with company info and apply button.
  *
  * ═══════════════════════════════════════════════════════════════════
  * UI COMPONENT
@@ -7,8 +7,10 @@
  *
  *   - ✅ Shows company information
  *   - ✅ Apply button (primary action)
- *   - ✅ Save button (UI only, as per requirements)
  *   - ✅ Follows design.md button and card patterns
+ *
+ *   Note: "Save job" feature was removed as it is outside MVP scope
+ *   (not listed in requirements.md §2.1 Student module scope).
  */
 
 export interface JobApplyCardProps {
@@ -24,8 +26,6 @@ export interface JobApplyCardProps {
   employerVerified: boolean;
   /** Callback when apply button is clicked. */
   onApply?: () => void;
-  /** Callback when save button is clicked. */
-  onSave?: () => void;
 }
 
 export default function JobApplyCard({
@@ -35,7 +35,6 @@ export default function JobApplyCard({
   companyAddress,
   employerVerified,
   onApply,
-  onSave,
 }: JobApplyCardProps) {
   return (
     <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5">
@@ -131,13 +130,6 @@ export default function JobApplyCard({
           className="w-full rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
           Ứng tuyển ngay
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="w-full rounded-seal border border-primary px-6 py-2.5 font-body font-medium text-primary transition hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          Lưu công việc
         </button>
       </div>
     </div>

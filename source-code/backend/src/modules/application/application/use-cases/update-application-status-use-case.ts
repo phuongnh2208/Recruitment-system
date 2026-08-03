@@ -36,6 +36,13 @@
 import { IApplicationRepository } from "../../domain/repositories/application-repository";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
 import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
+import { IUserRepository } from "../../../auth/domain/repositories/user-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
+import {
+  INotificationStrategy,
+  NotificationMessage,
+} from "../../../../common/interfaces/notification-strategy";
 import {
   ValidationException,
   AuthenticationException,
@@ -77,6 +84,10 @@ export class UpdateApplicationStatusUseCase {
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
     private readonly employerRepository: IEmployerRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly auditLogger: IAuditLogger,
+    private readonly notificationStrategy: INotificationStrategy,
   ) {}
 
   async execute(command: UpdateApplicationStatusCommand): Promise<UpdateApplicationStatusResult> {
@@ -159,6 +170,64 @@ export class UpdateApplicationStatusUseCase {
         },
         "Application Status Updated",
       );
+
+      // ── Step 7b: Audit log (non-blocking) ──────────────────────
+      this.auditLogger
+        .log(
+          command.employerId,
+          "APPLICATION_STATUS_UPDATED",
+          "APPLICATION",
+          command.applicationId,
+          {
+            status: command.status,
+          },
+        )
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn(
+            { applicationId: command.applicationId, error: errorMessage },
+            "Failed to write audit log",
+          );
+        });
+
+      // ── Step 7c: Send notification to student (non-blocking) ──
+      const studentProfile = await this.studentProfileRepository.findById(application.studentId);
+      if (studentProfile) {
+        const studentUser = await this.userRepository.findById(studentProfile.userId);
+        if (studentUser) {
+          const statusMessages: Record<string, { title: string; message: string }> = {
+            UNDER_REVIEW: {
+              title: "Đơn ứng tuyển đang được xem xét",
+              message: `Đơn ứng tuyển của bạn cho vị trí "${job.title ?? "công việc"}" đang được xem xét.`,
+            },
+            ACCEPTED: {
+              title: "Chúc mừng! Bạn đã trúng tuyển",
+              message: `Đơn ứng tuyển của bạn cho vị trí "${job.title ?? "công việc"}" đã được chấp nhận.`,
+            },
+            REJECTED: {
+              title: "Đơn ứng tuyển bị từ chối",
+              message: `Đơn ứng tuyển của bạn cho vị trí "${job.title ?? "công việc"}" đã bị từ chối.`,
+            },
+          };
+          const msg = statusMessages[command.status];
+          if (msg) {
+            const notification: NotificationMessage = {
+              userId: studentProfile.userId,
+              title: msg.title,
+              message: msg.message,
+              type: "application_status_update",
+              metadata: { email: studentUser.email },
+            };
+            this.notificationStrategy.send(notification).catch((error: unknown) => {
+              const errorMessage = error instanceof Error ? error.message : "Unknown error";
+              logger.warn(
+                { applicationId: command.applicationId, error: errorMessage },
+                "Failed to send application status notification",
+              );
+            });
+          }
+        }
+      }
 
       // ── Step 8: Return result ───────────────────────────────────
       return {

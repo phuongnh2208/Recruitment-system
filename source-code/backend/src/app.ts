@@ -42,6 +42,13 @@ import { JwtTokenProvider } from "./infrastructure/security/jwt-token-provider";
 import { NotificationGatewayPort } from "./infrastructure/websocket/notification-gateway";
 import { EmailServiceAdapter } from "./infrastructure/email/EmailServiceAdapter";
 import { LocalFileStorageStrategy } from "./infrastructure/storage/LocalFileStorageStrategy";
+import {
+  CompositeNotificationStrategy,
+  EmailNotificationStrategy,
+  WebSocketNotificationStrategy,
+} from "./infrastructure/notification";
+import { INotificationStrategy } from "./common/interfaces/notification-strategy";
+import { startJobExpiryJob } from "./infrastructure/scheduler/job-expiry-job";
 import { IFileStorageStrategy } from "./common/interfaces/file-storage-strategy";
 import { IEmailService } from "./common/interfaces/IEmailService";
 
@@ -52,6 +59,7 @@ import { createEmployerModule } from "./modules/employer/composition/employer-mo
 import { createJobModule } from "./modules/job/composition/job-module";
 import { createApplicationModule } from "./modules/application/composition/application-module";
 import { createAdminModule } from "./modules/admin/composition/admin-module";
+import { createAuditModule } from "./modules/audit/composition/audit-module";
 
 // ── Repositories ──────────────────────────────────────────────────────────────
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -85,6 +93,9 @@ prisma
     isDatabaseConnected = false;
     logger.error({ err }, "Failed to connect to database on startup.");
   });
+
+// Start background scheduler: auto-expire job postings (FR-SYS-11)
+startJobExpiryJob(prisma);
 
 /**
  * Single JWT Token Provider instance.
@@ -151,32 +162,40 @@ const notificationGatewayProxy: NotificationGatewayPort = {
  * Order matters: modules with no cross-dependencies first, then dependent modules.
  */
 function createModules() {
+  // ── Audit Module (no cross-module dependencies) ────────────────────────────
+  const auditModule = createAuditModule({
+    prisma,
+    authGuard,
+    roleGuard: adminRoleGuard,
+  });
+
   // ── Auth Module (no cross-module dependencies) ─────────────────────────────
-  const authModule = createAuthModule(prisma, emailService, notificationGatewayProxy, authGuard);
+  const authModule = createAuthModule(
+    prisma,
+    emailService,
+    notificationGatewayProxy,
+    authGuard,
+    auditModule.auditLogger,
+  );
 
   // ── Job Module (no cross-module dependencies) ──────────────────────────────
   // Job module expects roleGuard factory (requireRoles)
-  const jobModule = createJobModule(prisma, authGuard, roleGuard);
+  const jobModule = createJobModule(prisma, authGuard, roleGuard, auditModule.auditLogger);
 
   // ── Application Module (depends on Job Module's IJobPostingRepository) ─────
   // Application module expects roleGuard factory (requireRoles)
+  const notificationStrategy: INotificationStrategy = new CompositeNotificationStrategy([
+    new EmailNotificationStrategy(emailService),
+    new WebSocketNotificationStrategy(notificationGatewayProxy),
+  ]);
+
   const applicationModule = createApplicationModule({
     prisma,
     jobPostingRepository: jobModule.repositories.jobPostingRepository,
     authGuard,
     roleGuard,
-  });
-
-  // ── Student Module (depends on Application Module's IApplicationRepository and Job Module's IJobPostingRepository) ─────
-  // Student module expects roleGuard middleware (pre-created with STUDENT role)
-  const studentModule = createStudentModule({
-    prisma,
-    fileStorage,
-    applicationRepository: applicationModule.repositories.applicationRepository,
-    jobRepository: jobModule.repositories.jobPostingRepository,
-    jobPostingRepository: jobModule.repositories.jobPostingRepository,
-    authGuard,
-    roleGuard: studentRoleGuard,
+    auditLogger: auditModule.auditLogger,
+    notificationStrategy,
   });
 
   // ── Employer Module (depends on Application Module's IApplicationRepository) ─────
@@ -188,12 +207,27 @@ function createModules() {
     roleGuard: employerRoleGuard,
   });
 
+  // ── Student Module (depends on Application Module's IApplicationRepository and Job Module's IJobPostingRepository) ─────
+  // Student module expects roleGuard middleware (pre-created with STUDENT role)
+  const studentModule = createStudentModule({
+    prisma,
+    fileStorage,
+    applicationRepository: applicationModule.repositories.applicationRepository,
+    jobRepository: jobModule.repositories.jobPostingRepository,
+    jobPostingRepository: jobModule.repositories.jobPostingRepository,
+    employerRepository: employerModule.repositories.employerRepository,
+    authGuard,
+    roleGuard: studentRoleGuard,
+  });
+
   // ── Admin Module (no cross-module dependencies) ────────────────────────────
   // Admin module expects roleGuard middleware (pre-created with ADMINISTRATOR role)
   const adminModule = createAdminModule({
     prisma,
     authGuard,
     roleGuard: adminRoleGuard,
+    auditLogger: auditModule.auditLogger,
+    notificationStrategy,
   });
 
   return {
@@ -203,6 +237,7 @@ function createModules() {
     jobModule,
     applicationModule,
     adminModule,
+    auditModule,
   };
 }
 
@@ -249,6 +284,7 @@ export function createApp(): express.Application {
   app.use("/api/v1/jobs", modules.jobModule.router);
   app.use("/api/v1/applications", modules.applicationModule.router);
   app.use("/api/v1/admin", modules.adminModule.router);
+  app.use("/api/v1/admin", modules.auditModule.router);
 
   // ── 404 Handler ────────────────────────────────────────────────────────────
   app.use((_req, res) => {

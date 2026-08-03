@@ -114,6 +114,7 @@ import { PrismaClient } from "../../../generated/prisma";
 
 // ── Common ────────────────────────────────────────────────────────────────────
 import { createAuthGuard, requireRoles } from "../../../common/guards";
+import type { IAuditLogger } from "../../../common/interfaces/audit-logger";
 import type { Router } from "express";
 
 // ── Domain ────────────────────────────────────────────────────────────────────
@@ -128,6 +129,7 @@ import { CreateJobPostingUseCase } from "../application/use-cases/create-job-pos
 import { SubmitJobPostingUseCase } from "../application/use-cases/submit-job-posting-use-case";
 import { UpdateJobPostingUseCase } from "../application/use-cases/update-job-posting-use-case";
 import { CloseJobPostingUseCase } from "../application/use-cases/close-job-posting-use-case";
+import { ReopenJobPostingUseCase } from "../application/use-cases/reopen-job-posting-use-case";
 import { SearchJobsUseCase } from "../application/use-cases/search-jobs-use-case";
 import { GetJobDetailUseCase } from "../application/use-cases/get-job-detail-use-case";
 
@@ -163,6 +165,7 @@ export interface JobModule {
     submitJobPostingUseCase: SubmitJobPostingUseCase;
     updateJobPostingUseCase: UpdateJobPostingUseCase;
     closeJobPostingUseCase: CloseJobPostingUseCase;
+    reopenJobPostingUseCase: ReopenJobPostingUseCase;
     searchJobsUseCase: SearchJobsUseCase;
   };
 }
@@ -210,6 +213,7 @@ export function createJobModule(
   prismaClient: PrismaClient,
   authGuard: ReturnType<typeof createAuthGuard>,
   roleGuard: typeof requireRoles,
+  auditLogger?: IAuditLogger,
 ): JobModule {
   // ── 1. Infrastructure Layer ────────────────────────────────────────
   //     1a. Repository ─────────────────────────────────────────────────
@@ -224,6 +228,7 @@ export function createJobModule(
     jobPostingRepository,
     employerRepository,
     jobPostingFactory,
+    auditLogger!,
   );
 
   const submitJobPostingUseCase = new SubmitJobPostingUseCase(
@@ -234,6 +239,7 @@ export function createJobModule(
   const updateJobPostingUseCase = new UpdateJobPostingUseCase(
     jobPostingRepository,
     employerRepository,
+    auditLogger!,
   );
 
   const closeJobPostingUseCase = new CloseJobPostingUseCase(
@@ -241,7 +247,12 @@ export function createJobModule(
     employerRepository,
   );
 
-  const searchJobsUseCase = new SearchJobsUseCase(jobPostingRepository);
+  const reopenJobPostingUseCase = new ReopenJobPostingUseCase(
+    jobPostingRepository,
+    employerRepository,
+  );
+
+  const searchJobsUseCase = new SearchJobsUseCase(jobPostingRepository, employerRepository);
 
   const getJobDetailUseCase = new GetJobDetailUseCase(jobPostingRepository);
 
@@ -251,6 +262,7 @@ export function createJobModule(
     submitJobPostingUseCase,
     updateJobPostingUseCase,
     closeJobPostingUseCase,
+    reopenJobPostingUseCase,
     searchJobsUseCase,
     getJobDetailUseCase,
   );
@@ -272,6 +284,7 @@ export function createJobModule(
       submitJobPostingUseCase,
       updateJobPostingUseCase,
       closeJobPostingUseCase,
+      reopenJobPostingUseCase,
       searchJobsUseCase,
     },
   };

@@ -113,6 +113,12 @@ export function createJobRouter(
     roleGuard(Role.EMPLOYER),
     controller.closeJob.bind(controller),
   );
+  router.post(
+    "/:jobId/reopen",
+    authGuard,
+    roleGuard(Role.EMPLOYER),
+    controller.reopenJob.bind(controller),
+  );
 
   return router;
 }

@@ -54,10 +54,12 @@ import {
   IJobPostingRepository,
   JobSearchCriteria,
 } from "../../domain/repositories/job-posting-repository";
+import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
 import {
   ValidationException,
   BusinessException,
   InfrastructureException,
+  NotFoundException,
 } from "../../../../common/exceptions";
 import { logger } from "../../../../common/logger";
 
@@ -83,10 +85,14 @@ export interface SearchJobsCommand {
 
 /**
  * Output DTO for the search jobs use‑case.
+ *
+ * Pagination metadata is sourced directly from the repository's
+ * `PaginatedJobResult` so `total` / `totalPages` always reflect the
+ * number of items AFTER every filter (including salary) is applied.
  */
 export interface SearchJobsResult {
   /** Array of matching job postings. */
-  jobs: {
+  items: {
     id: string;
     employerId: string;
     title: string;
@@ -100,10 +106,21 @@ export interface SearchJobsResult {
     expiresAt: Date;
     createdAt: Date;
   }[];
+  /** Current page number (1-based). */
+  page: number;
+  /** Number of items per page. */
+  limit: number;
+  /** Total number of matching items after all filters. */
+  total: number;
+  /** Total number of pages. */
+  totalPages: number;
 }
 
 export class SearchJobsUseCase {
-  constructor(private readonly jobPostingRepository: IJobPostingRepository) {}
+  constructor(
+    private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository?: IEmployerRepository,
+  ) {}
 
   /**
    * Execute the search jobs flow.
@@ -139,22 +156,42 @@ export class SearchJobsUseCase {
         throw new ValidationException("limit must be >= 1");
       }
 
-      // ── 2. Create SearchCriteria with enforced state = APPROVED ─────
+      // ── 2. Resolve employerId (User.id → EmployerProfile.id) ─────────
+      // When command.employerId is provided (employer's own jobs lookup),
+      // resolve it to the EmployerProfile.id before passing to the repository.
+      // When empty/undefined (public student search), skip resolution entirely.
+      let resolvedEmployerId = command.employerId;
+      if (command.employerId) {
+        if (!this.employerRepository) {
+          logger.warn("employerRepository not injected; cannot resolve employer profile");
+          throw new InfrastructureException(
+            "EmployerRepository is required when employerId is provided",
+          );
+        }
+        const employerProfile = await this.employerRepository.findByUserId(command.employerId);
+        if (!employerProfile?.id) {
+          logger.warn({ employerId: command.employerId }, "Employer profile not found for user");
+          throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
+        }
+        resolvedEmployerId = employerProfile.id;
+      }
+
+      // ── 3. Create SearchCriteria with enforced state = APPROVED ─────
       // Business Rule: Students can only search for APPROVED jobs (BR-04)
       // State is always set to APPROVED regardless of client input
       const criteria: JobSearchCriteria = {
         keyword: command.keyword,
         location: command.location,
-        employerId: command.employerId,
+        employerId: resolvedEmployerId,
         salaryMin: command.salaryMin,
         salaryMax: command.salaryMax,
         state: "APPROVED",
       };
 
-      // ── 3. Execute repository search with pagination ────────────────
+      // ── 4. Execute repository search with pagination ────────────────
       const result = await this.jobPostingRepository.search(criteria, command.page, command.limit);
 
-      // ── 4. Log success ──────────────────────────────────────────────
+      // ── 5. Log success ──────────────────────────────────────────────
       logger.info(
         {
           page: command.page,
@@ -165,9 +202,11 @@ export class SearchJobsUseCase {
         "Search Completed",
       );
 
-      // ── 5. Return result ────────────────────────────────────────────
+      // ── 6. Return result ────────────────────────────────────────────
+      // Pagination metadata comes straight from the repository's
+      // PaginatedJobResult so total/totalPages reflect ALL filters.
       return {
-        jobs: result.items.map((job) => ({
+        items: result.items.map((job) => ({
           id: job.id!,
           employerId: job.employerId,
           title: job.title,
@@ -181,6 +220,10 @@ export class SearchJobsUseCase {
           expiresAt: job.expiresAt,
           createdAt: job.createdAt,
         })),
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
       };
     } catch (error) {
       // Re-throw known domain exceptions without wrapping

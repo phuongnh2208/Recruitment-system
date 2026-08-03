@@ -35,9 +35,12 @@
 import { IApplicationRepository } from "../../domain/repositories/application-repository";
 import { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
 import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
+import { ICVRepository } from "../../../student/domain/repositories/cv-repository";
+import { IUserRepository } from "../../../auth/domain/repositories/user-repository";
 import { ApplicationFactory } from "../../domain/factories/application-factory";
 import {
   ValidationException,
+  AuthenticationException,
   ConflictException,
   NotFoundException,
   BusinessException,
@@ -71,6 +74,8 @@ export class ApplyJobUseCase {
     private readonly applicationRepository: IApplicationRepository,
     private readonly jobPostingRepository: IJobPostingRepository,
     private readonly studentProfileRepository: IStudentProfileRepository,
+    private readonly cvRepository: ICVRepository,
+    private readonly userRepository: IUserRepository,
     private readonly applicationFactory: ApplicationFactory,
   ) {}
 
@@ -79,7 +84,7 @@ export class ApplyJobUseCase {
       // ── Step 1: Validate input ──────────────────────────────────
       this.validateInput(command);
 
-      // ── Step 2: Check duplicate application (BR-08) ──────────────
+      // ── Step 2: Resolve StudentProfile.id from User.id ──────────
       const studentProfile = await this.studentProfileRepository.findByUserId(command.studentId);
 
       if (!studentProfile?.id) {
@@ -87,11 +92,39 @@ export class ApplyJobUseCase {
         throw new NotFoundException(`Student profile for user ${command.studentId} not found`);
       }
 
-      const existingApplications = await this.applicationRepository.findByStudentId(
+      // ── Step 2b: Verify the user account is active (BR-02) ───────
+      const user = await this.userRepository.findById(command.studentId);
+      if (!user || !user.canLogin()) {
+        logger.warn({ userId: command.studentId }, "User account is not active — cannot apply");
+        throw new AuthenticationException("Tài khoản không hoạt động, không thể ứng tuyển");
+      }
+
+      // ── Step 3: Verify CV ownership ─────────────────────────────
+      const cv = await this.cvRepository.findById(command.cvId);
+
+      if (!cv) {
+        logger.warn({ cvId: command.cvId }, "CV Not Found");
+        throw new NotFoundException("CV not found");
+      }
+
+      if (cv.studentId !== studentProfile.id) {
+        logger.warn(
+          {
+            studentId: studentProfile.id,
+            cvId: command.cvId,
+            cvOwnerId: cv.studentId,
+          },
+          "CV Ownership Mismatch",
+        );
+        throw new AuthenticationException("You do not own this CV");
+      }
+
+      // ── Step 4: Check duplicate application (BR-08) ─────────────
+      const existing = await this.applicationRepository.findByJobAndStudent(
+        command.jobId,
         studentProfile.id,
       );
-      const alreadyApplied = existingApplications.some((app) => app.jobPostingId === command.jobId);
-      if (alreadyApplied) {
+      if (existing) {
         logger.warn(
           {
             studentId: studentProfile.id,
@@ -104,7 +137,7 @@ export class ApplyJobUseCase {
         );
       }
 
-      // ── Step 3: Find the job posting ────────────────────────────
+      // ── Step 5: Find the job posting ────────────────────────────
       const job = await this.jobPostingRepository.findById(command.jobId);
 
       if (!job) {
@@ -112,7 +145,7 @@ export class ApplyJobUseCase {
         throw new NotFoundException(`Job posting ${command.jobId} not found`);
       }
 
-      // ── Step 4: Verify job is in APPROVED state ──────────────────
+      // ── Step 6: Verify job is in APPROVED state ─────────────────
       if (job.state.value !== "APPROVED") {
         logger.warn(
           {
@@ -126,17 +159,17 @@ export class ApplyJobUseCase {
         );
       }
 
-      // ── Step 5: Create Application via Factory ───────────────────
+      // ── Step 7: Create Application via Factory ──────────────────
       const application = this.applicationFactory.create({
         studentId: studentProfile.id,
         jobPostingId: command.jobId,
         cvId: command.cvId,
       });
 
-      // ── Step 6: Persist the application ─────────────────────────
+      // ── Step 8: Persist the application ─────────────────────────
       await this.applicationRepository.create(application);
 
-      // ── Step 7: Log success ─────────────────────────────────────
+      // ── Step 9: Log success ─────────────────────────────────────
       logger.info(
         {
           studentId: studentProfile.id,
@@ -146,7 +179,7 @@ export class ApplyJobUseCase {
         "Application Submitted",
       );
 
-      // ── Step 8: Return result ───────────────────────────────────
+      // ── Step 10: Return result ──────────────────────────────────
       return {
         success: true,
         applicationId: application.id!,
@@ -154,6 +187,7 @@ export class ApplyJobUseCase {
     } catch (error) {
       if (
         error instanceof ValidationException ||
+        error instanceof AuthenticationException ||
         error instanceof ConflictException ||
         error instanceof NotFoundException ||
         error instanceof BusinessException

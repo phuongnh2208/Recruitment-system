@@ -53,10 +53,11 @@ async function fetchUsers(
     searchParams.set("status", filters.status);
   }
 
-  const response = await axiosInstance.get<PaginatedUserResponse>(
-    `${ENDPOINTS.ADMIN.USERS}?${searchParams.toString()}`,
-  );
-  return response.data;
+  const response = await axiosInstance.get<{
+    success: true;
+    data: PaginatedUserResponse;
+  }>(`${ENDPOINTS.ADMIN.USERS}?${searchParams.toString()}`);
+  return response.data.data;
 }
 
 /**

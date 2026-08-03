@@ -63,6 +63,7 @@
 
 import { IRefreshTokenRepository } from "../../domain/repositories/refresh-token-repository";
 import { TokenProvider } from "../../domain/token-provider";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
 import {
   AuthenticationException,
   ValidationException,
@@ -91,6 +92,7 @@ export class LogoutUseCase {
   constructor(
     private readonly refreshTokenRepository: IRefreshTokenRepository,
     private readonly tokenProvider: TokenProvider,
+    private readonly auditLogger: IAuditLogger,
   ) {}
 
   /**
@@ -147,6 +149,13 @@ export class LogoutUseCase {
       await this.refreshTokenRepository.update(refreshTokenEntity);
 
       logger.info("Logout Success: refresh token revoked successfully");
+
+      // 7b. Audit log (non-blocking).
+      const safeUserId = refreshTokenEntity.userId;
+      this.auditLogger.log(safeUserId, "LOGOUT", "USER", safeUserId).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logger.warn({ userId: safeUserId, error: errorMessage }, "Failed to write audit log");
+      });
 
       // TODO publish UserLoggedOut event
 

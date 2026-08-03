@@ -9,10 +9,11 @@ export interface StudentProfile {
   fullName: string;
   phone: string;
   address?: string;
-  school?: string;
+  university?: string;
   major?: string;
   graduationYear?: string;
   avatarUrl?: string;
+  defaultCvId?: string | null;
 }
 
 /** Input for the update profile API call. */
@@ -20,7 +21,7 @@ export interface UpdateProfileInput {
   fullName: string;
   phone: string;
   address?: string;
-  school?: string;
+  university?: string;
   major?: string;
   graduationYear?: string;
 }
@@ -28,7 +29,7 @@ export interface UpdateProfileInput {
 /** Response from the update profile API. */
 export interface UpdateProfileResponse {
   success: true;
-  studentProfileId: string;
+  data: { studentProfileId: string };
 }
 
 /** Response from the get profile API. */

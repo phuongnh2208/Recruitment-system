@@ -30,6 +30,11 @@
  */
 
 import { IAdminRepository } from "../../domain/repositories/admin-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
+import {
+  INotificationStrategy,
+  NotificationMessage,
+} from "../../../../common/interfaces/notification-strategy";
 import {
   ValidationException,
   NotFoundException,
@@ -57,7 +62,11 @@ export interface ApproveJobPostingResult {
 }
 
 export class ApproveJobPostingUseCase {
-  constructor(private readonly adminRepository: IAdminRepository) {}
+  constructor(
+    private readonly adminRepository: IAdminRepository,
+    private readonly auditLogger: IAuditLogger,
+    private readonly notificationStrategy: INotificationStrategy,
+  ) {}
 
   async execute(command: ApproveJobPostingCommand): Promise<ApproveJobPostingResult> {
     try {
@@ -111,6 +120,30 @@ export class ApproveJobPostingUseCase {
         },
         "Job Posting Approved",
       );
+
+      // ── Step 6b: Audit log (non-blocking) ──────────────────────────────
+      this.auditLogger
+        .log(command.adminId, "JOB_APPROVED", "JOB_POSTING", command.jobId)
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn({ jobId: command.jobId, error: errorMessage }, "Failed to write audit log");
+        });
+
+      // ── Step 6c: Send notification (non-blocking) ─────────────────────
+      const notification: NotificationMessage = {
+        userId: job.employer.user.id,
+        title: "Tin tuyển dụng đã được duyệt",
+        message: `Tin tuyển dụng "${job.title}" của bạn đã được duyệt và đang hiển thị công khai.`,
+        type: "job_approved",
+        metadata: { email: job.employer.user.email },
+      };
+      this.notificationStrategy.send(notification).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logger.warn(
+          { jobId: command.jobId, error: errorMessage },
+          "Failed to send job approval notification",
+        );
+      });
 
       // ── Step 7: Return result ───────────────────────────────────────────
       return {

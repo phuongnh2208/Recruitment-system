@@ -114,7 +114,7 @@ export default function PendingApprovalPage() {
                   <h2 className="font-display text-xl font-semibold text-ink">
                     Doanh nghiệp chờ duyệt
                   </h2>
-                  {pendingData.pendingEmployers.length > 0 ? (
+                  {(pendingData?.pendingEmployers ?? []).length > 0 ? (
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                       {pendingData.pendingEmployers.map((employer) => (
                         <PendingEmployerCard
@@ -137,7 +137,7 @@ export default function PendingApprovalPage() {
                   <h2 className="font-display text-xl font-semibold text-ink">
                     Tin tuyển dụng chờ duyệt
                   </h2>
-                  {pendingData.pendingJobs.length > 0 ? (
+                  {(pendingData?.pendingJobs ?? []).length > 0 ? (
                     <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                       {pendingData.pendingJobs.map((job) => (
                         <PendingJobCard
@@ -158,8 +158,8 @@ export default function PendingApprovalPage() {
                 </section>
 
                 {/* Empty state when no pending items */}
-                {pendingData.pendingEmployers.length === 0 &&
-                  pendingData.pendingJobs.length === 0 && (
+                {(pendingData?.pendingEmployers ?? []).length === 0 &&
+                  (pendingData?.pendingJobs ?? []).length === 0 && (
                     <ApprovalEmptyState />
                   )}
               </div>

@@ -97,6 +97,33 @@ export class PrismaApplicationRepository implements IApplicationRepository {
     }
   }
 
+  async findByJobAndStudent(jobId: string, studentId: string): Promise<Application | null> {
+    try {
+      // The Application table has a unique compound constraint @@unique([jobId, studentId]).
+      // findFirst with both fields is an efficient direct lookup.
+      const record = await this.prisma.application.findFirst({
+        where: { jobId, studentId },
+      });
+
+      if (!record) {
+        logger.debug({ jobId, studentId }, "No application found for job and student");
+        return null;
+      }
+
+      logger.debug(
+        { jobId, studentId, applicationId: record.id },
+        "Application found for job/student",
+      );
+      return this.toDomain(record);
+    } catch (error) {
+      logger.error({ error, jobId, studentId }, "Failed to find application by job and student");
+      throw new InfrastructureException("Failed to find application by job and student", {
+        jobId,
+        studentId,
+      });
+    }
+  }
+
   async findByStudentId(studentId: string): Promise<Application[]> {
     try {
       const records = await this.prisma.application.findMany({

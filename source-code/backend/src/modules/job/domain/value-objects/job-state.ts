@@ -28,6 +28,7 @@
  *   APPROVED  — Approved and visible to candidates.
  *   REJECTED  — Rejected during review.
  *   CLOSED    — Manually closed by the employer.
+ *   EXPIRED   — Automatically expired after the deadline passed.
  *
  * ═══════════════════════════════════════════════════════════════════
  * BUSINESS TRANSITIONS
@@ -38,6 +39,7 @@
  *   SUBMITTED ────── reject ───────────→ REJECTED
  *   REJECTED ─────── reopen ───────────→ DRAFT
  *   APPROVED ─────── close ────────────→ CLOSED
+ *   APPROVED ─────── expire ───────────→ EXPIRED
  *
  * Each transition is validated by its own method on JobState.
  *
@@ -49,7 +51,7 @@ import { ValidationException } from "../../../../common/exceptions/validation-ex
 /**
  * Allowed JobState values.
  */
-export type JobStateValue = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CLOSED";
+export type JobStateValue = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "CLOSED" | "EXPIRED";
 
 const ALLOWED_VALUES: readonly JobStateValue[] = [
   "DRAFT",
@@ -57,6 +59,7 @@ const ALLOWED_VALUES: readonly JobStateValue[] = [
   "APPROVED",
   "REJECTED",
   "CLOSED",
+  "EXPIRED",
 ] as const;
 
 export class JobState {
@@ -94,6 +97,11 @@ export class JobState {
   /** Returns the CLOSED state. */
   static closed(): JobState {
     return new JobState("CLOSED");
+  }
+
+  /** Returns the EXPIRED state. */
+  static expired(): JobState {
+    return new JobState("EXPIRED");
   }
 
   // ── Getters ───────────────────────────────────────────────────────

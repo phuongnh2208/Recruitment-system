@@ -108,10 +108,8 @@ export interface UploadCVCommand {
 export interface UploadCVResult {
   /** Indicates whether the operation was successful. */
   success: true;
-  /** The ID of the created CV metadata. */
-  cvId: string;
-  /** The storage path where the file was stored. */
-  storagePath: string;
+  /** The created CV metadata. */
+  cv: CVMetadata;
 }
 
 /** Maximum allowed file size in bytes (5 MB). */
@@ -263,8 +261,7 @@ export class UploadCVUseCase {
 
       return {
         success: true,
-        cvId: created.id!,
-        storagePath: uploadResult.path,
+        cv: created,
       };
     } catch (error) {
       // Re-throw known domain exceptions without wrapping

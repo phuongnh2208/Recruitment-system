@@ -32,10 +32,11 @@ import type { DashboardResponse } from "../types/dashboard.types";
  * @returns The API response containing dashboard stats and pending items.
  */
 async function fetchDashboard(): Promise<DashboardResponse> {
-  const response = await axiosInstance.get<DashboardResponse>(
-    ENDPOINTS.ADMIN.DASHBOARD,
-  );
-  return response.data;
+  const response = await axiosInstance.get<{
+    success: true;
+    data: DashboardResponse;
+  }>(ENDPOINTS.ADMIN.DASHBOARD);
+  return response.data.data;
 }
 
 /**

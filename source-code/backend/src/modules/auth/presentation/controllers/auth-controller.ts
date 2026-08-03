@@ -73,7 +73,7 @@ export class AuthController {
     try {
       const dto = registerSchema.parse(req.body);
       const result = await this.registerUseCase.execute(dto);
-      res.status(201).json(result);
+      res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -90,7 +90,7 @@ export class AuthController {
     try {
       const dto = loginSchema.parse(req.body);
       const result = await this.loginUseCase.execute(dto);
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -114,7 +114,7 @@ export class AuthController {
 
       const dto = logoutSchema.parse({ refreshToken });
       const result = await this.logoutUseCase.execute(dto);
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -146,7 +146,7 @@ export class AuthController {
         currentPassword: dto.currentPassword,
         newPassword: dto.newPassword,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -164,7 +164,7 @@ export class AuthController {
       const token = (req.query.token as string | undefined) ?? req.body?.token;
       const dto = verifyEmailSchema.parse({ token });
       const result = await this.verifyEmailUseCase.execute(dto);
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }

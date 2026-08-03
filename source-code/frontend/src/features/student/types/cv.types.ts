@@ -15,6 +15,7 @@ export interface CVMetadata {
   id: string;
   studentId: string;
   fileName: string;
+  originalFileName?: string;
   filePath: string;
   fileSize: number;
   mimeType: string;

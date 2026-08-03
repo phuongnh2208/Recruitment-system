@@ -69,6 +69,7 @@ import {
   INotificationStrategy,
   NotificationMessage,
 } from "../../../../common/interfaces/notification-strategy";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
 import { Email } from "../../domain/value-objects/email";
 import { Password } from "../../domain/value-objects/password";
 import { RefreshToken } from "../../domain/entities/refresh-token";
@@ -127,6 +128,7 @@ export class LoginUseCase {
     private readonly passwordHasher: PasswordHasher,
     private readonly tokenProvider: TokenProvider,
     private readonly notificationStrategy: INotificationStrategy,
+    private readonly auditLogger: IAuditLogger,
   ) {}
 
   /**
@@ -251,7 +253,16 @@ export class LoginUseCase {
       });
       await this.refreshTokenRepository.create(refreshTokenEntity);
 
-      // 1️⃣0️⃣ Send login notification (optional, non-blocking).
+      // 1️⃣0️⃣ Audit log (non-blocking).
+      const safeUserId = user.id as unknown as string;
+      this.auditLogger
+        .log(safeUserId, "LOGIN", "USER", safeUserId, { email: user.email })
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn({ userId: safeUserId, error: errorMessage }, "Failed to write audit log");
+        });
+
+      // 1️⃣1️⃣ Send login notification (optional, non-blocking).
       // TODO: publish UserLoggedIn event
       const notification: NotificationMessage = {
         userId: user.id as unknown as string,
@@ -270,7 +281,7 @@ export class LoginUseCase {
         logger.warn({ userId: user.id, error: errorMessage }, "Failed to send login notification");
       });
 
-      // 1️⃣1️⃣ Return result.
+      // 1️⃣2️⃣ Return result.
       return {
         accessToken,
         refreshToken,

@@ -3,7 +3,6 @@ import { AppHeader } from "../components/AppHeader";
 
 const navItems = [
   { to: "/student/profile", label: "Hồ sơ cá nhân", icon: "👤" },
-  { to: "/student/cv", label: "Quản lý CV", icon: "📄" },
   { to: "/student/jobs", label: "Việc làm", icon: "💼" },
   {
     to: "/student/application-history",

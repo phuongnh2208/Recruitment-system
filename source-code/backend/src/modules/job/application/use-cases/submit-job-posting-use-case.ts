@@ -126,6 +126,17 @@ export class SubmitJobPostingUseCase {
         throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
       }
 
+      // ── 1b. Verify employer is verified (BR-03) ───────────────────
+      if (!employerProfile.verified) {
+        logger.warn(
+          { userId: command.employerId },
+          "Employer not verified — cannot submit job posting",
+        );
+        throw new AuthenticationException(
+          "Doanh nghiệp chưa được xác thực, không thể gửi tin tuyển dụng để duyệt",
+        );
+      }
+
       // ── 2. Load job posting via Repository ────────────────────────
       const job = await this.jobPostingRepository.findById(command.jobPostingId);
 

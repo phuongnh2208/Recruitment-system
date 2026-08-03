@@ -8,6 +8,75 @@ import { GetApplicationHistoryUseCase } from "../../../student/application/use-c
 import { GetJobDetailUseCase } from "../../../student/application/use-cases/get-job-detail-use-case";
 import { SearchJobsUseCase } from "../../../job/application/use-cases/search-jobs-use-case";
 import { AuthenticationException } from "../../../../common/exceptions";
+import { StudentProfile } from "../../domain/entities/student-profile";
+import { CVMetadata } from "../../domain/entities/cv-metadata";
+import { Application } from "../../../application/domain/entities/application";
+
+/**
+ * Map a StudentProfile domain entity to a flat DTO for HTTP serialization.
+ *
+ * Domain entities use private fields + getters, so JSON.stringify would
+ * emit `_fullName` instead of `fullName`. This mapper ensures the wire
+ * format matches what the frontend expects.
+ */
+function toProfileDto(profile: StudentProfile) {
+  return {
+    id: profile.id,
+    userId: profile.userId,
+    fullName: profile.fullName,
+    phone: profile.phone,
+    address: profile.address,
+    university: profile.university,
+    major: profile.major,
+    graduationYear: profile.graduationYear !== null ? String(profile.graduationYear) : "",
+    avatarUrl: profile.avatarUrl,
+    defaultCvId: profile.defaultCvId,
+  };
+}
+
+/**
+ * Map a CVMetadata domain entity to a flat DTO for HTTP serialization.
+ *
+ * Domain entities use private fields + getters, so JSON.stringify would
+ * emit `_fileSize` instead of `fileSize`. This mapper ensures the wire
+ * format matches what the frontend expects.
+ */
+function toCvDto(cv: CVMetadata) {
+  return {
+    id: cv.id,
+    studentId: cv.studentId,
+    fileName: cv.fileName,
+    originalFileName: cv.originalFileName,
+    mimeType: cv.mimeType,
+    fileSize: cv.fileSize,
+    filePath: cv.storagePath,
+    isDefault: cv.isDefault,
+    uploadedAt: cv.uploadedAt.toISOString(),
+  };
+}
+
+/**
+ * Map an Application domain entity to a flat DTO for HTTP serialization.
+ *
+ * Domain entities use private fields + getters, so JSON.stringify would
+ * emit `_studentId` instead of `studentId`. This mapper ensures the wire
+ * format matches what the frontend expects.
+ */
+function toApplicationDto(application: Application) {
+  return {
+    id: application.id,
+    studentId: application.studentId,
+    jobPostingId: application.jobPostingId,
+    cvId: application.cvId,
+    state: application.state.value,
+    rejectionReason: application.rejectionReason,
+    appliedAt: application.appliedAt.toISOString(),
+    reviewedAt: application.reviewedAt ? application.reviewedAt.toISOString() : null,
+    reviewedBy: application.reviewedBy,
+    createdAt: application.createdAt.toISOString(),
+    updatedAt: application.updatedAt.toISOString(),
+  };
+}
 
 /**
  * StudentController
@@ -15,9 +84,7 @@ import { AuthenticationException } from "../../../../common/exceptions";
  * Handles HTTP requests for the Student module and delegates all business
  * logic to the corresponding Use Cases.
  *
- * ═══════════════════════════════════════════════════════════════════
  * PRESENTATION LAYER
- * ═══════════════════════════════════════════════════════════════════
  *
  * This controller sits at the outermost layer (Presentation / Interface
  * Adapters). Its sole purpose is to translate between HTTP and the
@@ -31,22 +98,18 @@ import { AuthenticationException } from "../../../../common/exceptions";
  *   5. Forward any exception to the Global Error Middleware via
  *      `next(error)` — this controller does NOT handle errors itself.
  *
- * ═══════════════════════════════════════════════════════════════════
  * CLEAN ARCHITECTURE BOUNDARY
- * ═══════════════════════════════════════════════════════════════════
  *
  * This controller contains:
- *   - ❌ NO business logic
- *   - ❌ NO database access
- *   - ❌ NO repository calls
- *   - ❌ NO Prisma queries
- *   - ❌ NO try/catch blocks
+ *   - NO business logic
+ *   - NO database access
+ *   - NO repository calls
+ *   - NO Prisma queries
+ *   - NO try/catch blocks
  *
- * It is pure orchestration: validate → call use case → respond.
+ * It is pure orchestration: validate -> call use case -> respond.
  *
- * ═══════════════════════════════════════════════════════════════════
  * DEPENDENCY INJECTION
- * ═══════════════════════════════════════════════════════════════════
  *
  * All five use cases are injected via the constructor. The controller
  * has zero knowledge of how use cases are instantiated, which
@@ -67,16 +130,16 @@ export class StudentController {
     private readonly searchJobsUseCase: SearchJobsUseCase,
   ) {}
 
-  // ── Zod Schemas ─────────────────────────────────────────────────
+  // Zod Schemas
 
   /** Schema for updating student profile. */
   private readonly updateProfileSchema = z.object({
     fullName: z.string().min(1),
     phone: z.string().min(1),
-    address: z.string().min(1),
-    school: z.string().min(1),
-    major: z.string().min(1),
-    graduationYear: z.string().min(1),
+    address: z.string().optional().default(""),
+    university: z.string().optional().default(""),
+    major: z.string().optional().default(""),
+    graduationYear: z.string().optional().default(""),
     avatarUrl: z.string().optional().default(""),
   });
 
@@ -96,7 +159,7 @@ export class StudentController {
     salaryMax: z.coerce.number().int().nonnegative().optional().nullable(),
   });
 
-  // ── Endpoint Methods ────────────────────────────────────────────
+  // Endpoint Methods
 
   /**
    * PATCH /student/profile
@@ -109,10 +172,10 @@ export class StudentController {
    * **Request body** (validated by `updateProfileSchema`):
    * - `fullName`       – required, non-empty string
    * - `phone`          – required, non-empty string
-   * - `address`        – required, non-empty string
-   * - `school`         – required, non-empty string
-   * - `major`          – required, non-empty string
-   * - `graduationYear` – required, non-empty string
+   * - `address`        – optional, defaults to empty string
+   * - `university`     – optional, defaults to empty string
+   * - `major`          – optional, defaults to empty string
+   * - `graduationYear` – optional, defaults to empty string (null when empty)
    *
    * **Response** – `200 OK` with the update result.
    *
@@ -132,12 +195,15 @@ export class StudentController {
         fullName: body.fullName,
         phone: body.phone,
         address: body.address,
-        school: body.school,
+        university: body.university,
         major: body.major,
         graduationYear: body.graduationYear,
         avatarUrl: body.avatarUrl,
       });
-      res.status(200).json(result);
+      res.status(200).json({
+        success: true,
+        data: { studentProfileId: result.studentProfileId },
+      });
     } catch (error) {
       next(error);
     }
@@ -166,7 +232,13 @@ export class StudentController {
       const result = await this.getProfileUseCase.execute({
         userId: req.user.id,
       });
-      res.status(200).json(result);
+      res.status(200).json({
+        success: true,
+        data: {
+          profile: result.profile ? toProfileDto(result.profile) : null,
+          exists: result.exists,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -210,14 +282,7 @@ export class StudentController {
         buffer: file.buffer,
         size: file.size,
       });
-      // Frontend expects { success: true, data: CVMetadata }
-      // Need to fetch the created CV to return full metadata
-      const cv = await this.manageCVListUseCase.list({ studentId: req.user.id });
-      const createdCv = cv.cvs.find((c) => c.id === result.cvId);
-      res.status(201).json({
-        success: true,
-        data: createdCv,
-      });
+      res.status(201).json({ success: true, data: toCvDto(result.cv) });
     } catch (error) {
       next(error);
     }
@@ -249,7 +314,7 @@ export class StudentController {
       // Frontend expects CVMetadata[] directly, not { cvs: CVMetadata[] }
       res.status(200).json({
         success: true,
-        data: result.cvs,
+        data: result.cvs.map(toCvDto),
       });
     } catch (error) {
       next(error);
@@ -283,7 +348,7 @@ export class StudentController {
         studentId: req.user.id,
         cvId: req.params.cvId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -316,7 +381,7 @@ export class StudentController {
         studentId: req.user.id,
         cvId: req.params.cvId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -353,7 +418,16 @@ export class StudentController {
         page: query.page,
         limit: query.limit,
       });
-      res.status(200).json(result);
+      res.status(200).json({
+        success: true,
+        data: {
+          items: result.items.map(toApplicationDto),
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -379,7 +453,7 @@ export class StudentController {
       const result = await this.getJobDetailUseCase.execute({
         jobId: req.params.jobId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -417,16 +491,17 @@ export class StudentController {
         salaryMax: query.salaryMax ?? undefined,
       });
 
-      // Transform to frontend-expected format with pagination metadata
-      const totalItems = result.jobs.length;
-      const totalPages = Math.ceil(totalItems / query.limit) || 1;
-
+      // Standardized DTO — pagination metadata comes straight from the
+      // use case (sourced from the repository's PaginatedJobResult).
       res.status(200).json({
-        items: result.jobs,
-        page: query.page,
-        size: query.limit,
-        totalPages,
-        totalItems,
+        success: true,
+        data: {
+          items: result.items,
+          page: result.page,
+          size: result.limit,
+          totalPages: result.totalPages,
+          totalItems: result.total,
+        },
       });
     } catch (error) {
       next(error);

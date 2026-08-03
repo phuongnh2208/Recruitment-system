@@ -65,12 +65,14 @@
 
 import { IJobPostingRepository } from "../../domain/repositories/job-posting-repository";
 import { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
 import {
   JobPostingFactory,
   CreateJobPostingInput,
 } from "../../domain/factories/job-posting-factory";
 import {
   ValidationException,
+  AuthenticationException,
   BusinessException,
   InfrastructureException,
   NotFoundException,
@@ -116,6 +118,7 @@ export class CreateJobPostingUseCase {
     private readonly jobPostingRepository: IJobPostingRepository,
     private readonly employerRepository: IEmployerRepository,
     private readonly jobPostingFactory: JobPostingFactory,
+    private readonly auditLogger: IAuditLogger,
   ) {}
 
   /**
@@ -169,6 +172,17 @@ export class CreateJobPostingUseCase {
         throw new NotFoundException(`Employer profile for user ${command.employerId} not found`);
       }
 
+      // ── 1b. Verify employer is verified (BR-03) ───────────────────
+      if (!employerProfile.verified) {
+        logger.warn(
+          { userId: command.employerId },
+          "Employer not verified — cannot create job posting",
+        );
+        throw new AuthenticationException(
+          "Doanh nghiệp chưa được xác thực, không thể đăng tin tuyển dụng",
+        );
+      }
+
       // ── 2. Create JobPosting entity via Factory ───────────────────
       const factoryInput: CreateJobPostingInput = {
         employerId: employerProfile.id,
@@ -195,6 +209,17 @@ export class CreateJobPostingUseCase {
         },
         "Job Created",
       );
+
+      // ── 4b. Audit log (non-blocking) ──────────────────────────────
+      this.auditLogger
+        .log(command.employerId, "JOB_CREATED", "JOB_POSTING", jobPosting.id!)
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn(
+            { jobPostingId: jobPosting.id, error: errorMessage },
+            "Failed to write audit log",
+          );
+        });
 
       return {
         success: true,

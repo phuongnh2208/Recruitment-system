@@ -4,6 +4,7 @@ import { CreateJobPostingUseCase } from "../../application/use-cases/create-job-
 import { SubmitJobPostingUseCase } from "../../application/use-cases/submit-job-posting-use-case";
 import { UpdateJobPostingUseCase } from "../../application/use-cases/update-job-posting-use-case";
 import { CloseJobPostingUseCase } from "../../application/use-cases/close-job-posting-use-case";
+import { ReopenJobPostingUseCase } from "../../application/use-cases/reopen-job-posting-use-case";
 import { SearchJobsUseCase } from "../../application/use-cases/search-jobs-use-case";
 import { GetJobDetailUseCase } from "../../application/use-cases/get-job-detail-use-case";
 import { AuthenticationException } from "../../../../common/exceptions";
@@ -14,9 +15,7 @@ import { AuthenticationException } from "../../../../common/exceptions";
  * Handles HTTP requests for the Job module and delegates all business
  * logic to the corresponding Use Cases.
  *
- * ═══════════════════════════════════════════════════════════════════
  * PRESENTATION LAYER
- * ═══════════════════════════════════════════════════════════════════
  *
  * This controller sits at the outermost layer (Presentation / Interface
  * Adapters). Its sole purpose is to translate between HTTP and the
@@ -29,23 +28,19 @@ import { AuthenticationException } from "../../../../common/exceptions";
  *   5. Forward any exception to the Global Error Middleware via
  *      `next(error)` — this controller does NOT handle errors itself.
  *
- * ═══════════════════════════════════════════════════════════════════
  * CLEAN ARCHITECTURE BOUNDARY
- * ═══════════════════════════════════════════════════════════════════
  *
  * This controller contains:
- *   - ❌ NO business logic
- *   - ❌ NO database access
- *   - ❌ NO repository calls
- *   - ❌ NO Prisma queries
- *   - ❌ NO try/catch blocks
- *   - ❌ NO logging
+ *   - NO business logic
+ *   - NO database access
+ *   - NO repository calls
+ *   - NO Prisma queries
+ *   - NO try/catch blocks
+ *   - NO logging
  *
- * It is pure orchestration: validate → call use case → respond.
+ * It is pure orchestration: validate -> call use case -> respond.
  *
- * ═══════════════════════════════════════════════════════════════════
  * DEPENDENCY INJECTION
- * ═══════════════════════════════════════════════════════════════════
  *
  * All five use cases are injected via the constructor. The controller
  * has zero knowledge of how use cases are instantiated, which
@@ -61,11 +56,12 @@ export class JobController {
     private readonly submitJobPostingUseCase: SubmitJobPostingUseCase,
     private readonly updateJobPostingUseCase: UpdateJobPostingUseCase,
     private readonly closeJobPostingUseCase: CloseJobPostingUseCase,
+    private readonly reopenJobPostingUseCase: ReopenJobPostingUseCase,
     private readonly searchJobsUseCase: SearchJobsUseCase,
     private readonly getJobDetailUseCase: GetJobDetailUseCase,
   ) {}
 
-  // ── Zod Schemas ─────────────────────────────────────────────────
+  // Zod Schemas
 
   /** Schema for creating a new job posting. */
   private readonly createJobSchema = z.object({
@@ -100,7 +96,7 @@ export class JobController {
     salaryMax: z.coerce.number().int().nonnegative().optional().nullable(),
   });
 
-  // ── Endpoint Methods ────────────────────────────────────────────
+  // Endpoint Methods
 
   /**
    * POST /jobs
@@ -144,7 +140,7 @@ export class JobController {
         currency: body.currency,
         expiresAt: body.expiresAt,
       });
-      res.status(201).json(result);
+      res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -192,7 +188,7 @@ export class JobController {
         salaryMax: body.salaryMax,
         expiresAt: body.expiresAt,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -223,7 +219,7 @@ export class JobController {
         employerId: req.user.id,
         jobPostingId: req.params.jobId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -254,7 +250,34 @@ export class JobController {
         employerId: req.user.id,
         jobPostingId: req.params.jobId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /jobs/:jobId/reopen
+   *
+   * Reopens a rejected job posting. Transitions state from REJECTED to
+   * DRAFT. Only the owner can reopen.
+   *
+   * **Path params:**
+   * - `jobId` – the unique identifier of the job posting
+   *
+   * **Response** – `200 OK` with `{ success: true }`.
+   */
+  async reopenJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        next(new AuthenticationException("Authentication required."));
+        return;
+      }
+      const result = await this.reopenJobPostingUseCase.execute({
+        employerId: req.user.id,
+        jobPostingId: req.params.jobId,
+      });
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -291,7 +314,16 @@ export class JobController {
         salaryMin: query.salaryMin ?? undefined,
         salaryMax: query.salaryMax ?? undefined,
       });
-      res.status(200).json(result);
+      res.status(200).json({
+        success: true,
+        data: {
+          items: result.items,
+          page: result.page,
+          size: result.limit,
+          totalPages: result.totalPages,
+          totalItems: result.total,
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -316,7 +348,7 @@ export class JobController {
       const result = await this.getJobDetailUseCase.execute({
         jobId: req.params.jobId,
       });
-      res.status(200).json(result);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -347,7 +379,16 @@ export class JobController {
         limit: 100,
         employerId: req.user.id,
       });
-      res.status(200).json(result);
+      res.status(200).json({
+        success: true,
+        data: {
+          items: result.items,
+          page: result.page,
+          size: result.limit,
+          totalPages: result.totalPages,
+          totalItems: result.total,
+        },
+      });
     } catch (error) {
       next(error);
     }

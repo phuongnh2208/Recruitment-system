@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 /**
  * StudentProfilePage
@@ -26,6 +26,7 @@ import React from "react";
 import { useProfileForm } from "../hooks/useProfileForm";
 import { useProfile } from "../hooks/useProfile";
 import { useCvList } from "../hooks/useCvList";
+import CvUploadZone from "./CvUploadZone";
 import CvListItem from "./CvListItem";
 import CvEmptyState from "./CvEmptyState";
 import NoDefaultCvBanner from "./NoDefaultCvBanner";
@@ -40,7 +41,7 @@ import NoDefaultCvBanner from "./NoDefaultCvBanner";
 function PageLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-paper">
-      <div className="mx-auto max-w-2xl px-4 py-8 md:px-6 md:py-12">
+      <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-12">
         {children}
       </div>
     </div>
@@ -214,6 +215,8 @@ export default function StudentProfilePage() {
   const { data: profileData, isLoading, isError } = useProfile();
   const { data: cvList, isLoading: cvLoading } = useCvList();
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -230,6 +233,22 @@ export default function StudentProfilePage() {
   const hasProfile = profileData?.exists === true && profileData?.profile;
   const hasDefaultCv = cvList?.some((cv) => cv.isDefault) ?? false;
 
+  const handleEdit = () => {
+    if (profileData?.profile) {
+      form.reset(profileData.profile);
+    }
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleFormSubmit = async (values: Parameters<typeof onSubmit>[0]) => {
+    await onSubmit(values);
+    setIsEditing(false);
+  };
+
   return (
     <PageLayout>
       {/* ── Page header ────────────────────────────────── */}
@@ -238,7 +257,7 @@ export default function StudentProfilePage() {
           Hồ sơ cá nhân
         </h1>
         <p className="mt-1 font-body text-sm text-ink/60">
-          Quản lý thông tin hồ sơ của bạn
+          Quản lý thông tin hồ sơ và CV của bạn
         </p>
       </div>
 
@@ -278,206 +297,242 @@ export default function StudentProfilePage() {
         </div>
       )}
 
-      {/* ── Profile exists - Show profile info + CV + Edit button ──────────────────────────── */}
-      {hasProfile && !isLoading && profileData.profile && (
-        <div className="space-y-6">
-          {/* Profile Info Card */}
-          <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5 md:p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-xl font-semibold text-ink">
-                Thông tin hồ sơ
-              </h2>
-              <button
-                type="button"
-                onClick={() => form.reset(profileData.profile!)}
-                className="rounded-seal bg-primary px-4 py-2 font-body text-sm text-white hover:bg-primary-dark"
-              >
-                Chỉnh sửa
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-body text-xs text-ink/50">Họ và tên</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.fullName}
-                </p>
-              </div>
-              <div>
-                <p className="font-body text-xs text-ink/50">Số điện thoại</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.phone}
-                </p>
-              </div>
-              <div>
-                <p className="font-body text-xs text-ink/50">Địa chỉ</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.address || "Chưa cập nhật"}
-                </p>
-              </div>
-              <div>
-                <p className="font-body text-xs text-ink/50">Trường học</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.school || "Chưa cập nhật"}
-                </p>
-              </div>
-              <div>
-                <p className="font-body text-xs text-ink/50">Chuyên ngành</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.major || "Chưa cập nhật"}
-                </p>
-              </div>
-              <div>
-                <p className="font-body text-xs text-ink/50">Năm tốt nghiệp</p>
-                <p className="font-body text-sm text-ink">
-                  {profileData.profile.graduationYear || "Chưa cập nhật"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* CV Section */}
-          <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5 md:p-8">
-            <h2 className="font-display text-xl font-semibold text-ink mb-4">
-              CV của bạn
-            </h2>
-            {cvLoading ? (
-              <div className="text-center py-4">
-                <div className="h-4 w-4 animate-pulse rounded bg-sage/50 mx-auto" />
-                <p className="mt-2 font-body text-sm text-ink/60">
-                  Đang tải CV...
-                </p>
-              </div>
-            ) : cvList && cvList.length > 0 ? (
-              <>
-                {!hasDefaultCv && (
-                  <NoDefaultCvBanner
-                    action={
-                      <button className="rounded-seal bg-primary px-4 py-1.5 font-body text-sm text-white hover:bg-primary-dark">
-                        Đặt mặc định
-                      </button>
-                    }
-                  />
-                )}
-                <div className="space-y-4">
-                  {cvList.map((cv) => (
-                    <CvListItem key={cv.id} cv={cv} />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <CvEmptyState
-                action={
-                  <button className="rounded-seal bg-primary px-6 py-2.5 font-body text-white hover:bg-primary-dark">
-                    Tải lên CV
+      {/* ── Main content: 2-column layout on desktop ──────────────────────────── */}
+      {!isLoading && !isError && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ── Left column: Profile info / form ───────────────────────────── */}
+          <div className="space-y-6">
+            {/* Profile exists - Show profile info (when not editing) */}
+            {hasProfile && !isEditing && profileData.profile && (
+              <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5 md:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-xl font-semibold text-ink">
+                    Thông tin hồ sơ
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    className="rounded-seal bg-primary px-4 py-2 font-body text-sm text-white hover:bg-primary-dark"
+                  >
+                    Chỉnh sửa
                   </button>
-                }
-              />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="font-body text-xs text-ink/50">Họ và tên</p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.fullName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-body text-xs text-ink/50">
+                      Số điện thoại
+                    </p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.phone}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-body text-xs text-ink/50">Địa chỉ</p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.address || "Chưa cập nhật"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-body text-xs text-ink/50">Trường học</p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.university || "Chưa cập nhật"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-body text-xs text-ink/50">
+                      Chuyên ngành
+                    </p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.major || "Chưa cập nhật"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-body text-xs text-ink/50">
+                      Năm tốt nghiệp
+                    </p>
+                    <p className="font-body text-sm text-ink">
+                      {profileData.profile.graduationYear || "Chưa cập nhật"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form: shown when editing OR when no profile exists */}
+            {(isEditing || !hasProfile) && (
+              <form
+                onSubmit={handleSubmit(handleFormSubmit)}
+                noValidate
+                className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5 md:p-8"
+              >
+                <div className="space-y-6">
+                  <FormField
+                    label="Họ và tên"
+                    id="fullName"
+                    required
+                    error={errors.fullName?.message}
+                  >
+                    <InputField
+                      id="fullName"
+                      placeholder="Nguyễn Văn A"
+                      {...register("fullName")}
+                      error={errors.fullName?.message}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Số điện thoại"
+                    id="phone"
+                    required
+                    error={errors.phone?.message}
+                  >
+                    <InputField
+                      id="phone"
+                      type="tel"
+                      placeholder="0123456789"
+                      {...register("phone")}
+                      error={errors.phone?.message}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Địa chỉ"
+                    id="address"
+                    error={errors.address?.message}
+                  >
+                    <InputField
+                      id="address"
+                      placeholder="Hà Nội, Việt Nam"
+                      {...register("address")}
+                      error={errors.address?.message}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Trường học"
+                    id="university"
+                    error={errors.university?.message}
+                  >
+                    <InputField
+                      id="university"
+                      placeholder="Đại học Bách Khoa Hà Nội"
+                      {...register("university")}
+                      error={errors.university?.message}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Chuyên ngành"
+                    id="major"
+                    error={errors.major?.message}
+                  >
+                    <InputField
+                      id="major"
+                      placeholder="Công nghệ thông tin"
+                      {...register("major")}
+                      error={errors.major?.message}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Năm tốt nghiệp"
+                    id="graduationYear"
+                    error={errors.graduationYear?.message}
+                  >
+                    <InputField
+                      id="graduationYear"
+                      placeholder="2026"
+                      {...register("graduationYear")}
+                      error={errors.graduationYear?.message}
+                    />
+                  </FormField>
+                </div>
+
+                {/* ── Submit / Cancel buttons (design.md §5.1) ────────── */}
+                <div className="mt-8 flex items-center justify-end gap-4">
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="rounded-seal border border-ink/15 px-6 py-2.5 font-body font-medium text-ink/70 transition hover:bg-ink/5 focus:outline-none focus:ring-2 focus:ring-ink/10"
+                    >
+                      Hủy
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-sage disabled:text-ink/40"
+                  >
+                    {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
-        </div>
-      )}
 
-      {/* ── Profile doesn't exist - Show form to create profile ──────────────────────────── */}
-      {!hasProfile && !isLoading && !isError && (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-          className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5 md:p-8"
-        >
+          {/* ── Right column: CV ───────────────────────────────────────── */}
           <div className="space-y-6">
-            <FormField
-              label="Họ và tên"
-              id="fullName"
-              required
-              error={errors.fullName?.message}
-            >
-              <InputField
-                id="fullName"
-                placeholder="Nguyễn Văn A"
-                {...register("fullName")}
-                error={errors.fullName?.message}
-              />
-            </FormField>
-
-            <FormField
-              label="Số điện thoại"
-              id="phone"
-              required
-              error={errors.phone?.message}
-            >
-              <InputField
-                id="phone"
-                type="tel"
-                placeholder="0123456789"
-                {...register("phone")}
-                error={errors.phone?.message}
-              />
-            </FormField>
-
-            <FormField
-              label="Địa chỉ"
-              id="address"
-              error={errors.address?.message}
-            >
-              <InputField
-                id="address"
-                placeholder="Hà Nội, Việt Nam"
-                {...register("address")}
-                error={errors.address?.message}
-              />
-            </FormField>
-
-            <FormField
-              label="Trường học"
-              id="school"
-              error={errors.school?.message}
-            >
-              <InputField
-                id="school"
-                placeholder="Đại học Bách Khoa Hà Nội"
-                {...register("school")}
-                error={errors.school?.message}
-              />
-            </FormField>
-
-            <FormField
-              label="Chuyên ngành"
-              id="major"
-              error={errors.major?.message}
-            >
-              <InputField
-                id="major"
-                placeholder="Công nghệ thông tin"
-                {...register("major")}
-                error={errors.major?.message}
-              />
-            </FormField>
-
-            <FormField
-              label="Năm tốt nghiệp"
-              id="graduationYear"
-              error={errors.graduationYear?.message}
-            >
-              <InputField
-                id="graduationYear"
-                placeholder="2026"
-                {...register("graduationYear")}
-                error={errors.graduationYear?.message}
-              />
-            </FormField>
+            <div className="rounded-card bg-white p-6 shadow-card ring-1 ring-ink/5">
+              <h2 className="font-display text-xl font-semibold text-ink mb-4">
+                CV của bạn
+              </h2>
+              <CvUploadZone />
+              {cvLoading ? (
+                <div className="mt-6 space-y-4">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-card bg-white p-4 shadow-card ring-1 ring-ink/5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2">
+                          <div className="h-4 w-48 animate-pulse rounded bg-sage/50" />
+                          <div className="h-3 w-32 animate-pulse rounded bg-sage/30" />
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="h-9 w-32 animate-pulse rounded bg-sage/50" />
+                          <div className="h-9 w-16 animate-pulse rounded bg-sage/50" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : cvList && cvList.length > 0 ? (
+                <>
+                  {!hasDefaultCv && (
+                    <NoDefaultCvBanner
+                      action={
+                        <button className="rounded-seal bg-primary px-4 py-1.5 font-body text-sm text-white hover:bg-primary-dark">
+                          Đặt mặc định
+                        </button>
+                      }
+                    />
+                  )}
+                  <div className="mt-4 space-y-4">
+                    {cvList.map((cv) => (
+                      <CvListItem key={cv.id} cv={cv} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <CvEmptyState
+                  action={
+                    <button className="rounded-seal bg-primary px-6 py-2.5 font-body text-white hover:bg-primary-dark">
+                      Tải lên CV
+                    </button>
+                  }
+                />
+              )}
+            </div>
           </div>
-
-          {/* ── Submit button (design.md §5.1) ────────────── */}
-          <div className="mt-8 flex items-center justify-end gap-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-seal bg-primary px-6 py-2.5 font-body font-medium text-white shadow-card transition hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-sage disabled:text-ink/40"
-            >
-              {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
-            </button>
-          </div>
-        </form>
+        </div>
       )}
     </PageLayout>
   );

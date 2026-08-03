@@ -121,6 +121,7 @@ import { PrismaClient } from "../../../generated/prisma";
 // ── Common ────────────────────────────────────────────────────────────────────
 import type { IEmailService } from "../../../common/interfaces/IEmailService";
 import type { INotificationStrategy } from "../../../common/interfaces/notification-strategy";
+import type { IAuditLogger } from "../../../common/interfaces/audit-logger";
 import type { Request, Response, NextFunction } from "express";
 
 // ── Domain ────────────────────────────────────────────────────────────────────
@@ -229,6 +230,7 @@ export function createAuthModule(
   emailService: IEmailService,
   notificationGateway?: NotificationGatewayPort,
   authGuard?: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+  auditLogger?: IAuditLogger,
 ): AuthModule {
   // ── 1. Infrastructure Layer ────────────────────────────────────────
   //     1a. Repositories ──────────────────────────────────────────────
@@ -269,9 +271,10 @@ export function createAuthModule(
     passwordHasher,
     tokenProvider,
     notificationStrategy,
+    auditLogger!,
   );
 
-  const logoutUseCase = new LogoutUseCase(refreshTokenRepository, tokenProvider);
+  const logoutUseCase = new LogoutUseCase(refreshTokenRepository, tokenProvider, auditLogger!);
 
   const changePasswordUseCase = new ChangePasswordUseCase(
     userRepository,

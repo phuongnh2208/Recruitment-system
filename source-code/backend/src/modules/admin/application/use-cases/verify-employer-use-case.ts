@@ -30,6 +30,11 @@
  */
 
 import { IAdminRepository } from "../../domain/repositories/admin-repository";
+import { IAuditLogger } from "../../../../common/interfaces/audit-logger";
+import {
+  INotificationStrategy,
+  NotificationMessage,
+} from "../../../../common/interfaces/notification-strategy";
 import {
   ValidationException,
   NotFoundException,
@@ -57,7 +62,11 @@ export interface VerifyEmployerResult {
 }
 
 export class VerifyEmployerUseCase {
-  constructor(private readonly adminRepository: IAdminRepository) {}
+  constructor(
+    private readonly adminRepository: IAdminRepository,
+    private readonly auditLogger: IAuditLogger,
+    private readonly notificationStrategy: INotificationStrategy,
+  ) {}
 
   async execute(command: VerifyEmployerCommand): Promise<VerifyEmployerResult> {
     try {
@@ -112,6 +121,33 @@ export class VerifyEmployerUseCase {
         },
         "Employer Verified",
       );
+
+      // ── Step 6b: Audit log (non-blocking) ──────────────────────────────
+      this.auditLogger
+        .log(command.adminId, "EMPLOYER_VERIFIED", "EMPLOYER", command.employerId)
+        .catch((error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          logger.warn(
+            { employerId: command.employerId, error: errorMessage },
+            "Failed to write audit log",
+          );
+        });
+
+      // ── Step 6c: Send notification (non-blocking) ─────────────────────
+      const notification: NotificationMessage = {
+        userId: employer.userId,
+        title: "Doanh nghiệp đã được xác thực",
+        message: `Công ty ${employer.companyName} của bạn đã được xác thực thành công. Bạn có thể đăng tin tuyển dụng ngay bây giờ.`,
+        type: "employer_verified",
+        metadata: { email: employer.user.email },
+      };
+      this.notificationStrategy.send(notification).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        logger.warn(
+          { employerId: command.employerId, error: errorMessage },
+          "Failed to send employer verification notification",
+        );
+      });
 
       // ── Step 7: Return result ───────────────────────────────────────────
       return {

@@ -112,6 +112,8 @@ import { PrismaClient } from "../../../generated/prisma";
 
 // ── Common ────────────────────────────────────────────────────────────────────
 import { createAuthGuard, requireRoles } from "../../../common/guards";
+import type { IAuditLogger } from "../../../common/interfaces/audit-logger";
+import type { INotificationStrategy } from "../../../common/interfaces/notification-strategy";
 import type { Router } from "express";
 
 // ── Domain ────────────────────────────────────────────────────────────────────
@@ -121,6 +123,8 @@ import { ApplicationFactory } from "../domain/factories/application-factory";
 import { PrismaApplicationRepository } from "../infrastructure/repositories/prisma-application-repository";
 import { PrismaEmployerRepository } from "../../employer/infrastructure/repositories/prisma-employer-repository";
 import { PrismaStudentProfileRepository } from "../../student/infrastructure/repositories/prisma-student-repository";
+import { PrismaCVRepository } from "../../student/infrastructure/repositories/prisma-cv-repository";
+import { PrismaUserRepository } from "../../auth/infrastructure/repositories/prisma-user-repository";
 
 // ── Application — Use Cases ───────────────────────────────────────────────────
 import { ApplyJobUseCase } from "../application/use-cases/apply-job-use-case";
@@ -149,6 +153,8 @@ export interface ApplicationModuleDependencies {
   jobPostingRepository: IJobPostingRepository;
   authGuard?: ReturnType<typeof createAuthGuard>;
   roleGuard?: typeof requireRoles;
+  auditLogger?: IAuditLogger;
+  notificationStrategy?: INotificationStrategy;
 }
 
 export interface ApplicationModule {
@@ -216,12 +222,16 @@ export function createApplicationModule(deps: ApplicationModuleDependencies): Ap
   const applicationRepository = new PrismaApplicationRepository(deps.prisma);
   const employerRepository = new PrismaEmployerRepository(deps.prisma);
   const studentProfileRepository = new PrismaStudentProfileRepository(deps.prisma);
+  const cvRepository = new PrismaCVRepository(deps.prisma);
+  const userRepository = new PrismaUserRepository(deps.prisma);
 
   // ── 2. Application Layer (Use Cases) ───────────────────────────────
   const applyJobUseCase = new ApplyJobUseCase(
     applicationRepository,
     deps.jobPostingRepository,
     studentProfileRepository,
+    cvRepository,
+    userRepository,
     new ApplicationFactory(),
   );
 
@@ -229,9 +239,16 @@ export function createApplicationModule(deps: ApplicationModuleDependencies): Ap
     applicationRepository,
     deps.jobPostingRepository,
     employerRepository,
+    studentProfileRepository,
+    userRepository,
+    deps.auditLogger!,
+    deps.notificationStrategy!,
   );
 
-  const withdrawApplicationUseCase = new WithdrawApplicationUseCase(applicationRepository);
+  const withdrawApplicationUseCase = new WithdrawApplicationUseCase(
+    applicationRepository,
+    studentProfileRepository,
+  );
 
   // ── 3. Presentation Layer ──────────────────────────────────────────
   const controller = new ApplicationController(

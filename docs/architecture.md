@@ -653,19 +653,19 @@ source-code/backend/
 │   │   │   ├── domain/              # EmployerProfile, EmployerProfileFactory, Repository Interfaces
 │   │   │   ├── infrastructure/      # PrismaEmployerRepository
 │   │   │   └── composition/         # EmployerModule DI wiring
-│   │   ├── job/                     # [⚠️ Partial — Domain only]
+│   │   ├── job/                     # [✅ Fully Implemented]
 │   │   │   ├── domain/              # JobPosting (Aggregate), JobState VO, Repository Interface
-│   │   │   ├── presentation/        # [❌ Not Implemented]
-│   │   │   ├── application/         # [❌ Not Implemented]
-│   │   │   └── infrastructure/      # [❌ Not Implemented]
-│   │   ├── application/             # [⚠️ Partial — Domain only]
+│   │   │   ├── presentation/        # [✅ Implemented] JobController, routes
+│   │   │   ├── application/         # [✅ Implemented] 7 use cases
+│   │   │   └── infrastructure/      # [✅ Implemented] PrismaJobPostingRepository
+│   │   ├── application/             # [✅ Fully Implemented]
 │   │   │   ├── domain/              # Application (Aggregate), ApplicationState VO, Repository Interface
-│   │   │   ├── presentation/        # [❌ Not Implemented]
-│   │   │   ├── application/         # [❌ Not Implemented]
-│   │   │   └── infrastructure/      # [❌ Not Implemented]
-│   │   ├── admin/                   # [❌ Not Implemented]
-│   │   ├── notification/            # [❌ Not Implemented]
-│   │   ├── audit/                   # [❌ Not Implemented]
+│   │   │   ├── presentation/        # [✅ Implemented] ApplicationController, routes
+│   │   │   ├── application/         # [✅ Implemented] ApplyJob, UpdateStatus, Withdraw
+│   │   │   └── infrastructure/      # [✅ Implemented] PrismaApplicationRepository
+│   │   ├── admin/                   # [✅ Fully Implemented]
+│   │   ├── notification/            # [✅ Fully Implemented]
+│   │   ├── audit/                   # [✅ Fully Implemented]
 │   │   └── ai/                      # [❌ Not Implemented]
 │   └── infrastructure/              # Cross-cutting infrastructure [✅ Implemented]
 │       ├── database/                # PrismaClient provider, migrations
@@ -694,20 +694,20 @@ source-code/frontend/
 │   │   ├── routes/                  # Route definitions, lazy loading
 │   │   └── layout/                  # Layout components
 │   ├── features/                    # Feature-based modules (Domain-driven)
-│   │   ├── auth/                    # [❌ Not Implemented]
+│   │   ├── auth/                    # [✅ Fully Implemented] Login, Register
 │   │   ├── student/                 # [✅ Fully Implemented] Profile, CV, Applications
 │   │   │   ├── components/          # StudentProfilePage, StudentCvPage, CvUploadZone, CvListItem, CvEmptyState, NoDefaultCvBanner, ApplicationHistoryPage, ApplicationHistoryItem, ApplicationHistoryPagination, ApplicationHistoryEmptyState, ApplicationHistorySkeleton
 │   │   │   ├── hooks/               # useProfileForm, useCvUpload, useCvList, useApplicationHistory
 │   │   │   ├── services/            # student.service, application-history.service
 │   │   │   ├── schemas/             # profile.schema, cv.schema
 │   │   │   └── types/               # student.types, cv.types, application-history.types
-│   │   ├── employer/                # [⚠️ Partial] Company Profile, Applicants
-│   │   │   ├── components/          # CompanyProfilePage, ApplicantsPage, ApplicantRow, ApplicantsPagination, ApplicantsEmptyState, ApplicantsSkeleton
+│   │   ├── employer/                # [✅ Fully Implemented] Company Profile, Applicants, Applicant Detail
+│   │   │   ├── components/          # CompanyProfilePage, ApplicantsPage, ApplicantRow, ApplicantsPagination, ApplicantsEmptyState, ApplicantsSkeleton, ApplicantDetailPage
 │   │   │   ├── hooks/               # useCompanyProfileForm, useApplicants
 │   │   │   ├── services/            # employer.service, applicants.service
 │   │   │   ├── schemas/             # company-profile.schema
 │   │   │   └── types/               # company-profile.types, applicants.types
-│   │   ├── admin/                   # [❌ Not Implemented]
+│   │   ├── admin/                   # [✅ Fully Implemented] Dashboard, Pending Approvals, Users, Audit Log
 │   │   └── shared/                  # [❌ Not Implemented]
 │   ├── core/                        # Core infrastructure [✅ Implemented]
 │   │   ├── api/                     # Axios instance, interceptors, endpoints
@@ -1538,3 +1538,12 @@ Tổng hợp các quyết định kiến trúc quan trọng cho dự án TrustHi
 | **Zod**                 | Thực hiện schema validation mạnh mẽ ở runtime cho cả Request DTOs, tự động suy luận kiểu dữ liệu (Type Inference) đồng bộ hoàn hảo với TypeScript.                                                |
 | **Pino Logger**         | Thư viện Logging có hiệu năng cực cao, ghi nhận log dạng cấu trúc JSON, giúp tích hợp tốt với các công cụ phân tích log tập trung.                                                                |
 | **Modular Monolith**    | Phù hợp với mô hình MVP của TrustHire, giảm bớt sự phức tạp của hạ tầng Microservices ban đầu nhưng vẫn đảm bảo tính module độc lập để dễ dàng phân tách dịch vụ trong tương lai khi tích hợp AI. |
+
+---
+
+# 19. Change Log
+
+| Date       | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| 2026-07-20 | Khởi tạo phiên bản 1.1                                         |
+| 2026-08-03 | Cập nhật trạng thái triển khai sau đợt sửa lỗi TSK-FIX-601→610 |

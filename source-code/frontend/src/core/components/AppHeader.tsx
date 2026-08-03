@@ -1,4 +1,5 @@
 import { useLogout } from "../../features/auth/hooks/useAuth";
+import { NotificationIcon } from "./NotificationIcon";
 
 interface AppHeaderProps {
   title: string;
@@ -37,6 +38,7 @@ export function AppHeader({ title, role }: AppHeaderProps) {
         >
           {roleLabel}
         </span>
+        <NotificationIcon />
         <button
           onClick={handleLogout}
           disabled={logoutMutation.isPending}

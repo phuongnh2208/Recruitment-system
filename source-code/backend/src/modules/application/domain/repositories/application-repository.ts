@@ -39,6 +39,18 @@ export interface IApplicationRepository {
   findById(id: string): Promise<Application | null>;
 
   /**
+   * Find an application submitted by a specific student for a specific job.
+   *
+   * Used for an efficient duplicate-application check (BR-08) instead of
+   * loading the student's full application list and filtering in memory.
+   *
+   * @param jobId - The unique identifier of the job posting.
+   * @param studentId - The unique identifier of the student profile.
+   * @returns The Application entity if found, or `null` if not.
+   */
+  findByJobAndStudent(jobId: string, studentId: string): Promise<Application | null>;
+
+  /**
    * Find all applications submitted by a student.
    *
    * @param studentId - The unique identifier of the student.

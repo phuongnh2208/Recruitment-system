@@ -7,41 +7,19 @@
  * implementations are instantiated inside the use‑case.
  *
  * ═══════════════════════════════════════════════════════════════════
- * APPLICATION LAYER
- * ═══════════════════════════════════════════════════════════════════
- *
- * This Use Case belongs to the Application Layer. It orchestrates
- * the repository to fulfill the get job detail use case without
- * containing business logic itself.
- *
- * ═══════════════════════════════════════════════════════════════════
- * REPOSITORY PATTERN
- * ═══════════════════════════════════════════════════════════════════
- *
- * The repository abstracts away the underlying persistence mechanism.
- * The Use Case depends only on the repository interface (abstraction),
- * not on concrete implementations (e.g. Prisma, in-memory).
- *
- * ═══════════════════════════════════════════════════════════════════
- * DEPENDENCY INJECTION
- * ═══════════════════════════════════════════════════════════════════
- *
- * IJobRepository is injected via the constructor. The Use Case has
- * zero knowledge of how the repository is implemented or which
- * database is used.
- *
- * ═══════════════════════════════════════════════════════════════════
  * BUSINESS FLOW
- * ═══════════════════════════════════════════════════════════════════
+ * ══════════════════════════════════════════════════════════════════
  *
- *   1. Validate jobId (must not be empty)
- *   2. Log debug "Job Detail Requested"
- *   3. Call repository.findById(jobId)
- *   4. If null → throw NotFoundException
- *   5. Check job.state === APPROVED
- *      - If not → throw NotFoundException (hide existence of non-approved jobs)
- *   6. Log info "Job Detail Loaded"
- *   7. Return { job }
+ * 1. Validate jobId (must not be empty)
+ * 2. Log debug "Job Detail Requested"
+ * 3. Call jobPostingRepository.findById(jobId)
+ * 4. If null → throw NotFoundException
+ * 5. Check job.state === APPROVED
+ *    - If not → throw NotFoundException (hide existence of non-approved jobs)
+ * 6. Fetch employer profile using employerId from job
+ * 7. Map employer details to job object
+ * 8. Log info "Job Detail Loaded"
+ * 9. Return enhanced job with employer details
  *
  * ═══════════════════════════════════════════════════════════════════
  * WHY ONLY APPROVED JOBS ARE RETURNED (FR-ST-07)
@@ -66,6 +44,15 @@
  * the Application Layer. The Controller (if any) only delegates
  * to this Use Case and formats the HTTP response.
  *
+ * ═══════════════════════════════════════════════════════════════════
+ * DEPENDENCY INJECTION
+ * ══════════════════════════════════════════════════════════════════
+ *
+ * - IJobPostingRepository (Domain Interface)
+ * - IEmployerRepository (Domain Interface)
+ *
+ * No Prisma. No concrete repository.
+ *
  * @category Application Use Case
  */
 
@@ -73,21 +60,22 @@ import { JobPosting } from "../../../job/domain";
 import {
   ValidationException,
   NotFoundException,
-  BusinessException,
   InfrastructureException,
 } from "../../../../common/exceptions";
 import { logger } from "../../../../common/logger";
+import type { IEmployerRepository } from "../../../employer/domain/repositories/employer-repository";
+import type { IJobPostingRepository } from "../../../job/domain/repositories/job-posting-repository";
 
 /**
  * Repository interface for JobPosting entity queries.
  *
- * ═══════════════════════════════════════════════════════════════════
+ * ═════════════════════════════════════════════════════════════════════
  * NOTE: This interface is defined here temporarily and will be moved
  * to the Job module's domain layer
  * (src/modules/job/domain/repositories/)
  * as part of a future task. It is placed here to avoid creating
  * additional files outside the scope of this task.
- * ═══════════════════════════════════════════════════════════════════
+ * ═════════════════════════════════════════════════════════════════════
  *
  * @category Domain Repository Interface
  */
@@ -113,12 +101,28 @@ export interface GetJobDetailCommand {
  * Output DTO for getting job detail.
  */
 export interface GetJobDetailResult {
-  /** The job posting entity. */
-  job: JobPosting;
+  /** The job posting entity with employer details. */
+  job: JobPosting & {
+    /** Company/employer name. */
+    companyName: string;
+    /** Company description. */
+    companyDescription?: string;
+    /** Company website. */
+    website?: string;
+    /** Company address. */
+    companyAddress?: string;
+    /** Company logo URL. */
+    logoUrl?: string;
+    /** Whether the employer is verified. */
+    employerVerified: boolean;
+  };
 }
 
 export class GetJobDetailUseCase {
-  constructor(private readonly jobRepository: IJobRepository) {}
+  constructor(
+    private readonly jobPostingRepository: IJobPostingRepository,
+    private readonly employerRepository: IEmployerRepository,
+  ) {}
 
   /**
    * Retrieve the full details of a job posting by its ID.
@@ -128,7 +132,7 @@ export class GetJobDetailUseCase {
    * NotFoundException to hide the job's existence from Students.
    *
    * @param command - The command containing the job ID.
-   * @returns The job posting details.
+   * @returns The job posting details with employer information.
    * @throws {ValidationException} If input validation fails.
    * @throws {NotFoundException} If the job is not found or not approved.
    * @throws {InfrastructureException} If an unexpected error occurs.
@@ -150,7 +154,7 @@ export class GetJobDetailUseCase {
       );
 
       // ── 3. Fetch job from repository ───────────────────────────────
-      const job = await this.jobRepository.findById(command.jobId);
+      const job = await this.jobPostingRepository.findById(command.jobId);
 
       // ── 4. Check existence ─────────────────────────────────────────
       if (!job) {
@@ -175,7 +179,21 @@ export class GetJobDetailUseCase {
         throw new NotFoundException("Job not found");
       }
 
-      // ── 6. Log success ─────────────────────────────────────────────
+      // ── 6. Fetch employer profile ─────────────────────────────────
+      const employer = await this.employerRepository.findById(job.employerId);
+
+      // ── 7. Map employer details to job object ───────────────────────
+      const enhancedJob = {
+        ...job,
+        companyName: employer?.companyName ?? "",
+        companyDescription: employer?.description ?? undefined,
+        website: employer?.website ?? undefined,
+        companyAddress: undefined,
+        logoUrl: employer?.logoUrl ?? undefined,
+        employerVerified: employer?.verified ?? false,
+      };
+
+      // ── 8. Log success ─────────────────────────────────────────────
       logger.info(
         {
           jobId: command.jobId,
@@ -183,14 +201,22 @@ export class GetJobDetailUseCase {
         "Job Detail Loaded",
       );
 
-      // ── 7. Return result ───────────────────────────────────────────
-      return { job };
+      // ── 9. Return result ───────────────────────────────────────────
+      return {
+        job: enhancedJob as JobPosting & {
+          companyName: string;
+          companyDescription?: string;
+          website?: string;
+          companyAddress?: string;
+          logoUrl?: string;
+          employerVerified: boolean;
+        },
+      };
     } catch (error) {
       // Re-throw known domain exceptions without wrapping
       if (
         error instanceof ValidationException ||
         error instanceof NotFoundException ||
-        error instanceof BusinessException ||
         error instanceof InfrastructureException
       ) {
         throw error;
@@ -212,7 +238,7 @@ export class GetJobDetailUseCase {
         ...(errorStack && { stack: errorStack }),
       };
 
-      throw new InfrastructureException("Failed to retrieve job detail", details);
+      throw new InfrastructureException("Failed to get job detail", details);
     }
   }
 }

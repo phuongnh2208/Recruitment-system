@@ -18,7 +18,7 @@ import { logger } from "../../../../common/logger";
  *   APPROVED  → APPROVED
  *   REJECTED  → REJECTED
  *   CLOSED    → CLOSED
- *   EXPIRED   → CLOSED  (Domain has no EXPIRED state)
+ *   EXPIRED   → EXPIRED
  */
 const PRISMA_TO_DOMAIN_STATE: Record<PrismaJobState, JobStateValue> = {
   [PrismaJobState.DRAFT]: "DRAFT",
@@ -26,7 +26,7 @@ const PRISMA_TO_DOMAIN_STATE: Record<PrismaJobState, JobStateValue> = {
   [PrismaJobState.APPROVED]: "APPROVED",
   [PrismaJobState.REJECTED]: "REJECTED",
   [PrismaJobState.CLOSED]: "CLOSED",
-  [PrismaJobState.EXPIRED]: "CLOSED",
+  [PrismaJobState.EXPIRED]: "EXPIRED",
 };
 
 /**
@@ -38,6 +38,7 @@ const PRISMA_TO_DOMAIN_STATE: Record<PrismaJobState, JobStateValue> = {
  *   APPROVED  → APPROVED
  *   REJECTED  → REJECTED
  *   CLOSED    → CLOSED
+ *   EXPIRED   → EXPIRED
  */
 const DOMAIN_TO_PRISMA_STATE: Record<JobStateValue, PrismaJobState> = {
   DRAFT: PrismaJobState.DRAFT,
@@ -45,6 +46,7 @@ const DOMAIN_TO_PRISMA_STATE: Record<JobStateValue, PrismaJobState> = {
   APPROVED: PrismaJobState.APPROVED,
   REJECTED: PrismaJobState.REJECTED,
   CLOSED: PrismaJobState.CLOSED,
+  EXPIRED: PrismaJobState.EXPIRED,
 };
 
 /**
@@ -197,11 +199,34 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
         where.state = DOMAIN_TO_PRISMA_STATE[state];
       }
 
-      // Build query options with pagination.
+      // Detect whether a salary filter is requested.
+      const hasSalaryFilter =
+        (salaryMin !== undefined && salaryMin !== null) ||
+        (salaryMax !== undefined && salaryMax !== null);
+
+      // ═══════════════════════════════════════════════════════════════════
+      // SALARY FILTER (Method B — no schema change)
+      //
+      // `salaryMin`/`salaryMax` are stored inside the `salaryRange` JSON
+      // string column, so Prisma cannot filter them directly in the SQL
+      // `where` clause. When a salary filter is requested we therefore:
+      //   1. Bypass Prisma-level pagination (skip/take) and fetch ALL
+      //      records matching the other criteria.
+      //   2. Filter the salary range in-memory.
+      //   3. Manually paginate the filtered array (total / totalPages
+      //      reflect the result AFTER the salary filter is applied).
+      //
+      // ⚠️ PERFORMANCE WARNING: This pulls the full matching dataset into
+      //    memory. For large job-posting tables this can be slow and memory
+      //    heavy. If `salaryMin`/`salaryMax` are later added as dedicated
+      //    DB columns (Method A), this block can be removed and the filters
+      //    pushed down into the SQL `where` clause.
+      // ═══════════════════════════════════════════════════════════════════
       const queryOptions: Prisma.JobPostingFindManyArgs = {
         where,
-        skip,
-        take: limit,
+        // Skip/take only when NO salary filter — otherwise fetch everything
+        // and paginate manually after in-memory filtering.
+        ...(hasSalaryFilter ? {} : { skip, take: limit }),
         orderBy: { createdAt: "desc" },
       };
 
@@ -211,13 +236,8 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
         this.prisma.jobPosting.count({ where }),
       ]);
 
-      // In-memory salary filtering (best-effort for string-encoded JSON).
-      let filteredRecords = records;
-      if (
-        (salaryMin !== undefined && salaryMin !== null) ||
-        (salaryMax !== undefined && salaryMax !== null)
-      ) {
-        filteredRecords = records.filter((record) => {
+      if (hasSalaryFilter) {
+        const filteredRecords = records.filter((record) => {
           const salary = this.parseSalaryRange(record.salaryRange);
           if (
             salaryMin !== undefined &&
@@ -237,6 +257,34 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
           }
           return true;
         });
+
+        const filteredTotal = filteredRecords.length;
+        const filteredTotalPages = Math.ceil(filteredTotal / limit) || 1;
+        const startIndex = (page - 1) * limit;
+        const pagedRecords = filteredRecords.slice(startIndex, startIndex + limit);
+
+        logger.debug(
+          {
+            keyword,
+            location,
+            state,
+            salaryMin,
+            salaryMax,
+            page,
+            limit,
+            total: filteredTotal,
+            returnedCount: pagedRecords.length,
+          },
+          "Job postings search completed (salary filtered in-memory)",
+        );
+
+        return {
+          items: pagedRecords.map((record) => this.toDomain(record)),
+          total: filteredTotal,
+          page,
+          limit,
+          totalPages: filteredTotalPages,
+        };
       }
 
       logger.debug(
@@ -249,13 +297,13 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
           page,
           limit,
           total,
-          returnedCount: filteredRecords.length,
+          returnedCount: records.length,
         },
         "Job postings search completed",
       );
 
       return {
-        items: filteredRecords.map((record) => this.toDomain(record)),
+        items: records.map((record) => this.toDomain(record)),
         total,
         page,
         limit,
@@ -378,7 +426,7 @@ export class PrismaJobPostingRepository implements IJobPostingRepository {
   /**
    * Converts a Prisma JobPosting model to a Domain JobPosting entity.
    *
-   * State mapping: PENDING → SUBMITTED, EXPIRED → CLOSED.
+   * State mapping: PENDING → SUBMITTED, EXPIRED → EXPIRED.
    * Salary range is parsed from JSON string.
    *
    * @param model - The Prisma JobPosting record.

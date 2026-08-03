@@ -38,7 +38,7 @@ export default function DashboardStatCard({
         <div className="min-w-0 flex-1">
           <p className="truncate font-body text-sm text-ink/60">{label}</p>
           <p className="font-mono text-2xl font-medium text-ink">
-            {value.toLocaleString()}
+            {(value ?? 0).toLocaleString()}
           </p>
         </div>
       </div>

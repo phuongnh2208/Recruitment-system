@@ -31,6 +31,7 @@
  */
 
 import { IApplicationRepository } from "../../domain/repositories/application-repository";
+import { IStudentProfileRepository } from "../../../student/domain/repositories/student-profile-repository";
 import {
   ValidationException,
   AuthenticationException,
@@ -59,7 +60,10 @@ export interface WithdrawApplicationResult {
 }
 
 export class WithdrawApplicationUseCase {
-  constructor(private readonly applicationRepository: IApplicationRepository) {}
+  constructor(
+    private readonly applicationRepository: IApplicationRepository,
+    private readonly studentProfileRepository: IStudentProfileRepository,
+  ) {}
 
   async execute(command: WithdrawApplicationCommand): Promise<WithdrawApplicationResult> {
     try {
@@ -89,7 +93,19 @@ export class WithdrawApplicationUseCase {
       }
 
       // ── Step 4: Ownership check ─────────────────────────────────
-      if (application.studentId !== command.studentId) {
+      // Resolve User.id → StudentProfile.id before comparing ownership.
+      const studentProfile = await this.studentProfileRepository.findByUserId(command.studentId);
+      if (!studentProfile?.id) {
+        logger.warn(
+          {
+            studentId: command.studentId,
+          },
+          "Student Profile Not Found",
+        );
+        throw new NotFoundException(`Student profile for user ${command.studentId} not found`);
+      }
+
+      if (application.studentId !== studentProfile.id) {
         logger.warn(
           {
             studentId: command.studentId,

@@ -16,7 +16,8 @@
  *   - ❌ No business logic – delegated to hooks / service
  */
 
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useJobDetail } from "../hooks/useJobDetail";
 import JobDetailHeader from "./JobDetailHeader";
 import JobDescriptionCard from "./JobDescriptionCard";
@@ -25,10 +26,12 @@ import JobInformationCard from "./JobInformationCard";
 import JobApplyCard from "./JobApplyCard";
 import JobDetailSkeleton from "./JobDetailSkeleton";
 import JobDetailErrorState from "./JobDetailErrorState";
+import ApplyJobDialog from "../../application/components/ApplyJobDialog";
 
 export default function JobDetailPage() {
   const navigate = useNavigate();
-  const jobId = window.location.pathname.split("/").pop() || "";
+  const { jobId = "" } = useParams<{ jobId: string }>();
+  const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
 
   const {
     data: jobData,
@@ -43,13 +46,11 @@ export default function JobDetailPage() {
   };
 
   const handleApply = () => {
-    // TODO: Implement apply functionality (TSK-FE-APP-201)
-    alert("Chức năng ứng tuyển sẽ được triển khai sau.");
+    setIsApplyDialogOpen(true);
   };
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    alert("Chức năng lưu công việc sẽ được triển khai sau.");
+  const handleApplyDialogClose = () => {
+    setIsApplyDialogOpen(false);
   };
 
   if (isLoading) {
@@ -119,11 +120,17 @@ export default function JobDetailPage() {
                 companyAddress={job.companyAddress}
                 employerVerified={job.employerVerified}
                 onApply={handleApply}
-                onSave={handleSave}
               />
             </div>
           </div>
         </div>
+
+        {/* Apply Job Dialog */}
+        <ApplyJobDialog
+          isOpen={isApplyDialogOpen}
+          jobId={jobId}
+          onClose={handleApplyDialogClose}
+        />
       </div>
     </div>
   );

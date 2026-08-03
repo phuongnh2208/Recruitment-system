@@ -37,11 +37,12 @@ import type {
 async function getJobDetail(
   params: JobDetailParams,
 ): Promise<JobDetailResponse> {
-  const response = await axiosInstance.get<JobDetailResponse>(
-    ENDPOINTS.STUDENT.JOB_DETAIL(params.jobId),
-  );
+  const response = await axiosInstance.get<{
+    success: true;
+    data: JobDetailResponse;
+  }>(ENDPOINTS.STUDENT.JOB_DETAIL(params.jobId));
 
-  return response.data;
+  return response.data.data;
 }
 
 /**

@@ -26,15 +26,16 @@ import type { PendingApprovalResponse } from "../types/pending.types";
 /**
  * Fetch all pending approvals (employers + jobs).
  *
- * Calls GET /admin/dashboard and extracts pending items.
+ * Calls GET /admin/pending-approvals.
  *
  * @returns The API response containing pending employers and jobs.
  */
 async function fetchPendingApprovals(): Promise<PendingApprovalResponse> {
-  const response = await axiosInstance.get<PendingApprovalResponse>(
-    ENDPOINTS.ADMIN.DASHBOARD,
-  );
-  return response.data;
+  const response = await axiosInstance.get<{
+    success: true;
+    data: PendingApprovalResponse;
+  }>(ENDPOINTS.ADMIN.PENDING_APPROVALS);
+  return response.data.data;
 }
 
 /**

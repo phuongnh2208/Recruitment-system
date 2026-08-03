@@ -16,7 +16,7 @@ export const ENDPOINTS = {
     CV_DELETE: (cvId: string) => `/student/cv/${cvId}`,
     CV_SET_DEFAULT: (cvId: string) => `/student/cv/${cvId}/default`,
     APPLICATIONS: "/student/applications",
-    JOB_DETAIL: (jobId: string) => `/jobs/${jobId}`,
+    JOB_DETAIL: (jobId: string) => `/student/jobs/${jobId}`,
     JOBS: "/student/jobs",
   },
   EMPLOYER: {
@@ -45,11 +45,13 @@ export const ENDPOINTS = {
   },
   ADMIN: {
     DASHBOARD: "/admin/dashboard",
+    PENDING_APPROVALS: "/admin/pending-approvals",
     VERIFY_EMPLOYER: (employerId: string) =>
       `/admin/employers/${employerId}/verify`,
     APPROVE_JOB: (jobId: string) => `/admin/jobs/${jobId}/approve`,
     REJECT_JOB: (jobId: string) => `/admin/jobs/${jobId}/reject`,
     USERS: "/admin/users",
     UPDATE_USER_STATUS: (userId: string) => `/admin/users/${userId}/status`,
+    AUDIT_LOGS: "/admin/audit-logs",
   },
 } as const;

@@ -2,11 +2,14 @@ import { PrismaClient } from "../../../generated/prisma";
 import type { Request, Response, NextFunction } from "express";
 import { PrismaEmployerRepository } from "../infrastructure/repositories/prisma-employer-repository";
 import { PrismaJobPostingRepository } from "../../job/infrastructure/repositories/prisma-job-posting-repository";
+import { PrismaStudentProfileRepository } from "../../student/infrastructure/repositories/prisma-student-repository";
+import { PrismaUserRepository } from "../../auth/infrastructure/repositories/prisma-user-repository";
 import { EmployerProfileFactory } from "../domain/employer-profile-factory";
 import { UpdateCompanyProfileUseCase } from "../application/use-cases/update-company-profile-use-case";
 import { GetCompanyProfileUseCase } from "../application/use-cases/get-company-profile-use-case";
 import { GetMyApplicantsUseCase } from "../application/use-cases/get-my-applicants-use-case";
 import { ViewApplicantDetailsUseCase } from "../application/use-cases/view-applicant-details-use-case";
+import { GenerateRecruitmentReportUseCase } from "../application/use-cases/generate-recruitment-report-use-case";
 import type { IApplicationRepository } from "../../application/domain/repositories/application-repository";
 import { EmployerController } from "../presentation/controllers/employer-controller";
 import { createEmployerRouter } from "../presentation/routes/employer-routes";
@@ -21,11 +24,15 @@ export interface EmployerModuleDependencies {
 export interface EmployerModuleOutput {
   controller: EmployerController;
   router: ReturnType<typeof createEmployerRouter>;
+  repositories: {
+    employerRepository: PrismaEmployerRepository;
+  };
   useCases: {
     updateCompanyProfile: UpdateCompanyProfileUseCase;
     getCompanyProfile: GetCompanyProfileUseCase;
     getMyApplicants: GetMyApplicantsUseCase;
     viewApplicantDetails: ViewApplicantDetailsUseCase;
+    generateRecruitmentReport: GenerateRecruitmentReportUseCase;
   };
 }
 
@@ -49,6 +56,15 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
   const viewApplicantDetailsUseCase = new ViewApplicantDetailsUseCase(
     deps.applicationRepository,
     jobPostingRepository,
+    employerRepository,
+  );
+
+  const generateRecruitmentReportUseCase = new GenerateRecruitmentReportUseCase(
+    employerRepository,
+    jobPostingRepository,
+    deps.applicationRepository,
+    new PrismaStudentProfileRepository(deps.prisma),
+    new PrismaUserRepository(deps.prisma),
   );
 
   const controller = new EmployerController(
@@ -56,6 +72,7 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
     getCompanyProfileUseCase,
     getMyApplicantsUseCase,
     viewApplicantDetailsUseCase,
+    generateRecruitmentReportUseCase,
   );
 
   const router = createEmployerRouter(controller, deps.authGuard, deps.roleGuard);
@@ -63,11 +80,15 @@ export function createEmployerModule(deps: EmployerModuleDependencies): Employer
   return {
     controller,
     router,
+    repositories: {
+      employerRepository,
+    },
     useCases: {
       updateCompanyProfile: updateCompanyProfileUseCase,
       getCompanyProfile: getCompanyProfileUseCase,
       getMyApplicants: getMyApplicantsUseCase,
       viewApplicantDetails: viewApplicantDetailsUseCase,
+      generateRecruitmentReport: generateRecruitmentReportUseCase,
     },
   };
 }

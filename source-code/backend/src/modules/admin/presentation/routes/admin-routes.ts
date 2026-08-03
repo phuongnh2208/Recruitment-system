@@ -27,6 +27,7 @@ export function createAdminRouter(
   router.use(roleGuard);
 
   router.get("/dashboard", controller.getDashboardStats.bind(controller));
+  router.get("/pending-approvals", controller.getPendingApprovals.bind(controller));
   router.get("/users", controller.getUsers.bind(controller));
   router.patch("/employers/:employerId/verify", controller.verifyEmployer.bind(controller));
   router.patch("/jobs/:jobId/approve", controller.approveJobPosting.bind(controller));
